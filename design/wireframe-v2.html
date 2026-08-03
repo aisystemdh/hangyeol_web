@@ -1,0 +1,525 @@
+<title>한결 홈페이지 — 와이어프레임 v1</title>
+
+<style>
+  :root {
+    --ground: #ffffff;
+    --backdrop: #e8e6e1;
+    --ink: #1b1a18;
+    --grey-1: #78756f;
+    --grey-2: #b3afa8;
+    --grey-3: #ddd9d3;
+    --grey-4: #f2f0ec;
+    --meta: #0f6e7b;
+    --meta-bg: #eef6f7;
+    --rule: #cfcbc4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #1a1a1d;
+      --backdrop: #0e0e10;
+      --ink: #ece9e4;
+      --grey-1: #97938c;
+      --grey-2: #625f5a;
+      --grey-3: #3a3835;
+      --grey-4: #232326;
+      --meta: #62c2ce;
+      --meta-bg: #17282b;
+      --rule: #3a3835;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #1a1a1d;
+    --backdrop: #0e0e10;
+    --ink: #ece9e4;
+    --grey-1: #97938c;
+    --grey-2: #625f5a;
+    --grey-3: #3a3835;
+    --grey-4: #232326;
+    --meta: #62c2ce;
+    --meta-bg: #17282b;
+    --rule: #3a3835;
+  }
+  :root[data-theme="light"] {
+    --ground: #ffffff;
+    --backdrop: #e8e6e1;
+    --ink: #1b1a18;
+    --grey-1: #78756f;
+    --grey-2: #b3afa8;
+    --grey-3: #ddd9d3;
+    --grey-4: #f2f0ec;
+    --meta: #0f6e7b;
+    --meta-bg: #eef6f7;
+    --rule: #cfcbc4;
+  }
+
+  body {
+    margin: 0;
+    background: var(--backdrop);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", sans-serif;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono {
+    font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  }
+
+  /* ---- 문서 헤더 ---- */
+  .doc-head {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px 20px;
+  }
+  .doc-head h1 {
+    font-size: 19px;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .doc-head p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--grey-1);
+    max-width: 58ch;
+  }
+  .doc-head .stamp {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--meta);
+    border: 1px solid var(--meta);
+    border-radius: 2px;
+    padding: 2px 7px;
+    margin-bottom: 12px;
+  }
+
+  /* ---- 화면 컬럼 (모바일 우선) ---- */
+  .screen {
+    max-width: 460px;
+    margin: 0 auto 40px;
+    background: var(--ground);
+    border: 1px solid var(--rule);
+  }
+  section {
+    padding: 34px 22px;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  section:last-child { border-bottom: 0; }
+
+  .tag {
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--grey-1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tag::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--grey-3);
+  }
+
+  h2 { font-size: 20px; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+  h3 { font-size: 15px; margin: 0; }
+  p  { margin: 0; font-size: 14px; }
+  .sub { color: var(--grey-1); font-size: 13.5px; }
+
+  /* ---- 와이어프레임 플레이스홀더 ---- */
+  .ph {
+    border: 1.5px dashed var(--grey-2);
+    color: var(--grey-1);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--grey-4);
+    text-align: center;
+    padding: 8px;
+  }
+  .ph-logo { height: 96px; }
+  .ph-face { height: 84px; flex: 1; }
+  .row { display: flex; gap: 10px; }
+
+  .btn {
+    background: var(--ink);
+    color: var(--ground);
+    text-align: center;
+    padding: 13px;
+    font-size: 14.5px;
+    font-weight: 600;
+    border-radius: 3px;
+  }
+  .btn-ghost {
+    border: 1px solid var(--grey-2);
+    color: var(--grey-1);
+    text-align: center;
+    padding: 11px;
+    font-size: 13px;
+    border-radius: 3px;
+  }
+
+  .meta-line {
+    font-size: 12.5px;
+    color: var(--grey-1);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+
+  /* ---- 목록 블록 ---- */
+  .block {
+    border-left: 2px solid var(--grey-3);
+    padding-left: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .stack { display: flex; flex-direction: column; gap: 20px; }
+
+  .step { display: flex; gap: 12px; align-items: baseline; }
+  .step-time {
+    font-size: 11px;
+    color: var(--grey-1);
+    white-space: nowrap;
+    min-width: 92px;
+    font-variant-numeric: tabular-nums;
+  }
+  .step-body { display: flex; flex-direction: column; gap: 3px; }
+
+  /* ---- 정보 테이블 ---- */
+  .facts { display: flex; flex-direction: column; gap: 0; border-top: 1px solid var(--grey-3); }
+  .fact {
+    display: flex;
+    gap: 14px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--grey-3);
+    font-size: 14px;
+  }
+  .fact dt { color: var(--grey-1); min-width: 62px; font-size: 13px; margin: 0; }
+  .fact dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+  .field {
+    border: 1px solid var(--grey-2);
+    background: var(--grey-4);
+    color: var(--grey-1);
+    font-size: 12.5px;
+    padding: 11px 12px;
+    border-radius: 3px;
+  }
+
+  .faq-q {
+    border-bottom: 1px solid var(--grey-3);
+    padding: 12px 0;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .faq-q span:last-child { color: var(--grey-2); }
+
+  /* ---- 주석 (설계 레이어) ---- */
+  .note {
+    background: var(--meta-bg);
+    border-left: 2px solid var(--meta);
+    color: var(--meta);
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 9px 12px;
+  }
+  .note b { font-weight: 700; }
+  .note--doc { max-width: 760px; margin: 0 auto 10px; }
+
+  /* ---- 결정 목록 ---- */
+  .decisions {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 8px 20px 64px;
+  }
+  .decisions h2 { font-size: 16px; margin-bottom: 4px; }
+  .decisions ol { padding-left: 20px; margin: 14px 0 0; display: flex; flex-direction: column; gap: 12px; }
+  .decisions li { font-size: 13.5px; }
+  .decisions li b { display: block; }
+  .decisions li span { color: var(--grey-1); font-size: 13px; }
+
+  @media (min-width: 900px) {
+    .screen { max-width: 500px; }
+  }
+
+  /* ---- 히어로 워드플레이 ---- */
+  .hero { align-items: center; text-align: center; gap: 18px; padding-top: 44px; padding-bottom: 40px; }
+  .hero .ph-logo { width: 100%; height: 150px; }
+  .slogan { font-size: 27px; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
+
+  .wordplay {
+    display: grid;
+    place-items: center;
+    min-height: 62px;
+    width: 100%;
+  }
+  .wp-parts, .wp-result { grid-area: 1 / 1; }
+  .wp-parts {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 25px;
+    font-weight: 600;
+    color: var(--grey-1);
+    opacity: 0; /* 기본은 최종 상태. .playing이 붙으면 애니메이션이 덮어쓴다 */
+  }
+  .wp-plus { font-size: 17px; color: var(--grey-2); }
+  .wp-result { font-size: 31px; font-weight: 700; letter-spacing: -0.02em; }
+  .wp-result em { font-style: normal; }
+  .wp-result .lit { border-bottom: 2px solid var(--ink); padding-bottom: 1px; }
+
+  .playing .wp-a     { animation: wp-pop .45s .25s both; }
+  .playing .wp-plus  { animation: wp-pop .35s 1.05s both; }
+  .playing .wp-b     { animation: wp-pop .45s 1.35s both; }
+  .playing .wp-parts { animation: wp-out .45s 2.45s both; }
+  .playing .wp-result{ animation: wp-in  .55s 2.75s both; }
+
+  @keyframes wp-pop { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+  @keyframes wp-out { from { opacity: 1; } to { opacity: 0; transform: scale(.93); } }
+  @keyframes wp-in  { from { opacity: 0; transform: scale(1.07); } to { opacity: 1; transform: none; } }
+
+  .replay {
+    background: none;
+    border: 1px solid var(--grey-3);
+    color: var(--grey-1);
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    padding: 5px 11px;
+    border-radius: 99px;
+    cursor: pointer;
+  }
+  .replay:focus-visible { outline: 2px solid var(--meta); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .playing .wp-a, .playing .wp-plus, .playing .wp-b,
+    .playing .wp-parts, .playing .wp-result { animation: none; }
+  }
+</style>
+
+<div class="doc-head">
+  <div class="stamp mono">Wireframe v2 · 구조 검토용</div>
+  <h1>한결 홈페이지 — 와이어프레임</h1>
+  <p>
+    색·서체·이미지는 아직 입히지 않았습니다. 지금 볼 것은 <b>섹션 순서, 각 섹션에 들어갈 내용, 카피의 방향</b> 세 가지입니다.
+    회색 점선 상자는 나중에 채울 자리, <span class="mono" style="color:var(--meta)">청록색 블록</span>은 제 설계 메모라 실제 페이지에는 나오지 않습니다.
+  </p>
+</div>
+
+<div class="note note--doc">
+  구성 순서는 <b>_홈페이지.md</b>의 6단을 그대로 따랐습니다. 히어로 워드플레이는 실제로 움직이니 한 번 보시고,
+  다시 보려면 <b>다시 보기</b>를 누르세요. 확정·미확정 항목은 맨 아래에 정리해뒀습니다.
+</div>
+
+<div class="screen">
+
+  <!-- 1 -->
+  <section class="hero" id="hero">
+    <div class="tag mono" style="align-self:stretch">S1 · 로고 · 슬로건 · 한 줄 설명</div>
+    <div class="ph ph-logo mono">로고 (심볼 + 워드마크) — 크게</div>
+    <p class="slogan">결국에는 결이더라</p>
+
+    <div class="wordplay">
+      <div class="wp-parts">
+        <span class="wp-a">결</span>
+        <span class="wp-plus">+</span>
+        <span class="wp-b">가치</span>
+      </div>
+      <div class="wp-result">한<em class="lit">결</em><em class="lit">같이</em></div>
+    </div>
+    <button class="replay mono" type="button" id="replay">다시 보기</button>
+
+    <p class="sub">가치관이 맞는 사람을 오프라인에서 만나는 자리.</p>
+    <div class="meta-line mono" style="justify-content:center">
+      <span>날짜 미정</span><span>·</span><span>합정</span><span>·</span><span>20명</span>
+    </div>
+    <div class="btn" style="align-self:stretch">신청하기</div>
+
+    <div class="note" style="text-align:left">
+      <b>워드플레이가 이 페이지의 유일한 움직임입니다.</b> 결 → 가치 → 한<u>결</u><u>같이</u> 순으로 쓰이면서
+      "같이"와 "가치"가 같은 소리라는 걸 보여줍니다. 로고와 슬로건이 위에서 정지해 있고 이 한 곳만 움직이니 시선이 여기로 모입니다.<br><br>
+      날짜는 <b>"날짜 미정"</b>으로 자리만 잡아뒀습니다. 확정되면 이 자리에 그대로 들어갑니다.
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <div class="tag mono">S2 · 정체성 3가지 (차별점)</div>
+    <h2>여느 소개팅 자리와 무엇이 다른가</h2>
+    <div class="stack">
+      <div class="block">
+        <h3>외모가 아니라 생각을 먼저 봅니다</h3>
+        <p class="sub">신청하시면 10개 주제의 질문을 보내드립니다. 하루 전까지 답해주시면, 당일 대화는 그 답변에서 시작합니다.</p>
+      </div>
+      <div class="block">
+        <h3>실명도 직업도 묻지 않습니다</h3>
+        <p class="sub">이름, 나이, 학교, 회사, 사는 동네, SNS, 연락처. 행사 중에는 전부 비공개입니다. 남는 건 생각뿐입니다.</p>
+      </div>
+      <div class="block">
+        <h3>20명 모두 같은 값을 냈습니다</h3>
+        <p class="sub">남녀 구분 없이 39,000원 단일가. 무료 초대 게스트 0명, 섭외된 참가자 0명. 자리에 있는 전원이 직접 신청하고 직접 낸 사람입니다.</p>
+      </div>
+    </div>
+    <div class="note">
+      세 번째 항목은 <b>_시장조사(운영자관점)</b>의 결론을 그대로 카피로 옮긴 것입니다 — 참가자들이 이미 "괜찮다 싶으면 알바지"를 전제하고 온다는 것,
+      그리고 상위 3곳이 전부 성별 단일가라는 것. 균일가는 약점이 아니라 <b>지금 시장에서 가장 잘 먹히는 각</b>이라 정면에 세웠습니다.
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <div class="tag mono">S3 · 진행 순서</div>
+    <h2>당일은 이렇게 흘러갑니다</h2>
+    <div class="stack">
+      <div class="step">
+        <div class="step-time mono">하루 전</div>
+        <div class="step-body">
+          <h3>사전 질문</h3>
+          <p class="sub">10개 주제에 답하고, 당일 공개할 답변 하나를 고릅니다.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-time mono">18:10–20:00</div>
+        <div class="step-body">
+          <h3>1부 · 너의 생각은?</h3>
+          <p class="sub">1:1 대화 10회. 답이 같으면 이유를 묻고, 다르면 어디까지 받아들일 수 있는지 이야기합니다.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-time mono">20:00–20:30</div>
+        <div class="step-body">
+          <h3>2부 · 너랑 비슷하다고?</h3>
+          <p class="sub">답변이 가장 비슷한 상대와 한 번 더, 시간 제한 없이 이야기합니다.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-time mono">20:30–21:00</div>
+        <div class="step-body">
+          <h3>3부 · 리포트</h3>
+          <p class="sub">사전 답변으로 만든 성향 리포트를 PDF로 드립니다. 이후는 자유롭게.</p>
+        </div>
+      </div>
+    </div>
+    <div class="note">
+      타임테이블의 내부 용어(결카드, 로테이션, 매칭 유사도)는 <b>전부 일상어로 바꿨습니다.</b>
+      처음 보는 사람에게 "결카드"는 뜻이 통하지 않습니다. 브랜드 용어로 쓰고 싶으시면 목업 단계에서 되살릴 수 있습니다.
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <div class="tag mono">S4 · 운영자 · 왜 만들었나</div>
+    <h2>저희가 궁금했던 것</h2>
+    <p class="sub">
+      소개팅 앱은 위험하다고 하고, 프로필은 진짜인지 알 수 없고, 만남은 대체로 가벼웠습니다.
+      저희 질문은 하나였습니다 — <b>생각이 같은 사람은 실제로도 잘 맞을까?</b>
+      앱을 만들기 전에 그 질문을 오프라인에서 직접 확인해보기로 했고, 이번이 그 첫 번째 자리입니다.
+    </p>
+    <div class="row">
+      <div class="ph ph-face mono">사진</div>
+      <div class="ph ph-face mono">사진</div>
+    </div>
+    <div class="meta-line"><span>이현우 · 여동현 — 기획 및 진행</span></div>
+    <div class="note">
+      <b>_홈페이지.md</b>에 "앞당김"이라고 적혀 있어서 원래 4번인 이 섹션을 위로 올릴지 고민했는데, 일단 순서는 유지했습니다.
+      먼저 <b>뭘 하는 자리인지</b>를 이해해야 "왜 만들었나"가 설득력을 갖기 때문입니다. 올리길 원하시면 S2 바로 뒤가 적당합니다.
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <div class="tag mono">S5 · 가격 · 정원 · 위치 · 시간 + 신청</div>
+    <h2>1차 모임</h2>
+    <dl class="facts">
+      <div class="fact"><dt>일시</dt><dd>날짜 미정 · 18:00–21:00 <span class="sub">(17:45 입장)</span></dd></div>
+      <div class="fact"><dt>장소</dt><dd>합정 <span class="sub">(신청자에게 개별 안내)</span></dd></div>
+      <div class="fact"><dt>정원</dt><dd>20명 — 남 10 · 여 10</dd></div>
+      <div class="fact"><dt>참가비</dt><dd>39,000원 <span class="sub">— 남녀 동일</span></dd></div>
+      <div class="fact"><dt>참가 조건</dt><dd>만 20 – 33세</dd></div>
+    </dl>
+    <div class="ph mono" style="height:44px">남은 자리 표시 — 남 O / 여 O [동적]</div>
+    <div class="field">이름</div>
+    <div class="field">연락처</div>
+    <div class="field">성별</div>
+    <div class="field">나이</div>
+    <div class="btn">신청하기</div>
+    <div class="btn-ghost">참가 조건 · 금지 사항 보기</div>
+    <div class="note">
+      "남은 자리"는 이 사이트에서 <b>동적으로 만들 첫 번째 요소</b>입니다. 성비가 실시간으로 보이면 참가자의 가장 큰 불안(성비 붕괴)이 바로 해소되고,
+      운영자관점 리포트가 모드파티에서 가져오라고 지목한 장치이기도 합니다.<br><br>
+      단일가 39,000원으로 확정하면서 <b>명함 QR 34,000원은 뺐습니다.</b> QR 할인이 있으면 S2의 "모두 같은 값을 냈다"가 흔들립니다.
+      명함에는 할인 대신 <b>우선 초대</b> 같은 값이 안 깎이는 후크를 붙이는 쪽이 맞습니다.<br><br>
+      결제는 <b>보류</b>. 지금은 신청만 받는 폼으로 두고, 폼이 다 만들어진 뒤에 결제를 얹습니다.
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section>
+    <div class="tag mono">S6 · 자주 묻는 질문</div>
+    <h2>자주 묻는 질문</h2>
+    <div>
+      <div class="faq-q"><span>누가 오나요?</span><span>+</span></div>
+      <div class="faq-q"><span>안전한가요? 어떻게 확인하나요?</span><span>+</span></div>
+      <div class="faq-q"><span>술을 마시나요?</span><span>+</span></div>
+      <div class="faq-q"><span>혼자 가도 괜찮나요?</span><span>+</span></div>
+    </div>
+
+    <div class="block">
+      <h3>환불이 되나요?</h3>
+      <p class="sub">
+        행사 <b>7일 전</b>까지 취소하시면 전액 돌려드립니다.<br>
+        <b>3일 전</b>까지는 절반을 돌려드립니다.<br>
+        그 이후에는 환불이 어렵습니다. 자리가 20석뿐이라 한 명이 빠지면 성비가 무너지기 때문입니다.
+      </p>
+    </div>
+
+    <div class="note">
+      FAQ는 <b>_시장조사.md</b>의 불만 유형 상위 항목을 뒤집은 것입니다 — 라인업, 안전, 술자리화, 혼자 오는 부담.<br><br>
+      환불 규정은 접어두지 않고 <b>펼친 채로</b> 뒀습니다. "환불 난맥상"이 이 시장의 대표 불만이라, 숨기지 않는 것 자체가 신뢰 신호가 됩니다.
+      마지막 문장에 <b>이유</b>를 붙인 것도 같은 이유입니다 — 규정만 있으면 야박해 보이고, 이유가 붙으면 납득됩니다.<br><br>
+      사업자 정보 블록은 요청대로 <b>뺐습니다.</b>
+    </div>
+  </section>
+
+</div>
+
+<div class="decisions">
+  <h2>v2에서 확정된 것</h2>
+  <ol>
+    <li><b>슬로건 = "결국에는 결이더라"</b><span>"맞추지 말고, 맞는 사람을 찾아"는 뺐습니다. 히어로는 로고 → 슬로건 → 워드플레이 순.</span></li>
+    <li><b>참가비 39,000원 단일가</b><span>명함 QR 34,000원 제거.</span></li>
+    <li><b>참가 조건 만 20–33세</b> · <b>환불 7일 전 100% / 3일 전 50% / 이후 불가</b><span>둘 다 페이지에 반영했습니다.</span></li>
+    <li><b>사업자 정보 블록 제거</b> · <b>결제는 보류</b><span>폼을 다 만든 뒤에 결제를 얹습니다.</span></li>
+  </ol>
+
+  <h2 style="margin-top:34px">아직 남은 것</h2>
+  <ol>
+    <li><b>행사 날짜</b><span>지금은 "날짜 미정"으로 자리만 잡혀 있습니다. 히어로와 S5 두 곳에 들어갑니다.</span></li>
+    <li><b>명함에 넣을 후크</b><span>QR 할인을 없앴으니 명함이 줄 이득이 비었습니다. "우선 초대"처럼 값을 깎지 않는 후크가 필요합니다.</span></li>
+    <li><b>참가비 수입 계산</b><span>_1차 오프라인 소개팅.md는 4만원 × 20명 = 80만원으로 잡혀 있는데 39,000원이면 78만원입니다. 볼트 숫자를 고칠지 알려주세요.</span></li>
+  </ol>
+</div>
+
+<script>
+  (function () {
+    var hero = document.getElementById('hero');
+    var btn = document.getElementById('replay');
+    function play() {
+      hero.classList.remove('playing');
+      void hero.offsetWidth;          // 리플로우를 강제해 애니메이션을 다시 트리거
+      hero.classList.add('playing');
+    }
+    btn.addEventListener('click', play);
+    play();
+  })();
+</script>

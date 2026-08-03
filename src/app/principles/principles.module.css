@@ -1,0 +1,344 @@
+/* /principles 전용 스타일.
+   토큰(--ink/--mute/--faint/--rule/--tint/--num/--lead)은 globals.css에서 온다.
+   .band--dark가 그 토큰을 반전시키므로 여기서는 색을 절대 하드코딩하지 않는다.
+   — 하드코딩하면 검정 밴드 안에서 흰 위 흰이 된다. */
+
+/* ── 밴드 내부 세로 리듬 ─────────────────────────────────────
+   .band > .shell은 세로 패딩이 0이라 간격을 여기서 만든다. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 2.6vw, 30px);
+}
+
+/* .display는 max-width가 없어 1000px 전폭으로 퍼진다. 제목만 여기서 묶는다.
+   (/why의 .title과 같은 값 — 페이지 간 제목 폭을 맞추기 위한 것) */
+.title {
+  max-width: 15em;
+}
+
+/* .display(38~58px)가 감당 못 하는 긴 문장용. 줄 수를 늘리는 대신 크기를 줄인다. */
+.displayTight {
+  font-size: clamp(28px, 4.6vw, 42px);
+  max-width: 20em;
+}
+
+/* 본문 블록과 앞 단락 사이의 큰 여백 */
+.blockGap {
+  margin-top: clamp(52px, 6.5vw, 84px);
+}
+
+/* 8개 원칙 목록의 캡션 h2. .eyebrow와 같은 크기라 시각적으로는 라벨이지만
+   마크업상으로는 h1(58px)과 원칙 제목(h3, 34px) 사이를 잇는 단계다. */
+.listCaption {
+  margin: clamp(52px, 6.5vw, 84px) 0 0;
+}
+
+/* ═══ 8개 원칙 ═══════════════════════════════════════════════ */
+.principles {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(44px, 5.5vw, 64px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.principle {
+  border-top: 1px solid var(--rule);
+  padding-top: clamp(24px, 3vw, 34px);
+}
+
+/* --num은 19px 이상(대형 텍스트 3:1)을 전제로 한 색이다. 여기는 13px이라
+   일반 텍스트 기준 4.5:1이 필요하므로 --faint를 쓴다. .rule::before도 같다. */
+.principleNum {
+  display: block;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: var(--faint);
+}
+
+.principleTitle {
+  margin: 10px 0 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: clamp(24px, 3.4vw, 34px);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.principleLead {
+  margin: 14px 0 0;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--lead);
+  max-width: 40em;
+}
+
+/* 적용 / 금지 2단. 두 칸의 무게를 일부러 비슷하게 맞췄다 —
+   "금지하는 것"이 이 페이지의 신뢰 장치라 부속물처럼 보이면 안 된다. */
+.pair {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin-top: clamp(20px, 2.4vw, 28px);
+}
+
+.block {
+  padding: 18px 20px;
+  border-left: 1px solid var(--rule);
+  background: transparent;
+}
+
+/* 금지 칸: 배경 + 굵은 좌측 선으로 시각적 무게를 올린다 */
+.blockDeny {
+  border-left: 2px solid var(--ink);
+  background: var(--tint);
+}
+
+.blockLabel {
+  display: block;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+}
+
+.blockDeny .blockLabel {
+  color: var(--ink);
+}
+
+.blockBody {
+  margin: 10px 0 0;
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--lead);
+}
+
+/* ── × 표식이 붙는 금지 목록 ─────────────────────────────── */
+.denyList {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.denyList li {
+  position: relative;
+  padding-left: 1.5em;
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+.denyList li::before {
+  content: "×";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ═══ 충돌 우선순위 ══════════════════════════════════════════ */
+.chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chainItem {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px 14px;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: clamp(18px, 2.8vw, 26px);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.chainRef {
+  font-size: 0.62em;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--faint);
+}
+
+/* 항목 사이 꺾쇠. 마지막 항목 뒤에는 붙이지 않는다. */
+.chainItem:not(:last-child)::after {
+  content: "›";
+  font-weight: 400;
+  color: var(--faint);
+}
+
+/* [data-bar]는 시작 상태가 scaleX(0)이라 면적이 0 → 반드시 부모가 관찰돼야 한다.
+   이 막대는 .chainWrap 안에 있으므로 PageEffects가 부모를 잡는다. */
+.chainWrap {
+  margin-top: clamp(28px, 3.5vw, 40px);
+}
+
+.chainRule {
+  display: block;
+  height: 2px;
+  margin-top: 22px;
+  background: var(--ink);
+}
+
+/* ═══ 그라운드룰 ═════════════════════════════════════════════ */
+.rules {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: rule;
+}
+
+.rule {
+  counter-increment: rule;
+  display: grid;
+  grid-template-columns: 3.2em 1fr;
+  gap: 0 14px;
+  align-items: baseline;
+  padding: 20px 0;
+  border-top: 1px solid var(--rule);
+  font-size: 16.5px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+.rule:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+
+.rule::before {
+  content: "0" counter(rule);
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+}
+
+/* ═══ 행사 중 비공개 정보 ════════════════════════════════════ */
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.infoCol {
+  padding: 22px 22px 24px;
+  background: var(--tint);
+  border-top: 2px solid var(--rule);
+}
+
+.infoColDeny {
+  border-top-color: var(--ink);
+}
+
+.infoLabel {
+  display: block;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+}
+
+.infoColDeny .infoLabel {
+  color: var(--ink);
+}
+
+.infoList {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.infoList li {
+  position: relative;
+  padding-left: 1.5em;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.infoList li::before {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+}
+
+.infoColDeny .infoList li::before {
+  content: "×";
+  color: var(--ink);
+}
+
+.infoColAllow .infoList li {
+  color: var(--lead);
+}
+
+.infoColAllow .infoList li::before {
+  content: "—";
+  color: var(--faint);
+  font-weight: 400;
+}
+
+/* 강조 인라인 */
+.em {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* 각주 — 출처·범위를 밝히는 작은 글씨 */
+.note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--faint);
+  max-width: 44em;
+}
+
+/* 마무리 CTA */
+.cta {
+  padding: 15px 26px;
+  font-size: 15.5px;
+  letter-spacing: -0.01em;
+  align-self: flex-start;
+}
+
+/* ── 넓은 화면 ───────────────────────────────────────────── */
+@media (min-width: 760px) {
+  .pair {
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .infoGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .rule {
+    grid-template-columns: 4em 1fr;
+    gap: 0 20px;
+  }
+}

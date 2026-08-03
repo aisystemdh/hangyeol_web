@@ -1,0 +1,415 @@
+/* /mission 전용 스타일.
+   globals.css의 프리미티브(.band .shell .stagger .eyebrow .display .lede .card .chip)를
+   그대로 쓰고, 여기에는 이 페이지에만 필요한 배치·리듬만 둔다.
+   토큰은 새로 만들지 않는다 — .band--dark가 반전시켜 주는 값을 그대로 참조한다. */
+
+/* ── 섹션 세로 리듬 ────────────────────────────────────────────
+   .display/.lede는 margin:0이므로 간격은 전부 부모 gap이 만든다. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(22px, 3vw, 30px);
+}
+/* .stack은 stretch라 그리드/표가 폭을 채운다. 링크·버튼만 따로 왼쪽에 붙인다. */
+.selfStart {
+  align-self: flex-start;
+}
+/* 전역 .pill에는 패딩이 없다(각 화면이 크기를 정한다). /why /principles와 같은 치수. */
+.ctaPill {
+  font-size: 16px;
+  padding: 17px 34px;
+}
+
+/* 제목 아래 한 박자 더 띄우고 싶은 블록 */
+.spaced {
+  margin-top: clamp(6px, 1.6vw, 16px);
+}
+
+/* 작은 라벨 — .eyebrow보다 한 단계 작다. 표의 열 이름 역할. */
+.miniLabel {
+  display: block;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 12.5px;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+}
+
+/* 본문 문단 묶음 */
+.prose {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2.2vw, 22px);
+  max-width: 34em;
+}
+.prose p {
+  margin: 0;
+  font-size: 17.5px;
+  line-height: 1.85;
+  color: var(--mute);
+}
+.prose strong {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* 문단 흐름을 끊는 한 줄 ("사람도 그렇다.") */
+.beat {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: clamp(23px, 3.4vw, 32px);
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+/* '결' 음절 강조 — 본문 하이라이트 바와 같은 톤 */
+.grainMark {
+  background: linear-gradient(transparent 60%, var(--hl-bar-body) 60%);
+}
+
+/* ── 1. 미션 · 단어별 해설 ─────────────────────────────────── */
+.words {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.wordCard {
+  gap: 12px;
+}
+.wordTitle {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: clamp(24px, 2.8vw, 29px);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+.wordWhy {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.75;
+  color: var(--mute);
+}
+.wordExcl {
+  margin: 0;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.wordExclText {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--faint);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+/* ── 2. 미션이 아닌 것 ─────────────────────────────────────── */
+.nots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(22px, 3vw, 34px) clamp(28px, 4vw, 56px);
+}
+.not {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  padding-top: clamp(18px, 2.4vw, 24px);
+  border-top: 1px solid var(--rule);
+}
+.notX {
+  grid-row: 1 / span 2;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 19px;
+  line-height: 1.35;
+  color: var(--faint);
+}
+.notTitle {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: clamp(21px, 2.7vw, 28px);
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+.notWhy {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.75;
+  color: var(--mute);
+}
+
+/* ── 3. 비전 · Phase 표 ────────────────────────────────────── */
+.phases {
+  display: flex;
+  flex-direction: column;
+}
+.phase {
+  display: grid;
+  grid-template-columns: minmax(150px, 200px) 1fr;
+  gap: 14px clamp(24px, 4vw, 60px);
+  padding: clamp(24px, 3vw, 34px) 0;
+  border-top: 1px solid var(--rule);
+}
+.phase:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+.phaseHead {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.phaseName {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  color: var(--num);
+}
+.phaseTag {
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: clamp(24px, 3vw, 30px);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+.phaseWhen {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 500;
+  font-size: 14.5px;
+  letter-spacing: 0.02em;
+  color: var(--faint);
+}
+.phaseBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.phaseGoal {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+.phaseWin {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.phaseWinText {
+  font-size: 15.5px;
+  line-height: 1.75;
+  color: var(--mute);
+}
+
+/* 10년 뒤 듣고 싶은 말 */
+.echo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 30em;
+}
+.echoQuote {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: clamp(22px, 3.4vw, 34px);
+  line-height: 1.45;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+.echoNote {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--mute);
+}
+
+/* ── 4. '결'의 정의 ────────────────────────────────────────── */
+.def {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 38em;
+  padding: 2px 0 2px clamp(18px, 3vw, 28px);
+  border-left: 2px solid var(--ink);
+}
+.defTerm {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  color: var(--faint);
+}
+.defText {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: clamp(19px, 2.5vw, 26px);
+  line-height: 1.65;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+/* ── 5. 이름의 이중 의미 ───────────────────────────────────── */
+.layers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.layerCard {
+  gap: 12px;
+}
+.layerSplit {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: clamp(21px, 2.6vw, 27px);
+  line-height: 1.35;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+.layerMeaning {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--mute);
+}
+.roleChip {
+  align-self: flex-start;
+  margin-top: 2px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 7px 15px;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+/* 슬로건 해부 */
+.sloganBig {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: clamp(27px, 5vw, 44px);
+  line-height: 1.3;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+.anatomy {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.anaRow {
+  display: grid;
+  grid-template-columns: 26px minmax(120px, 0.9fr) 1.5fr 0.9fr;
+  gap: 8px clamp(16px, 2.4vw, 32px);
+  align-items: baseline;
+  padding: clamp(16px, 2.2vw, 22px) 0;
+  border-top: 1px solid var(--rule);
+}
+.anaRow:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+.anaIdx {
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--num);
+}
+.anaWord {
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: clamp(20px, 2.4vw, 25px);
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.anaMeaning {
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--mute);
+}
+.anaFn {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+/* ── 6. 선언문 ─────────────────────────────────────────────── */
+.manifesto {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(30px, 4.4vw, 52px);
+  max-width: 32em;
+}
+.stanza {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 400;
+  font-size: clamp(19px, 2.6vw, 26px);
+  line-height: 1.95;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.stanzaSign {
+  font-weight: 700;
+  font-size: clamp(24px, 4.2vw, 38px);
+  line-height: 1.4;
+  letter-spacing: -0.03em;
+}
+
+/* ── 반응형 ────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .words {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .nots,
+  .layers {
+    grid-template-columns: 1fr;
+  }
+  .anaRow {
+    grid-template-columns: 26px 1fr;
+  }
+  .anaMeaning,
+  .anaFn {
+    grid-column: 2;
+  }
+}
+@media (max-width: 640px) {
+  .words {
+    grid-template-columns: 1fr;
+  }
+  .phase {
+    grid-template-columns: 1fr;
+  }
+}

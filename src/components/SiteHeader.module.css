@@ -1,0 +1,191 @@
+/* SiteHeader 전용. 스티키/블러/스크롤 축소는 globals.css의 .site-header가 담당하고,
+   여기에는 내비게이션 관련 신규 스타일만 둔다. */
+
+.inner {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 12px 22px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ── 좌: 데스크톱 내비 ─────────────────────────────────────── */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  justify-self: start;
+}
+
+.navLink {
+  position: relative;
+  text-decoration: none;
+  color: var(--mute);
+  font-size: 14.5px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  padding-bottom: 2px;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+.navLink:hover {
+  color: var(--ink);
+}
+
+/* 활성 표시는 밑줄이 아니라 글자 아래 4px 점 */
+.navLink::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0;
+  transform: translate(-50%, -0.25rem);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.navLinkActive {
+  color: var(--ink);
+}
+.navLinkActive::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ── 중앙: 브랜드 ─────────────────────────────────────────── */
+.brand {
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--ink);
+}
+.brand:hover {
+  color: var(--ink);
+}
+
+/* ── 우: CTA + 햄버거 ─────────────────────────────────────── */
+.right {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.burger {
+  display: none;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--ink);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+}
+.burger span {
+  display: block;
+  width: 20px;
+  height: 1.5px;
+  background: currentColor;
+  border-radius: 2px;
+}
+
+/* ── 모바일 오버레이 ──────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 22px 40px;
+  overflow-y: auto;
+}
+/* display:flex가 hidden 속성을 이기므로 명시적으로 눌러 준다 */
+.overlay[hidden] {
+  display: none;
+}
+.overlayTop {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 50px;
+}
+.close {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 26px;
+  line-height: 1;
+}
+.overlayNav {
+  display: flex;
+  flex-direction: column;
+  margin-top: 18px;
+  border-top: 1px solid var(--rule);
+}
+.overlayLink {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--rule);
+  text-decoration: none;
+  color: var(--ink);
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: clamp(32px, 9vw, 44px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.overlayLinkActive {
+  color: var(--ink);
+}
+.overlayDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink);
+  flex: none;
+}
+.overlayCta {
+  margin-top: 30px;
+  align-self: flex-start;
+  font-size: 16px;
+  padding: 16px 30px;
+}
+
+@media (max-width: 767px) {
+  .nav {
+    display: none;
+  }
+  .burger {
+    display: flex;
+  }
+  .ctaDesktop {
+    display: none;
+  }
+  .inner {
+    grid-template-columns: 1fr auto 1fr;
+  }
+}
+
+@media (min-width: 768px) {
+  .overlay {
+    display: none;
+  }
+}

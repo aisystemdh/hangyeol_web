@@ -1,0 +1,252 @@
+/* /why 전용 조판.
+   공통 프리미티브(.band / .shell / .eyebrow / .display / .lede / .stagger /
+   .link-arrow / .pill / .mark)는 globals.css에 있다 — 여기서 다시 만들지 않는다.
+   이 파일은 "이 페이지에만 있는 것"만 다룬다: 번호가 붙은 긴 목록, 대조표,
+   연구 사실 목록, 고백 문장. */
+
+/* ── 섹션 4단 구조의 세로 리듬 ───────────────────────────── */
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 2.6vw, 30px);
+}
+
+/* .display는 max-width가 없어 1000px 전폭으로 퍼진다. 제목만 여기서 묶는다. */
+.title {
+  max-width: 15em;
+}
+
+/* 연속된 문단 묶음. .stagger 자식 수를 6개 이하로 유지하려고 한 덩어리로 싼다. */
+.prose {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15em;
+}
+
+/* ── 번호 목록 (다섯 결함 · 세 연구가 공유) ───────────────── */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 0 clamp(16px, 3vw, 34px);
+  padding: clamp(34px, 4.5vw, 54px) 0;
+  border-top: 1px solid var(--rule);
+}
+.item:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.item:last-child {
+  padding-bottom: 0;
+}
+
+.num {
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.02em;
+  line-height: 1.55; /* 제목 첫 줄과 눈높이를 맞춘 값 */
+  color: var(--num);
+}
+
+.itemBody {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2vw, 22px);
+}
+
+.itemTitle {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 900;
+  font-size: clamp(21px, 3.2vw, 27px);
+  line-height: 1.32;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.text {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.85;
+  color: var(--mute);
+  max-width: 34em;
+}
+
+/* 한 문장 강조. 본문보다 크고 소제목보다 작은 자리. */
+.pull {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: clamp(19px, 2.6vw, 24px);
+  line-height: 1.55;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  max-width: 26em;
+}
+
+/* 참가자 후기 등 외부 인용 */
+.quote {
+  margin: 0;
+  padding-left: clamp(16px, 2.4vw, 24px);
+  border-left: 2px solid var(--track);
+  font-family: var(--font-serif), serif;
+  font-size: 17px;
+  line-height: 1.8;
+  color: var(--lead);
+  max-width: 32em;
+}
+
+.note {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--faint);
+  max-width: 34em;
+}
+
+/* ── 대조표 (결함 1) ──────────────────────────────────────
+   모바일에서 열이 무너지면 "왼쪽 열 / 오른쪽 열"이라는 논지가 깨진다.
+   그래서 좁은 화면에서도 2열을 유지하고 글자만 줄인다. */
+.contrast {
+  width: 100%;
+  max-width: 40em;
+  border-collapse: collapse;
+  table-layout: fixed;
+  text-align: left;
+}
+.contrast th {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 13.5px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  color: var(--faint);
+  vertical-align: bottom;
+  padding: 0 clamp(12px, 2vw, 20px) 12px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.contrast td {
+  font-size: clamp(13.5px, 2.6vw, 15.5px);
+  line-height: 1.65;
+  color: var(--mute);
+  vertical-align: top;
+  padding: 14px clamp(12px, 2vw, 20px) 14px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.contrast th:last-child,
+.contrast td:last-child {
+  padding-right: 0;
+  padding-left: clamp(12px, 2vw, 20px);
+}
+/* 오른쪽 열이 이 표의 논지다 — 대비로 그것을 말한다 */
+.contrast td:last-child {
+  color: var(--ink);
+}
+.contrast tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ── 연구 사실 목록 ──────────────────────────────────────── */
+.facts {
+  margin: 0;
+  display: grid;
+  gap: 0;
+  max-width: 36em;
+}
+.factRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+  padding: 13px 0;
+  border-top: 1px solid var(--rule);
+}
+.factRow:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.factRow:last-child {
+  padding-bottom: 0;
+}
+@media (min-width: 700px) {
+  .factRow {
+    grid-template-columns: 9.5em minmax(0, 1fr);
+    gap: 0 clamp(18px, 2.4vw, 28px);
+    align-items: baseline;
+  }
+}
+.factTerm {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  color: var(--faint);
+}
+.factDesc {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--mute);
+}
+
+/* 문장 안에 박히는 숫자. 별도 차트를 만들지 않고 이것으로만 크기를 준다. */
+.stat {
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: 1.5em;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.source {
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-size: 13.5px;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  color: var(--faint);
+}
+
+/* ── 고백 ────────────────────────────────────────────────── */
+.big {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: clamp(24px, 4.2vw, 36px);
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  max-width: 20em;
+}
+
+.cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(18px, 3vw, 30px);
+  padding-top: clamp(6px, 1.5vw, 14px);
+}
+.ctaPill {
+  font-size: 16px;
+  padding: 17px 34px;
+}
+
+/* ── 좁은 화면: 번호를 제목 위로 올린다 ──────────────────── */
+@media (max-width: 640px) {
+  .item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .num {
+    line-height: 1.4;
+  }
+}

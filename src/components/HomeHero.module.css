@@ -1,0 +1,90 @@
+/* 회사 메인 히어로. 전역 .hero__* 는 그대로 재사용하고, 여기서는
+   나무결 배경을 깔기 위한 레이어링과 스크롤 힌트만 정의한다. */
+
+.stage {
+  position: relative;
+  overflow: hidden;
+}
+
+/* 나무결 캔버스. 위아래 -220px은 GrainCanvas의 PAD 상수와 짝이다 —
+   패럴랙스로 아래로 밀려도 위쪽이 비지 않는다. 한쪽만 고치면 틈이 생긴다.
+
+   ⚠️ <canvas>는 replaced element라 left/right(또는 top/bottom)만으로는 늘어나지
+      않는다. width가 auto면 CSS 규격상 고유 크기 300×150을 쓴다(CSS 2.1 §10.3.8).
+      실제로 그 버그 때문에 결이 300×150 조각이 되어 화면 밖에 처박혀 있었다.
+      반드시 width/height를 명시할 것 — right/bottom으로 바꾸지 말 것. */
+.grain {
+  position: absolute;
+  left: 0;
+  top: -220px;
+  width: 100%;
+  height: calc(100% + 440px); /* 위아래 PAD 220px씩 */
+  display: block;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 결이 헤드라인을 방해하지 않도록 위아래를 흰색으로 흘려보낸다. */
+.veil {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    #ffffff 0%,
+    rgba(255, 255, 255, 0) 26%,
+    rgba(255, 255, 255, 0) 68%,
+    #ffffff 100%
+  );
+}
+
+.inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* 조용한 스크롤 유도. 워드플레이가 끝나는 9.4s 직후에 나타난다. */
+.hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  font-family: var(--font-display), sans-serif;
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  animation: hintIn 0.8s 9.6s var(--ease-out) both;
+}
+
+.hintLine {
+  display: block;
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--rule), transparent);
+  animation: hintDrift 2.8s 10.5s ease-in-out infinite;
+}
+
+@keyframes hintIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hintDrift {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(7px);
+    opacity: 0.45;
+  }
+}

@@ -1,0 +1,1130 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────
+   한결 디자인 토큰 — design/design_handoff_hangyeol_landing/README.md
+   흰 바탕 위 무채색 단일 테마. 다크 모드 대응 없음(디자인 확정 사항).
+   ───────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: light;
+
+  --ink: #111111;
+  --mute: #6b6b6b; /* 흰 위 5.33:1 */
+  /* 흰 위 4.73:1. 이전 값 #9b9b9b는 2.78:1로 WCAG AA 미달이었다 —
+     .eyebrow가 이 토큰을 쓰므로 모든 페이지의 첫 줄이 미달이었다. 되돌리지 말 것. */
+  --faint: #757370;
+  --rule: #e6e6e6;
+  --tint: #f5f4f2;
+  --track: #e2e0dc;
+
+  --headline-grey: #8a8781; /* 헤드라인 비강조 글자, 섹션 제목 뒷부분 */
+  --hl-bar: #cfccc6; /* 히어로 `결` 하이라이트 */
+  --hl-bar-body: #e2e0dc; /* 본문 하이라이트 */
+  --btn-hover: #3a3a3a;
+  --input-hover: #c9c7c2;
+  /* 카드 번호 01/02/03. **19px 이상 굵은 글자 전용**(대형 텍스트 3:1 기준으로
+     흰 위 3.58:1 / --tint 위 3.26:1). 13px짜리 작은 번호에는 --faint를 쓸 것.
+     이전 값 #a8a5a0은 2.45:1이라 대형 기준도 못 넘겼다. */
+  --num: #8a8781;
+  --lead: #55534f; /* 히어로 한 줄 설명 */
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --shell: 1000px;
+}
+
+html,
+body {
+  background: #ffffff;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-body), "Apple SD Gothic Neo", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-wrap: pretty;
+  /* 한글은 기본값(break-word 아님에도) 어절 중간에서 줄이 바뀐다 —
+     "만드/느냐" "습니/다" 같은 끊김이 전 페이지에 있었다. keep-all이 어절을 묶는다.
+     라틴 문자에는 영향이 없어 영문 구간도 안전하다. */
+  word-break: keep-all;
+  /* 핸드오프 원본에는 CSS 리셋이 없어 행간이 normal이다. Tailwind preflight의
+     1.5를 그대로 두면 제목·버튼 높이가 원본보다 5~6px씩 커진다.
+     행간이 필요한 곳(.body-text, .h2 등)에는 개별로 지정해 두었다. */
+  line-height: normal;
+}
+
+a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+a:hover {
+  color: var(--mute);
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+input,
+button {
+  font-family: inherit;
+}
+input:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.shell {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 76px 22px 84px;
+}
+.section {
+  border-top: 1px solid var(--rule);
+}
+
+/* 서체 역할 */
+.h2 {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 900;
+  font-size: clamp(32px, 8.5vw, 60px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+.h2 .tail {
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  color: var(--headline-grey);
+}
+
+.body-text {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--mute);
+}
+
+/* 알약 버튼 */
+.pill {
+  display: inline-block;
+  text-decoration: none;
+  background: var(--ink);
+  color: #ffffff;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background-color 0.25s ease,
+    transform 0.25s ease;
+}
+.pill:hover {
+  background: var(--btn-hover);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+.pill:active {
+  transform: scale(0.97);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   힌지식 공통 프리미티브 — 모든 페이지가 공유한다.
+   섹션 4단 구조: .eyebrow → .display → .lede → .link-arrow
+   ═══════════════════════════════════════════════════════════ */
+
+/* 작은 산세리프 라벨. 한글이라 대문자 변환은 하지 않는다. */
+.eyebrow {
+  display: block;
+  margin: 0;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 14.5px;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: none;
+  color: var(--faint);
+}
+
+/* 대형 명조 제목. 힌지 실측(데스크톱 58px / 모바일 44px)에 맞춘 값이다.
+   본문 18px 대비 3배 — 이 비율이 힌지 레이아웃의 핵심이다.
+   ⚠️ 하한은 38px이 아니라 **44px**이다. 7vw가 44px이 되려면 뷰포트 629px가 필요해
+      하한을 38로 두면 폰 화면에서 절대 44px이 나오지 않는다(390px에서 38px → 2.1배). */
+.display {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: clamp(44px, 7vw, 58px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+/* 본문 리드. .body-text(16px)보다 한 단계 큰, 제목 바로 아래용. */
+.lede {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.7;
+  color: var(--mute);
+  max-width: 34em;
+}
+
+/* 섹션 밴드. 안쪽은 .shell(max-width 1000px, 좌우 22px)을 그대로 쓴다. */
+.band {
+  padding: clamp(88px, 12vw, 160px) 0;
+}
+/* .shell의 세로 패딩(76/84px)은 .band가 대신 가지므로 안에서는 0으로 둔다.
+   좌우 22px은 유지 — 그래서 padding-left/right는 건드리지 않는다. */
+.band > .shell,
+.band > * > .shell {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* 검정 밴드. 배경색을 바꾸는 게 아니라 **토큰을 반전**시킨다.
+   그래서 안에 든 .pill/.card/.eyebrow/.display/.lede가 전부 자동으로 따라온다.
+   모든 값은 #111 위 4.5:1 이상으로 맞춰 두었다(--mute 11.2:1, --faint 5.7:1,
+   --headline-grey 5.3:1, --num 7.7:1, --lead 12.7:1). */
+.band--dark {
+  --ink: #fffefd;
+  --mute: #c9c7c2;
+  --faint: #8f8d89;
+  --rule: #333333;
+  /* #1e1e1e는 배경 #111 대비 1.13:1이라 카드가 카드로 안 읽혔다 → 1.35:1 */
+  --tint: #232323;
+  --track: #333333;
+  --headline-grey: #8a8781;
+  --hl-bar: #4a4a4a;
+  --hl-bar-body: #3a3a3a;
+  --num: #a8a5a0;
+  --lead: #d6d3ce;
+  --btn-hover: #e6e4e0;
+  --input-hover: #6b6b6b;
+
+  background: #111111;
+  color: var(--ink);
+}
+/* .pill은 글자색이 #fff로 고정이라 반전되면 흰 위 흰이 된다 → 여기서만 뒤집는다 */
+.band--dark .pill,
+.band--dark .pill:hover {
+  color: #111111;
+}
+
+/* 자식 순차 등장. [data-reveal]의 transition에 지연만 얹는다. */
+.stagger > *:nth-child(1) { transition-delay: 0s; }
+.stagger > *:nth-child(2) { transition-delay: 0.08s; }
+.stagger > *:nth-child(3) { transition-delay: 0.16s; }
+.stagger > *:nth-child(4) { transition-delay: 0.24s; }
+.stagger > *:nth-child(5) { transition-delay: 0.32s; }
+.stagger > *:nth-child(6) { transition-delay: 0.4s; }
+
+/* 밑줄 없는 텍스트 링크 + 화살표. 전역 a{text-decoration:underline}을 해제한다. */
+.link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  text-decoration: none;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  transition: color 0.25s ease;
+}
+.link-arrow::after {
+  content: "→";
+  display: inline-block;
+  transition: transform 0.25s var(--ease-out);
+}
+.link-arrow:hover {
+  color: var(--mute);
+}
+.link-arrow:hover::after {
+  transform: translateX(4px);
+}
+
+/* ── 스크롤 리빌 ─────────────────────────────────────────── */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.8s var(--ease-out),
+    transform 0.8s var(--ease-out);
+}
+[data-reveal][data-in] {
+  opacity: 1;
+  transform: none;
+}
+[data-bar] {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.7s var(--ease-out);
+}
+[data-bar][data-in] {
+  transform: scaleX(1);
+}
+[data-line] {
+  transform: scaleY(0);
+  transform-origin: top center;
+  transition: transform 1.2s cubic-bezier(0.33, 1, 0.68, 1);
+}
+[data-line][data-in] {
+  transform: scaleY(1);
+}
+
+/* ── 키프레임 (핸드오프 원본 그대로) ───────────────────────── */
+@keyframes wpPop {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes introOut {
+  0%, 70% { opacity: 1; visibility: visible; }
+  100% { opacity: 0; visibility: hidden; }
+}
+@keyframes strokeDraw {
+  0% { stroke-dashoffset: 300; }
+  40%, 100% { stroke-dashoffset: 0; }
+}
+/* 로고의 두 획이 "말하듯" 여닫는다. 시작·끝 모두 벌어진 상태를 유지하고
+   그 사이에서 진폭만 점점 줄어든다.
+   ⚠️ 이 진폭은 하트 방지 장치가 아니다 — 형태는 오직 HomeHero.tsx의 STROKE가 정한다.
+      진폭을 0으로 줄여도 하트가 되지 않아야 정상이다. */
+@keyframes speakL {
+  0% { transform: translateX(-13px) rotate(-15deg); }
+  18% { transform: translateX(-5px) rotate(-6deg); }
+  34% { transform: translateX(-13px) rotate(-15deg); }
+  50% { transform: translateX(-7px) rotate(-8deg); }
+  66% { transform: translateX(-12.5px) rotate(-14.5deg); }
+  78% { transform: translateX(-9.5px) rotate(-11deg); }
+  100% { transform: translateX(-13px) rotate(-15deg); }
+}
+@keyframes speakR {
+  0% { transform: translateX(13px) rotate(15deg); }
+  18% { transform: translateX(5px) rotate(6deg); }
+  34% { transform: translateX(13px) rotate(15deg); }
+  50% { transform: translateX(7px) rotate(8deg); }
+  66% { transform: translateX(12.5px) rotate(14.5deg); }
+  78% { transform: translateX(9.5px) rotate(11deg); }
+  100% { transform: translateX(13px) rotate(15deg); }
+}
+/* 마지막에 로고가 형태 그대로 화면을 채우며 커지고 사라진다 */
+@keyframes logoZoom {
+  0%, 68% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2.9); opacity: 0; }
+}
+@keyframes charIn {
+  from { opacity: 0; transform: translateY(10px); filter: blur(5px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes wpMergeR {
+  from { transform: translateX(0); }
+  to { transform: translateX(28px); }
+}
+@keyframes wpMergeL {
+  from { transform: translateX(0); }
+  to { transform: translateX(-28px); }
+}
+@keyframes wpFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes wpFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ulIn {
+  from { box-shadow: inset 0 -3px 0 rgba(17, 17, 17, 0); }
+  to { box-shadow: inset 0 -3px 0 rgba(17, 17, 17, 1); }
+}
+@keyframes hlIn {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes logoIn {
+  from { opacity: 0; transform: scale(0.72); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes answerIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+details[open] > [data-answer] {
+  animation: answerIn 0.38s var(--ease-out) both;
+}
+
+/* ── 헤더 ─────────────────────────────────────────────────── */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid transparent;
+  box-shadow: none;
+  transition:
+    border-color 0.35s ease,
+    box-shadow 0.35s ease;
+}
+/* 헤더 내부 배치(.inner)와 브랜드 묶음(.brand)은 SiteHeader.module.css가 갖는다.
+   여기 남는 것은 밖에서 상태를 거는 것들(스티키·스크롤 축소)뿐이다. */
+.site-header__logo {
+  height: 26px;
+  width: auto;
+  display: block;
+  transition: height 0.35s var(--ease-out);
+}
+.site-header__wordmark {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 900;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+.site-header__cta {
+  font-size: 14px;
+  padding: 10px 20px;
+}
+html[data-scrolled] .site-header {
+  border-bottom-color: var(--rule);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
+}
+html[data-scrolled] .site-header__logo {
+  height: 20px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ══ 아래는 /events/1 전용 ══
+   .hero__* / .identity__* / .timeline__* / .founders__* /
+   .apply__* / .seats__* 은 1차 모임 랜딩에서만 쓴다.
+   다른 페이지에서는 위쪽 공통 프리미티브(.band .display .lede …)를 쓸 것.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 히어로 ───────────────────────────────────────────────── */
+.hero {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 64px 22px 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 34px;
+  text-align: center;
+}
+.hero__intro {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  animation: introOut 2.5s linear both;
+}
+/* 첫 방문에만 재생한다. 속성은 layout.tsx의 렌더 전 인라인 스크립트가 붙인다. */
+html[data-intro-seen] .hero__intro {
+  display: none;
+}
+.hero__intro svg {
+  width: min(54vw, 40vh);
+  height: auto;
+  overflow: visible;
+}
+.hero__logo {
+  width: 78px;
+  height: auto;
+  display: block;
+  animation: logoIn 0.9s 5s var(--ease-out) both;
+}
+.hero__headline-wrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.hero__headline {
+  position: relative;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 900;
+  font-size: clamp(44px, 12.5vw, 100px);
+  line-height: 1.12;
+  letter-spacing: -0.045em;
+  margin: 0;
+  color: var(--headline-grey);
+}
+.hero__char {
+  display: inline-block;
+}
+.hero__char--lit {
+  position: relative;
+  color: var(--ink);
+}
+.hero__hl {
+  position: absolute;
+  left: -0.04em;
+  right: -0.04em;
+  bottom: 0.26em;
+  height: 0.22em;
+  background: var(--hl-bar);
+  border-radius: 3px;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+.hero__glyph {
+  position: relative;
+}
+
+.hero__wordplay {
+  display: grid;
+  place-items: center;
+  min-height: 80px;
+  width: 100%;
+}
+.hero__wp-parts {
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: clamp(24px, 6.5vw, 34px);
+  letter-spacing: -0.03em;
+  color: var(--mute);
+}
+.hero__wp-result {
+  grid-area: 1 / 1;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: clamp(26px, 7vw, 38px);
+  letter-spacing: -0.03em;
+  color: var(--mute);
+  animation: wpFadeIn 0.5s 7.6s var(--ease-out) both;
+}
+.hero__swap {
+  display: inline-grid;
+  vertical-align: top;
+}
+.hero__replay {
+  background: none;
+  border: 1px solid var(--rule);
+  color: var(--faint);
+  font-size: 12.5px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  margin-top: -18px;
+  transition:
+    border-color 0.25s ease,
+    color 0.25s ease;
+}
+.hero__replay:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.hero__lead {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 400;
+  font-size: 21px;
+  line-height: 1.65;
+  color: var(--lead);
+  max-width: 20em;
+  animation: riseIn 0.8s 3.4s var(--ease-out) both;
+}
+.hero__chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  animation: riseIn 0.8s 3.15s var(--ease-out) both;
+}
+.chip {
+  background: var(--tint);
+  border-radius: 999px;
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.hero__cta {
+  font-size: 17px;
+  padding: 20px 44px;
+  /* 원본은 box-sizing:content-box라 min-width:240px가 좌우 패딩 88px을 뺀 값이었다
+     → border-box에서는 328px에 해당한다. max-width로 좁은 화면 넘침만 막는다. */
+  min-width: 328px;
+  max-width: 100%;
+  animation: riseIn 0.8s 3.3s var(--ease-out) both;
+}
+.hero__cta:hover {
+  transform: translateY(-2px);
+}
+.hero__cta:active {
+  transform: scale(0.98);
+}
+
+/* ── 정체성 카드 ──────────────────────────────────────────── */
+.identity__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+.card {
+  background: var(--tint);
+  border-radius: 22px;
+  padding: 32px 26px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  /* transition이 없으면 :hover에서 툭 튄다 */
+  transition: transform 0.25s ease;
+}
+.card:hover {
+  transform: translateY(-5px);
+}
+.card__num {
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.02em;
+  color: var(--num);
+}
+.card__title {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 900;
+  font-size: 23px;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  margin: 0;
+  text-wrap: balance;
+}
+.mark {
+  color: var(--ink);
+  font-weight: 700;
+  position: relative;
+  display: inline-block;
+}
+.mark::before {
+  content: "";
+  position: absolute;
+  left: -0.06em;
+  right: -0.06em;
+  bottom: 0.02em;
+  height: 0.42em;
+  background: var(--hl-bar-body);
+  border-radius: 3px;
+}
+.mark > span {
+  position: relative;
+}
+
+/* ── 타임라인 ─────────────────────────────────────────────── */
+.timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.timeline__line {
+  position: absolute;
+  left: 90px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--ink);
+  opacity: 0.16;
+}
+.timeline__row {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 18px;
+  padding: 26px 0;
+  border-top: 1px solid var(--rule);
+}
+.timeline__row:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+.timeline__time {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  padding-top: 5px;
+}
+.timeline__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.timeline__title {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 900;
+  font-size: 21px;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+.timeline__body p {
+  max-width: 44em;
+}
+
+/* ── 운영자 ───────────────────────────────────────────────── */
+.two-col {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 76px 22px 84px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 44px;
+  align-items: start;
+}
+.founders__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+.founders__copy p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.85;
+  color: var(--mute);
+}
+.founders__q {
+  font-family: var(--font-serif), serif;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 1.08em;
+}
+.founders__photos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.founders__person {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.founders__slot {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: 22px; /* .card/.stat/.seats/.refund와 통일 */
+  background: var(--tint);
+  border: 1px dashed var(--track);
+  display: grid;
+  place-items: center;
+  color: var(--faint);
+  font-size: 13px;
+}
+.founders__name {
+  font-size: 14px;
+  font-weight: 500;
+}
+.founders__role {
+  color: var(--faint);
+  font-weight: 400;
+}
+
+/* ── 신청 ─────────────────────────────────────────────────── */
+.apply {
+  scroll-margin-top: 60px;
+}
+.apply__grid {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 76px 22px 84px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 44px;
+  align-items: start;
+}
+.apply__left {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.facts {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  border-top: 1px solid var(--rule);
+}
+.facts__row {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 16px;
+}
+.facts__row dt {
+  color: var(--faint);
+  font-size: 14px;
+  margin: 0;
+}
+.facts__row dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.facts__note {
+  color: var(--faint);
+  font-size: 14px;
+}
+
+.seats {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 26px;
+  background: var(--tint);
+  border-radius: 22px;
+}
+.seats__title {
+  font-size: 14px;
+  font-weight: 700;
+}
+.seats__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.seats__row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.seats__label {
+  font-size: 15px;
+  min-width: 22px;
+  color: var(--mute);
+}
+.seats__track {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+.seats__cell {
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--track);
+  overflow: hidden;
+}
+.seats__fill {
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+}
+.seats__count {
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 52px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.apply__right {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.input {
+  border: 1px solid var(--rule);
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 16px;
+  padding: 18px 20px;
+  border-radius: 999px;
+  transition: border-color 0.25s ease;
+  width: 100%;
+}
+.input:hover {
+  border-color: var(--input-hover);
+}
+.input:focus {
+  border-color: var(--ink);
+}
+.gender {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.gender__btn {
+  border: 1px solid var(--rule);
+  background: #ffffff;
+  color: var(--mute);
+  font-size: 16px;
+  padding: 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.2s ease;
+}
+.gender__btn:active {
+  transform: scale(0.97);
+}
+.gender__btn[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #ffffff;
+}
+.form__submit {
+  padding: 20px;
+  font-size: 17px;
+  margin-top: 6px;
+  width: 100%;
+}
+.form__submit:hover {
+  transform: translateY(-2px);
+}
+.form__submit:active {
+  transform: scale(0.98);
+}
+.form__error {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 34px 26px;
+  border: 1px solid var(--ink);
+  border-radius: 22px;
+  text-align: center;
+  animation: riseIn 0.6s var(--ease-out) both;
+}
+.confirm__title {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+.confirm p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--mute);
+}
+
+.rules {
+  border: 1px solid var(--rule);
+  border-radius: 22px;
+  padding: 20px 24px;
+  transition: border-color 0.25s ease;
+}
+.rules:hover {
+  border-color: var(--input-hover);
+}
+.rules > summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.rules p {
+  margin: 14px 0 0;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--mute);
+}
+
+/* ── FAQ ──────────────────────────────────────────────────── */
+.faq__list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--rule);
+}
+.faq__item {
+  border-bottom: 1px solid var(--rule);
+  padding: 20px 0;
+}
+.faq__q {
+  list-style: none;
+  cursor: pointer;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: 19.5px;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+.faq__a {
+  margin: 14px 0 0;
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--mute);
+  max-width: 46em;
+}
+.plus {
+  color: var(--faint);
+  font-weight: 400;
+  transition: transform 0.3s var(--ease-out);
+  display: inline-block;
+}
+details[open] > summary .plus {
+  transform: rotate(45deg);
+}
+
+.refund {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 32px 28px;
+  background: var(--tint);
+  border-radius: 22px;
+}
+.refund__title {
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: 23px;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.refund__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 16px;
+  line-height: 1.75;
+}
+.refund__row {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 14px;
+}
+.refund__when {
+  color: var(--faint);
+}
+
+/* ── 푸터 · 하단 고정 바 ──────────────────────────────────── */
+.site-footer {
+  border-top: 1px solid var(--rule);
+}
+.site-footer__inner {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 56px 22px 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+.site-footer__logo {
+  width: 52px;
+  height: auto;
+  display: block;
+}
+.site-footer__brand {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+.site-footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 22px;
+  margin-top: 6px;
+}
+.site-footer__nav a {
+  text-decoration: none;
+  font-size: 14px;
+  color: var(--mute);
+  transition: color 0.2s ease;
+}
+.site-footer__nav a:hover {
+  color: var(--ink);
+}
+.site-footer__people {
+  font-size: 13.5px;
+  color: var(--faint);
+}
+
+.sticky-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid var(--rule);
+  padding: 12px 22px;
+  transform: translateY(110%);
+  transition: transform 0.5s var(--ease-out);
+}
+html[data-scrolled] .sticky-bar {
+  transform: translateY(0);
+}
+.sticky-bar__inner {
+  max-width: var(--shell);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.sticky-bar__price {
+  font-size: 14px;
+  font-weight: 700;
+}
+.sticky-bar__meta {
+  font-size: 12.5px;
+  color: var(--faint);
+}
+.sticky-bar__cta {
+  font-size: 15px;
+  padding: 14px 30px;
+}
+
+/* ── 동작 줄이기 ──────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+  }
+  [data-reveal],
+  [data-bar],
+  [data-line] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  /* 반드시 유지 — 없으면 흰 오버레이가 화면에 남는다 */
+  .hero__intro {
+    display: none !important;
+  }
+  .hero__hl {
+    transform: scaleX(1) !important;
+  }
+  /* 히어로 워드플레이는 두 레이어를 grid-area 1/1에 겹쳐 두고 페이드로 교체한다.
+     애니메이션이 꺼지면 둘 다 불투명하게 남아 "결 가치"와 "한결가치같이"가
+     겹쳐 찍혀 판독 불가가 된다 → 최종 상태(= 한결같이)만 남긴다. */
+  .hero__wp-parts {
+    display: none !important;
+  }
+  .hero__swap > *:first-child {
+    display: none !important;
+  }
+}

@@ -1,0 +1,18 @@
+/*
+ * 힌지식 섹션 4단 구조의 "머리" — eyebrow + display를 한 덩어리로 묶는다.
+ * .stagger는 카드·행 묶음에 쓰므로, 라벨과 제목은 여기서 함께 한 번에 등장한다.
+ * globals.css는 건드리지 않는다(공용 토큰만 참조).
+ */
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/*
+ * 제목 뒷부분의 회색. globals.css의 `.h2 .tail`을 `.display`용으로 옮긴 것이다.
+ * `.display`가 이미 명조 700이라 여기서는 색만 바꾼다.
+ */
+.tail {
+  color: var(--headline-grey);
+}
