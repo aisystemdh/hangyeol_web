@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import StickyBar from "@/components/StickyBar";
 import { EVENT_CTA_LABEL, EVENT_HREF } from "@/lib/site";
 import styles from "./principles.module.css";
 
@@ -201,7 +202,7 @@ const ALLOWED = [
 
 export default function PrinciplesPage() {
   return (
-    <>
+    <div style={{ paddingBottom: 88 }}>
       {/* ── 1. 8개 원칙 (흰) ─────────────────────────────────── */}
       <section className="band" aria-labelledby="principles-intro">
         <div className={`shell stagger ${styles.stack}`}>
@@ -223,6 +224,20 @@ export default function PrinciplesPage() {
               <span>금지 항목이 없는 원칙은 지켜지지 않는다.</span>
             </span>
           </p>
+
+          {/* 핵심 요약 — 8개 원칙 전체를 다 읽지 않아도 충돌 시 우선순위와
+              가장 무거운 원칙(안전)이 뭔지는 여기서 바로 알 수 있게 한다. */}
+          <div className="tldr" data-reveal>
+            <span className="tldr__label">핵심 요약</span>
+            <ul className="tldr__list">
+              <li>원칙이 8개 있고, 각 원칙은 금지 항목과 함께 적용된다.</li>
+              <li>
+                두 원칙이 충돌하면 <strong>안전 → 존엄 → 정직 → 깊이 → 지속</strong> 순으로
+                우선한다.
+              </li>
+              <li>현장에서는 실명·나이·직업·SNS 등 식별 정보를 전부 비공개로 다룬다.</li>
+            </ul>
+          </div>
 
           {/* 원칙 제목은 h3다. 섹션 제목(h2, 58px)과 크기가 두 배 가까이 다른데
               같은 레벨이면 마크업 위계와 시각 위계가 어긋난다. 이 h2가 그 사이를 잇는다. */}
@@ -369,6 +384,8 @@ export default function PrinciplesPage() {
           </Link>
         </div>
       </section>
-    </>
+
+      <StickyBar href={EVENT_HREF} />
+    </div>
   );
 }

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import ReplayButton from "./ReplayButton";
+import SkipIntroButton from "./SkipIntroButton";
 import GrainCanvas from "./GrainCanvas";
 import styles from "./HomeHero.module.css";
 
@@ -105,6 +106,10 @@ export default function HomeHero() {
     <section id="hero" className={styles.stage} aria-label="한결 소개">
       <GrainCanvas className={styles.grain} />
       <div className={styles.veil} aria-hidden="true" />
+
+      {/* 오버레이 밖에 둔다 — .hero__intro는 aria-hidden이라 안에 넣으면
+          스크린리더와 탭 순서에서 이 버튼이 함께 숨는다. */}
+      <SkipIntroButton />
 
       <div className={`hero ${styles.inner}`}>
         {/* 0–2.5초 인트로 오버레이.
@@ -212,6 +217,12 @@ export default function HomeHero() {
           </div>
         </div>
         <span className="sr-only">한결같이 — 결이 같은 사람</span>
+
+        {/* "결"의 뜻을 즉시 풀어준다 — /mission까지 가야 알 수 있으면
+            대부분의 방문자는 언어유희를 눈치채지 못하고 지나간다. */}
+        <p className="hero__gloss">
+          결 = 나뭇결처럼 바뀌지 않는 성향과 가치관. 결이 같은 사람과 이야기하는 자리입니다.
+        </p>
 
         <ReplayButton />
 

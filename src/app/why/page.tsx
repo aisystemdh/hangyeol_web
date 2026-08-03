@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import StickyBar from "@/components/StickyBar";
 import { EVENT_CTA_LABEL, EVENT_HREF } from "@/lib/site";
 import s from "./why.module.css";
 
 export const metadata: Metadata = {
   title: "왜 가치관인가",
   description:
-    "한결이 겨누는 것은 사람도 업체도 아닌 설계다. 기존 포맷의 다섯 가지 구조적 결함과, 그 대안을 뒷받침하는 세 편의 연구.",
+    "한결이 겨누는 것은 사람도 업체도 아닌 설계다. 기존 포맷의 네 가지 구조적 결함과, 그 대안을 뒷받침하는 세 편의 연구.",
 };
 
 export default function WhyPage() {
   return (
-    <>
+    <div style={{ paddingBottom: 88 }}>
       {/* ── 1. 문제를 정확히 겨누기 (흰) ───────────────────── */}
       <section className="band" aria-labelledby="why-aim">
         <div className={`shell stagger ${s.head}`}>
@@ -34,6 +35,20 @@ export default function WhyPage() {
               처리량의 목적이다.
             </p>
           </div>
+
+          {/* 핵심 요약 — 이 페이지 전체(구조적 결함 5개 + 연구 3편)를 끝까지
+              읽지 않아도 결론과 다음 행동을 바로 알 수 있게 한다. */}
+          <div className="tldr" data-reveal>
+            <span className="tldr__label">핵심 요약</span>
+            <ul className="tldr__list">
+              <li>기존 포맷은 틀린 게 아니라 처리량이 목적이다. 우리는 깊이가 목적이다.</li>
+              <li>
+                <strong>Joel et al. 2020(PNAS)</strong> — 관계 만족도는 누구를 만났는지(21%)보다
+                만난 뒤의 관계 역학(45%)이 두 배 더 크게 좌우한다.
+              </li>
+              <li>그래서 완벽한 매칭은 약속하지 않는다. 약속하는 건 좋은 시작뿐이다.</li>
+            </ul>
+          </div>
         </div>
       </section>
 
@@ -41,7 +56,7 @@ export default function WhyPage() {
       <section className="band band--dark" aria-labelledby="why-flaws">
         <div className={`shell stagger ${s.head}`}>
           <span className="eyebrow" data-reveal>
-            문제 · 다섯 가지 구조적 결함
+            문제 · 네 가지 구조적 결함
           </span>
           <h2 className={`display ${s.title}`} id="why-flaws" data-reveal>
             명사는 사람을 분류할 수 있게 해주지만
@@ -56,12 +71,8 @@ export default function WhyPage() {
               <div className={s.itemBody}>
                 <h3 className={s.itemTitle}>사람을 스펙 카드로 환원한다</h3>
                 <p className={s.text}>
-                  현장 프로필 카드의 표준 구성은 MBTI·나이·직업 + 최근 본
-                  영화·이상형·좋아하는 음식·취미다.
-                </p>
-                <p className={s.pull}>
-                  이 항목들의 공통점은 전부 명사라는 것이다. 명사는 사람을
-                  분류할 수 있게 해주지만 이해하게 해주지는 않는다.
+                  MBTI·나이·직업 같은 명사형 정보는 사람을 분류하게 해줄 뿐,
+                  이해하게 해주지는 않는다.
                 </p>
                 <table className={s.contrast}>
                   <thead>
@@ -87,10 +98,13 @@ export default function WhyPage() {
                     </tr>
                   </tbody>
                 </table>
-                <p className={s.note}>
-                  오른쪽 열이 관계의 성패를 가른다. 왼쪽 열은 대화의 재료일
-                  뿐이다.
-                </p>
+                <div className={s.solution}>
+                  <span className={s.solutionLabel}>한결의 해결책</span>
+                  <p className={s.solutionText}>
+                    모든 문항에 &ldquo;왜 그렇게 생각했는지&rdquo; Follow-up을 붙인다 — 선택이
+                    아니라 선택 + 이유를 본다.
+                  </p>
+                </div>
               </div>
             </li>
 
@@ -100,14 +114,16 @@ export default function WhyPage() {
               <div className={s.itemBody}>
                 <h3 className={s.itemTitle}>대화를 스몰토크로 설계한다</h3>
                 <p className={s.text}>
-                  “최근 본 영화”는 나쁜 질문이 아니다. 첫 30초에는 훌륭한
-                  질문이다. 문제는 그 뒤에 아무것도 없다는 것이다. 10분 내내
-                  스몰토크 목록을 소화하고 나면 남는 것은 정보의 교환이지
-                  이해가 아니다.
+                  가벼운 질문은 첫 30초엔 훌륭하지만, 그 다음이 없으면 남는 건
+                  정보 교환이지 이해가 아니다.
                 </p>
-                <p className={s.pull}>
-                  깊이는 저절로 생기지 않는다. 설계되어야 생긴다.
-                </p>
+                <div className={s.solution}>
+                  <span className={s.solutionLabel}>한결의 해결책</span>
+                  <p className={s.solutionText}>
+                    사전에 10개 주제로 답변을 받아, 당일 대화가 처음부터 그
+                    답변에서 시작한다.
+                  </p>
+                </div>
               </div>
             </li>
 
@@ -115,25 +131,17 @@ export default function WhyPage() {
             <li className={s.item} data-reveal>
               <div className={s.num}>03</div>
               <div className={s.itemBody}>
-                <h3 className={s.itemTitle}>10명은 기억되지 않는다</h3>
+                <h3 className={s.itemTitle}>선택을 공개적으로 만든다</h3>
                 <p className={s.text}>
-                  10:10 포맷에서 참가자는 10명을 만난다. 실제로 기억에 남는
-                  것은 4~5명이다.
+                  누구를 선택했는지가 드러나는 순간, 참가자는 거절의 두려움을
+                  안고 대화하게 된다.
                 </p>
-                <p className={s.text}>
-                  그리고 여기서 더 심각한 문제가 생긴다. 2시간 뒤 일괄 순위를
-                  매기면 그 순위는 최신 효과(가장 마지막 사람), 외모 기억,
-                  유난히 강했던 발언에 오염된다. 즉 참가자는 자기가 누구를
-                  좋아하는지 정확히 보고할 수 없는 상태에서 보고하게 된다.
-                </p>
-                <p className={s.text}>
-                  선택지가 많을수록 이 문제는 악화된다. 그리고 선택지가
-                  많을수록 사람은 판단 비용이 낮은 단서, 즉 외모에 의존하게
-                  된다.
-                </p>
-                <p className={s.pull}>
-                  더 많이 만나게 해줄수록 더 얕게 판단하게 된다.
-                </p>
+                <div className={s.solution}>
+                  <span className={s.solutionLabel}>한결의 해결책</span>
+                  <p className={s.solutionText}>
+                    결1~결20 익명 배정, 선택 결과는 원칙적으로 비공개다.
+                  </p>
+                </div>
               </div>
             </li>
 
@@ -141,40 +149,17 @@ export default function WhyPage() {
             <li className={s.item} data-reveal>
               <div className={s.num}>04</div>
               <div className={s.itemBody}>
-                <h3 className={s.itemTitle}>선택을 공개적으로 만든다</h3>
-                <p className={s.text}>
-                  호감 표현 방식은 두 가지로 갈린다: 즉시형(대화 직후 쪽지
-                  교환)과 일괄형(종료 시 호스트에게 통보). 어느 쪽이든 선택받지
-                  못한 사실이 본인에게, 때로는 타인에게 드러나는 순간이
-                  존재한다.
-                </p>
-                <blockquote className={s.quote}>
-                  “민망하지 않게 카페는 이 행사만을 위해 통대관되었다고 했다.
-                  (…) 꼭 진행 장소가 통대관된 장소인지 확인해 보길 바란다.”
-                </blockquote>
-                <p className={s.text}>
-                  참가자가 후속 참가자에게 명시적으로 권고할 만큼 중요했던 것이
-                  프라이버시다. 즉 “남들이 보는 것”이 참가자의 최대 부담이다.
-                  그런데 대부분의 포맷은 마지막 단계에서 선택 결과를 드러내는
-                  구조를 갖는다.
-                </p>
-              </div>
-            </li>
-
-            {/* 결함 5 */}
-            <li className={s.item} data-reveal>
-              <div className={s.num}>05</div>
-              <div className={s.itemBody}>
                 <h3 className={s.itemTitle}>만남 이후가 없다</h3>
                 <p className={s.text}>
-                  행사가 끝나면 관계는 참가자 개인의 능력에 맡겨진다.
-                  미매칭자에게 “One More Time 티켓”을 주는 정교한 운영도
-                  있지만, 그것은 다음 행사로의 유입이지 관계의 지속이 아니다.
+                  행사가 끝나면 관계는 참가자 개인의 몫으로 남고, 대부분의
+                  포맷엔 그 다음이 없다.
                 </p>
-                <p className={s.pull}>
-                  한결이 이름에 ‘한결같다’를 담은 이유가 여기 있다. 시작만 파는
-                  회사가 되지 않기 위해서다.
-                </p>
+                <div className={s.solution}>
+                  <span className={s.solutionLabel}>한결의 해결책</span>
+                  <p className={s.solutionText}>
+                    성향 리포트를 드리고, 관계를 잇는 것까지 설계에 포함한다.
+                  </p>
+                </div>
               </div>
             </li>
           </ol>
@@ -340,6 +325,8 @@ export default function WhyPage() {
           </div>
         </div>
       </section>
-    </>
+
+      <StickyBar href={EVENT_HREF} />
+    </div>
   );
 }

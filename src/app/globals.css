@@ -250,9 +250,11 @@ a:focus-visible {
 [data-reveal] {
   opacity: 0;
   transform: translateY(22px);
+  /* 0.8s → 0.45s: rootMargin을 앞당겨도 transition 자체가 느리면 평균 스크롤
+     속도에서는 여전히 옅은 회색 중간 상태로 읽힌다. 두 값을 함께 조정해야 한다. */
   transition:
-    opacity 0.8s var(--ease-out),
-    transform 0.8s var(--ease-out);
+    opacity 0.45s var(--ease-out),
+    transform 0.45s var(--ease-out);
 }
 [data-reveal][data-in] {
   opacity: 1;
@@ -511,6 +513,53 @@ html[data-intro-seen] .hero__intro {
   display: inline-grid;
   vertical-align: top;
 }
+/* 인트로 건너뛰기 — 첫 방문자가 9초대 시퀀스를 강제로 다 보지 않아도 되게 한다.
+   오버레이(z-index 60)보다 위, 헤더보다 위(z-index 20)에 둔다. */
+.hero__skip {
+  position: fixed;
+  top: 18px;
+  right: 20px;
+  z-index: 61;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--rule);
+  color: var(--mute);
+  font-size: 13px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition:
+    border-color 0.25s ease,
+    color 0.25s ease;
+  /* 인트로 시퀀스가 다 끝나면(HomeHero 마지막 애니메이션 ~9.4s) 스스로 사라진다 —
+     다 본 사용자에게 불필요한 버튼을 남기지 않기 위해서다. JS 타이머 없이
+     CSS만으로 처리해 SkipIntroButton을 상태 없는 컴포넌트로 유지한다. */
+  animation: heroSkipOut 0.3s 9.4s both;
+}
+.hero__skip:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+html[data-intro-seen] .hero__skip {
+  display: none;
+}
+@keyframes heroSkipOut {
+  from { opacity: 1; visibility: visible; }
+  to { opacity: 0; visibility: hidden; }
+}
+
+/* 슬로건의 언어유희("결")를 즉시 풀어주는 한 줄 — /mission까지 가지 않아도
+   첫 화면에서 뜻이 통하게 한다. */
+.hero__gloss {
+  margin: -4px 0 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--faint);
+  max-width: 26em;
+  animation: riseIn 0.8s 9.15s var(--ease-out) both;
+}
+
 .hero__replay {
   background: none;
   border: 1px solid var(--rule);
@@ -1127,4 +1176,40 @@ html[data-scrolled] .sticky-bar {
   .hero__swap > *:first-child {
     display: none !important;
   }
+  /* 애니메이션이 꺼지면 인트로 자체가 없으니 건너뛰기 버튼도 필요 없다 */
+  .hero__skip {
+    display: none !important;
+  }
+}
+
+/* ── 핵심 요약(TL;DR) 박스 ────────────────────────────────────
+   /why · /principles처럼 본문이 긴 페이지 상단에 얹어, 끝까지 읽지 않는
+   방문자도 핵심 결론과 전환 경로를 놓치지 않게 한다. */
+.tldr {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 26px;
+  background: var(--tint);
+  border-radius: 22px;
+}
+.tldr__label {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+}
+.tldr__list {
+  margin: 0;
+  padding-left: 1.15em;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+.tldr__list strong {
+  font-weight: 700;
 }

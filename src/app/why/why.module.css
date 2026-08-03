@@ -113,6 +113,31 @@
   max-width: 34em;
 }
 
+/* 한결의 해결책 — 문제 바로 아래, 시각적으로 분리된 박스에 놓는다.
+   "문제 지적"으로 끝나지 않고 각 결함이 곧바로 우리 원칙/설계로 이어짐을 보여준다. */
+.solution {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 20px;
+  background: var(--tint);
+  border-radius: 14px;
+  max-width: 34em;
+}
+.solutionLabel {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: 0.05em;
+  color: var(--faint);
+}
+.solutionText {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
 /* ── 대조표 (결함 1) ──────────────────────────────────────
    모바일에서 열이 무너지면 "왼쪽 열 / 오른쪽 열"이라는 논지가 깨진다.
    그래서 좁은 화면에서도 2열을 유지하고 글자만 줄인다. */
