@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import StickyBar from "@/components/StickyBar";
 import { EVENT_CTA_LABEL, EVENT_HREF, SITE } from "@/lib/site";
 import s from "./mission.module.css";
 
@@ -96,7 +97,7 @@ const PHASES: {
     goal: <>오프라인 실험으로 핵심 가설 검증</>,
     win: (
       <>
-        {"“글로 맞춘 결이 실제로도 맞는다”는 "}
+        {"“결이 맞는지는 대화로 안다”는 "}
         <strong>데이터</strong> 확보
       </>
     ),
@@ -218,7 +219,7 @@ const MANIFESTO: string[][] = [
 
 export default function MissionPage() {
   return (
-    <>
+    <div style={{ paddingBottom: 88 }}>
       {/* ── 1. 미션 ─────────────────────────────────────────── */}
       <section className="band">
         <div className={`shell stagger ${s.stack}`}>
@@ -231,27 +232,51 @@ export default function MissionPage() {
             대화를 설계한다.
           </h1>
 
-          {/* 컨테이너에는 data-reveal을 걸지 않는다 — 자식이 이미 각자 등장하므로
-              겹치면 translateY가 두 번 쌓인다. */}
-          <div className={`${s.stack} ${s.spaced}`}>
-            <span className={s.miniLabel} data-reveal>
-              단어별 해설
-            </span>
-            <ul className={`${s.words} stagger`}>
-              {WORDS.map((w) => (
-                <li key={w.word} className={`card ${s.wordCard}`} data-reveal>
-                  {/* 표의 첫 칸이지 섹션 제목이 아니다 — h*를 쓰면 h1 아래
-                      목차가 어긋난다. */}
-                  <p className={s.wordTitle}>{w.word}</p>
-                  <p className={s.wordWhy}>{w.why}</p>
-                  <p className={s.wordExcl}>
-                    <span className={s.miniLabel}>이 단어가 배제하는 것</span>
-                    <span className={s.wordExclText}>{w.excludes}</span>
-                  </p>
-                </li>
-              ))}
+          {/* 핵심 요약 — 이 페이지 6개 섹션(미션·비전·이름·선언문)을 끝까지
+              읽지 않아도 결론을 먼저 알 수 있게 한다. */}
+          <div className="tldr" data-reveal>
+            <span className="tldr__label">핵심 요약</span>
+            <ul className="tldr__list">
+              <li>
+                미션은 매칭이 아니라 이해다 — 커플 수·외로움 해소·결혼은 우리 목표가 아니다.
+              </li>
+              <li>
+                지금은 <strong>Phase 1(2026)</strong> — &ldquo;결이 맞는지는 대화로
+                안다&rdquo;는 가설을 오프라인에서 검증하는 단계다.
+              </li>
+              <li>
+                &lsquo;한결&rsquo;은 &lsquo;같은 결의 사람&rsquo;(시작)과 &lsquo;변함없음&rsquo;(지속),
+                두 뜻을 동시에 담는다.
+              </li>
             </ul>
           </div>
+
+          {/* 컨테이너에는 data-reveal을 걸지 않는다 — 자식이 이미 각자 등장하므로
+              겹치면 translateY가 두 번 쌓인다.
+              단어별 해설은 미션 문장의 각주에 해당해 기본 접힘으로 둔다 —
+              위 핵심 요약과 아래 "미션이 아닌 것"이 이 페이지의 핵심 논지다. */}
+          <details className={`rules ${s.spaced}`}>
+            <summary>
+              단어별 해설 보기 — 미션 문장을 여섯 단어로 쪼갠다
+              <span className="plus">+</span>
+            </summary>
+            <div data-answer>
+              <ul className={`${s.words} stagger ${s.spaced}`}>
+                {WORDS.map((w) => (
+                  <li key={w.word} className={`card ${s.wordCard}`} data-reveal>
+                    {/* 표의 첫 칸이지 섹션 제목이 아니다 — h*를 쓰면 h1 아래
+                        목차가 어긋난다. */}
+                    <p className={s.wordTitle}>{w.word}</p>
+                    <p className={s.wordWhy}>{w.why}</p>
+                    <p className={s.wordExcl}>
+                      <span className={s.miniLabel}>이 단어가 배제하는 것</span>
+                      <span className={s.wordExclText}>{w.excludes}</span>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </details>
         </div>
       </section>
 
@@ -470,6 +495,8 @@ export default function MissionPage() {
           </Link>
         </div>
       </section>
-    </>
+
+      <StickyBar href={EVENT_HREF} />
+    </div>
   );
 }

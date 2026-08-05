@@ -21,6 +21,10 @@ export default function PageEffects() {
   const pathname = usePathname();
 
   useEffect(() => {
+    // rootMargin 하단을 양수로 두면 뷰포트 아래쪽 밖에서부터 미리 교차 판정이
+    // 나서, 평소 스크롤 속도로는 요소가 화면에 보이기 전에 리빌이 끝나 있다.
+    // 이전 값(-8%)은 요소가 화면에 상당히 들어온 뒤에야 발화해, 빠르게 스크롤하면
+    // 옅은 회색 중간 상태로 텍스트를 읽는 경우가 많았다.
     const reveal = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
@@ -29,7 +33,7 @@ export default function PageEffects() {
           reveal.unobserve(e.target);
         });
       },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.12 },
+      { rootMargin: "0px 0px 20% 0px", threshold: 0.01 },
     );
 
     // 막대·선은 시작 상태가 scaleX(0)/scaleY(0)이라 면적이 0 → 자기 자신을
@@ -47,7 +51,7 @@ export default function PageEffects() {
           bars.unobserve(e.target);
         });
       },
-      { rootMargin: "0px 0px -6% 0px", threshold: 0 },
+      { rootMargin: "0px 0px 10% 0px", threshold: 0 },
     );
 
     document

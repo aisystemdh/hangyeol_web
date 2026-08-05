@@ -1,5 +1,6 @@
 import Link from "next/link";
 import HomeHero from "@/components/HomeHero";
+import StickyBar from "@/components/StickyBar";
 import { EVENT } from "@/lib/event";
 import { EVENT_HREF, EVENT_CTA_LABEL } from "@/lib/site";
 import styles from "./home.module.css";
@@ -16,7 +17,7 @@ import styles from "./home.module.css";
  */
 export default function Home() {
   return (
-    <div style={{ overflowX: "hidden" }}>
+    <div style={{ overflowX: "hidden", paddingBottom: 88 }}>
       <HomeHero />
 
       {/* ── 2. 우리가 하는 일 (§1.2) ────────────────────────── */}
@@ -153,7 +154,7 @@ export default function Home() {
             Phase 1 · 증명 — 2026. 오프라인 실험으로 핵심 가설을 검증한다.
           </p>
           <p className={styles.quote} data-reveal>
-            글(텍스트)로 맞춘 결이, 실제로 만나도 맞을까?
+            결이 맞는지는 글이 아니라 대화로 안다.
           </p>
 
           <dl className={styles.facts} data-reveal>
@@ -182,6 +183,8 @@ export default function Home() {
           </Link>
         </div>
       </section>
+
+      <StickyBar href={EVENT_HREF} />
     </div>
   );
 }
