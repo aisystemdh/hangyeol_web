@@ -1,7 +1,6 @@
 import Image from "next/image";
 import ReplayButton from "./ReplayButton";
 import SkipIntroButton from "./SkipIntroButton";
-import GrainCanvas from "./GrainCanvas";
 import styles from "./HomeHero.module.css";
 
 const EASE = "cubic-bezier(.22,1,.36,1)";
@@ -26,18 +25,28 @@ const STROKE =
 /** 로고 위쪽 두 점. 왼쪽만 적고 오른쪽은 100에서 뺀다. */
 const DOT = { cx: 28.8, cy: 18.8, r: 7.4 };
 
-/** 글자별 등장 시각(초) — 핸드오프 타임라인 그대로 */
+/**
+ * 글자별 등장 시각(초).
+ *
+ * ⚠️ 핸드오프 원본은 2.25초에 시작했다. **전 구간을 1.35초씩 앞당겼다** —
+ *    순서와 간격(0.08초)은 원본 그대로다.
+ *
+ *    이유: 이 h1이 홈의 LCP 요소인데 `opacity:0`으로 시작하므로,
+ *    실제 LCP = (첫 렌더 시각) + (여기 적힌 지연)이 된다. 2.25초면 어떤 회선에서도
+ *    합격선 2.5초를 넘길 수 없었다. 0.9초면 첫 렌더가 1.5초여도 2.4초에 들어온다.
+ *    **이 값을 다시 늘리면 홈은 Core Web Vitals를 구조적으로 통과하지 못한다.**
+ */
 const LINE_1 = [
-  { ch: "결", at: 2.25, lit: 3.05 },
-  { ch: "국", at: 2.33 },
-  { ch: "에", at: 2.41 },
-  { ch: "는", at: 2.49 },
+  { ch: "결", at: 0.9, lit: 1.7 },
+  { ch: "국", at: 0.98 },
+  { ch: "에", at: 1.06 },
+  { ch: "는", at: 1.14 },
 ];
 const LINE_2 = [
-  { ch: "결", at: 2.61, lit: 3.25 },
-  { ch: "이", at: 2.69 },
-  { ch: "더", at: 2.77 },
-  { ch: "라", at: 2.85 },
+  { ch: "결", at: 1.26, lit: 1.9 },
+  { ch: "이", at: 1.34 },
+  { ch: "더", at: 1.42 },
+  { ch: "라", at: 1.5 },
 ];
 
 function Char({ ch, at, lit }: { ch: string; at: number; lit?: number }) {
@@ -74,7 +83,7 @@ function LogoStroke({ dir }: { dir: "L" | "R" }) {
          path 길이와 무관하게 정확히 처음부터 끝까지 그리게 된다. */
       pathLength={300}
       strokeDasharray="300"
-      style={{ animation: "strokeDraw 2.5s cubic-bezier(.4,0,.3,1) both" }}
+      style={{ animation: "strokeDraw 1.2s cubic-bezier(.4,0,.3,1) both" }}
     />
   );
   return (
@@ -82,7 +91,7 @@ function LogoStroke({ dir }: { dir: "L" | "R" }) {
       style={{
         transformBox: "view-box",
         transformOrigin: "50% 62%",
-        animation: `speak${dir} 2.5s cubic-bezier(.4,0,.3,1) both`,
+        animation: `speak${dir} 1.2s cubic-bezier(.4,0,.3,1) both`,
       }}
     >
       {dir === "L" ? path : <g transform="translate(100 0) scale(-1 1)">{path}</g>}
@@ -100,11 +109,26 @@ function LogoStroke({ dir }: { dir: "L" | "R" }) {
  * 인트로는 **로고 입모양 + 줌인**이다. 로고의 두 획이 "말하듯" 여닫다가
  * (speakL/speakR) 로고 형태 그대로 확대되며 사라진다(logoZoom).
  * 하트를 되살리지 말 것 — 근거와 함정은 위 STROKE 주석에 적어 두었다.
+ *
+ * ── 타임라인 (총 4.5초) ─────────────────────────────────────
+ *  0.0–1.2  인트로 오버레이 (strokeDraw · speakL/R · logoZoom · introOut)
+ *  0.9–1.5  헤드라인 글자 8개          ← **LCP 요소**. 더 뒤로 미루지 말 것
+ *  1.5      한 줄 설명 (.hero__lead)
+ *  1.7      뜻 풀이 (.hero__gloss)     ← 5초 테스트의 답. 워드플레이보다 먼저 나온다
+ *  1.7/1.9  헤드라인 하이라이트
+ *  2.2      작은 로고 (.hero__logo)
+ *  2.4–4.5  워드플레이 결+가치 → 한결같이
+ *  4.5      건너뛰기 버튼 퇴장 (heroSkipOut)
+ *
+ * 예전에는 이 전체가 9.4초였고 뜻 풀이가 9.15초에 나왔다. 지연값을 손볼 때는
+ * 위 순서가 유지되는지 확인할 것 — 특히 wpMerge(3.05+0.4)가 끝난 뒤에
+ * wpFadeOut(3.45)이 시작해야 두 글자가 합쳐졌다가 사라지는 것으로 보인다.
  */
 export default function HomeHero() {
   return (
     <section id="hero" className={styles.stage} aria-label="한결 소개">
-      <GrainCanvas className={styles.grain} />
+      {/* 나무결은 layout.tsx가 사이트 전체에 한 장 깐다. 여기 베일은 그 결을
+          히어로 위아래에서 흰색으로 흘려보내 100px 헤드라인의 가독성을 지킨다. */}
       <div className={styles.veil} aria-hidden="true" />
 
       {/* 오버레이 밖에 둔다 — .hero__intro는 aria-hidden이라 안에 넣으면
@@ -120,7 +144,7 @@ export default function HomeHero() {
               style={{
                 transformBox: "view-box",
                 transformOrigin: "50% 52%",
-                animation: "logoZoom 2.5s cubic-bezier(.45,0,.35,1) both",
+                animation: "logoZoom 1.2s cubic-bezier(.45,0,.35,1) both",
               }}
             >
               <LogoStroke dir="L" />
@@ -132,15 +156,16 @@ export default function HomeHero() {
           </svg>
         </div>
 
-        {/* 바로 아래 100px 헤드라인과 워드마크가 이름을 말하므로 이 이미지는 장식이다 */}
+        {/* 바로 아래 100px 헤드라인과 워드마크가 이름을 말하므로 이 이미지는 장식이다.
+            ⚠️ priority(=preload)를 다시 붙이지 말 것 — 2.2초에야 나타나는 장식 이미지가
+               LCP 경쟁 구간에서 대역폭을 먼저 가져간다. 첫 화면에 즉시 보이는 로고는
+               SiteHeader의 것 하나뿐이고, priority는 거기에만 남겨 두었다. */}
         <Image
           src="/hangyeol-logo.png"
           alt=""
           width={351}
           height={489}
           className="hero__logo"
-          priority
-          loading="eager"
         />
 
         <div className="hero__headline-wrap">
@@ -158,29 +183,29 @@ export default function HomeHero() {
         {/* 결 + 가치 → 한결같이 */}
         <div className="hero__wordplay" aria-hidden="true">
           <div className="hero__wp-parts">
-            <span style={{ display: "inline-block", animation: "wpFadeOut .4s 7.4s both" }}>
+            <span style={{ display: "inline-block", animation: "wpFadeOut .2s 3.45s both" }}>
               <span
                 style={{
                   display: "inline-block",
-                  animation: "wpMergeR .75s 6.6s cubic-bezier(.5,0,.2,1) both",
+                  animation: "wpMergeR .4s 3.05s cubic-bezier(.5,0,.2,1) both",
                 }}
               >
                 <span
-                  style={{ display: "inline-block", animation: `wpPop .5s 5.3s ${EASE} both` }}
+                  style={{ display: "inline-block", animation: `wpPop .3s 2.4s ${EASE} both` }}
                 >
                   결
                 </span>
               </span>
             </span>
-            <span style={{ display: "inline-block", animation: "wpFadeOut .4s 7.4s both" }}>
+            <span style={{ display: "inline-block", animation: "wpFadeOut .2s 3.45s both" }}>
               <span
                 style={{
                   display: "inline-block",
-                  animation: "wpMergeL .75s 6.6s cubic-bezier(.5,0,.2,1) both",
+                  animation: "wpMergeL .4s 3.05s cubic-bezier(.5,0,.2,1) both",
                 }}
               >
                 <span
-                  style={{ display: "inline-block", animation: `wpPop .5s 6s ${EASE} both` }}
+                  style={{ display: "inline-block", animation: `wpPop .3s 2.75s ${EASE} both` }}
                 >
                   가치
                 </span>
@@ -193,23 +218,23 @@ export default function HomeHero() {
               style={{
                 display: "inline-block",
                 color: "var(--ink)",
-                animation: "ulIn .45s 8.95s both",
+                animation: "ulIn .25s 4.25s both",
               }}
             >
               결
             </span>
             <span className="hero__swap">
-              <span style={{ gridArea: "1 / 1", animation: "wpFadeOut .45s 8.5s both" }}>
+              <span style={{ gridArea: "1 / 1", animation: "wpFadeOut .25s 4s both" }}>
                 가치
               </span>
               <span
                 style={{
                   gridArea: "1 / 1",
                   color: "var(--ink)",
-                  animation: `wpFadeIn .5s 8.55s ${EASE} both`,
+                  animation: `wpFadeIn .3s 4.05s ${EASE} both`,
                 }}
               >
-                <span style={{ display: "inline-block", animation: "ulIn .45s 8.95s both" }}>
+                <span style={{ display: "inline-block", animation: "ulIn .25s 4.25s both" }}>
                   같이
                 </span>
               </span>
@@ -227,7 +252,7 @@ export default function HomeHero() {
         <ReplayButton />
 
         <p className="hero__lead">
-          한결은 사람들이 서로를 더 깊이 이해하도록 대화를 설계하는 브랜드다.
+          한결은 사람들이 서로를 더 깊이 이해하도록 대화를 설계하는 브랜드입니다.
         </p>
 
         <div className={styles.hint} aria-hidden="true">

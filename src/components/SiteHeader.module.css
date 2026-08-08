@@ -8,22 +8,36 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 16px;
+  gap: var(--sp-4);
 }
 
-/* ── 좌: 데스크톱 내비 ─────────────────────────────────────── */
-.nav {
+/* ── 좌: 브랜드 심볼 ──────────────────────────────────────── */
+.brand {
+  grid-column: 1;
+  justify-self: start;
   display: flex;
   align-items: center;
-  gap: 26px;
-  justify-self: start;
+  text-decoration: none;
+  color: var(--ink);
+}
+.brand:hover {
+  color: var(--ink);
+}
+
+/* ── 중앙: 데스크톱 내비 ──────────────────────────────────── */
+.nav {
+  grid-column: 2;
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
 }
 
 .navLink {
   position: relative;
   text-decoration: none;
   color: var(--mute);
-  font-size: 14.5px;
+  font-size: var(--fs-1);
   font-weight: 500;
   letter-spacing: -0.01em;
   padding-bottom: 2px;
@@ -58,25 +72,13 @@
   transform: translate(-50%, 0);
 }
 
-/* ── 중앙: 브랜드 ─────────────────────────────────────────── */
-.brand {
-  justify-self: center;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: var(--ink);
-}
-.brand:hover {
-  color: var(--ink);
-}
-
 /* ── 우: CTA + 햄버거 ─────────────────────────────────────── */
 .right {
+  grid-column: 3;
   justify-self: end;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--sp-3);
 }
 
 .burger {
@@ -91,7 +93,7 @@
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--sp-1);
 }
 .burger span {
   display: block;
@@ -129,7 +131,7 @@
   background: none;
   cursor: pointer;
   color: var(--ink);
-  font-size: 26px;
+  font-size: var(--fs-5);
   line-height: 1;
 }
 .overlayNav {
@@ -141,7 +143,7 @@
 .overlayLink {
   display: flex;
   align-items: baseline;
-  gap: 12px;
+  gap: var(--sp-3);
   padding: 22px 0;
   border-bottom: 1px solid var(--rule);
   text-decoration: none;
@@ -165,7 +167,7 @@
 .overlayCta {
   margin-top: 30px;
   align-self: flex-start;
-  font-size: 16px;
+  font-size: var(--fs-2);
   padding: 16px 30px;
 }
 

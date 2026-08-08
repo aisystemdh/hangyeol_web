@@ -16,7 +16,7 @@
 }
 /* 전역 .pill에는 패딩이 없다(각 화면이 크기를 정한다). /why /principles와 같은 치수. */
 .ctaPill {
-  font-size: 16px;
+  font-size: var(--fs-2);
   padding: 17px 34px;
 }
 
@@ -29,8 +29,9 @@
 .miniLabel {
   display: block;
   font-family: var(--font-display), sans-serif;
-  font-weight: 600;
-  font-size: 12.5px;
+  /* 600은 로드하지 않는 굵기다 — 브라우저가 700으로 대체하므로 선언을 사실과 맞췄다 */
+  font-weight: 700;
+  font-size: var(--fs-1);
   line-height: 1.4;
   letter-spacing: 0.08em;
   color: var(--faint);
@@ -45,7 +46,7 @@
 }
 .prose p {
   margin: 0;
-  font-size: 17.5px;
+  font-size: var(--fs-3);
   line-height: 1.85;
   color: var(--mute);
 }
@@ -70,17 +71,25 @@
   background: linear-gradient(transparent 60%, var(--hl-bar-body) 60%);
 }
 
-/* ── 1. 미션 · 단어별 해설 ─────────────────────────────────── */
+/* .tldr 박스에 목록 대신 문장 한 줄만 넣을 때 */
+.tldrLine {
+  margin: 0;
+  font-size: var(--fs-3);
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+/* ── 1. 목표 · 단어별 해설 ─────────────────────────────────── */
 .words {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: var(--sp-4);
 }
 .wordCard {
-  gap: 12px;
+  gap: var(--sp-3);
 }
 .wordTitle {
   margin: 0;
@@ -91,30 +100,17 @@
   letter-spacing: -0.025em;
   color: var(--ink);
 }
+/* 카드에서 "이 단어가 배제하는 것" 블록을 걷어내고 이 문단만 남았다.
+   보조 설명이 아니라 카드의 본문이 됐으므로 --mute 15.5px에서 키우고 잉크색으로 올린다. */
 .wordWhy {
   margin: 0;
-  font-size: 15.5px;
-  line-height: 1.75;
-  color: var(--mute);
-}
-.wordExcl {
-  margin: 0;
-  margin-top: auto;
-  padding-top: 14px;
-  border-top: 1px solid var(--rule);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.wordExclText {
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--faint);
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
+  font-size: var(--fs-3);
+  font-weight: 500;
+  line-height: 1.7;
+  color: var(--ink);
 }
 
-/* ── 2. 미션이 아닌 것 ─────────────────────────────────────── */
+/* ── 2. 목표가 아닌 것 ─────────────────────────────────────── */
 .nots {
   list-style: none;
   margin: 0;
@@ -126,7 +122,7 @@
 .not {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 6px 16px;
+  gap: var(--sp-2) var(--sp-4);
   padding-top: clamp(18px, 2.4vw, 24px);
   border-top: 1px solid var(--rule);
 }
@@ -134,7 +130,7 @@
   grid-row: 1 / span 2;
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 19px;
+  font-size: var(--fs-4);
   line-height: 1.35;
   color: var(--faint);
 }
@@ -149,7 +145,7 @@
 }
 .notWhy {
   margin: 0;
-  font-size: 15.5px;
+  font-size: var(--fs-2);
   line-height: 1.75;
   color: var(--mute);
 }
@@ -172,14 +168,17 @@
 .phaseHead {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: var(--sp-2);
 }
 .phaseName {
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 14px;
+  font-size: var(--fs-1);
   letter-spacing: 0.06em;
-  color: var(--num);
+  /* --num이 아니라 --faint다. --num(3.58:1)은 globals.css 주석대로 19px 이상
+     굵은 글자에서만 쓸 수 있고, 14px은 일반 텍스트라 4.5:1이 필요하다.
+     --faint는 4.73:1로 통과한다. 되돌리지 말 것. */
+  color: var(--faint);
 }
 .phaseTag {
   font-family: var(--font-serif), serif;
@@ -192,38 +191,26 @@
 .phaseWhen {
   font-family: var(--font-display), sans-serif;
   font-weight: 500;
-  font-size: 14.5px;
+  font-size: var(--fs-1);
   letter-spacing: 0.02em;
   color: var(--faint);
 }
 .phaseBody {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--sp-4);
 }
 .phaseGoal {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--fs-3);
   line-height: 1.65;
   color: var(--ink);
 }
-.phaseWin {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.phaseWinText {
-  font-size: 15.5px;
-  line-height: 1.75;
-  color: var(--mute);
-}
-
 /* 10년 뒤 듣고 싶은 말 */
 .echo {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--sp-4);
   max-width: 30em;
 }
 .echoQuote {
@@ -235,18 +222,11 @@
   letter-spacing: -0.025em;
   color: var(--ink);
 }
-.echoNote {
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.75;
-  color: var(--mute);
-}
-
 /* ── 4. '결'의 정의 ────────────────────────────────────────── */
 .def {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--sp-3);
   max-width: 38em;
   padding: 2px 0 2px clamp(18px, 3vw, 28px);
   border-left: 2px solid var(--ink);
@@ -254,7 +234,7 @@
 .defTerm {
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 16px;
+  font-size: var(--fs-2);
   letter-spacing: 0.02em;
   color: var(--faint);
 }
@@ -275,10 +255,10 @@
   padding: 0;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  gap: var(--sp-4);
 }
 .layerCard {
-  gap: 12px;
+  gap: var(--sp-3);
 }
 .layerSplit {
   margin: 0;
@@ -291,7 +271,7 @@
 }
 .layerMeaning {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--fs-2);
   line-height: 1.75;
   color: var(--mute);
 }
@@ -303,7 +283,7 @@
   padding: 7px 15px;
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--fs-1);
   letter-spacing: -0.01em;
   color: var(--ink);
 }
@@ -339,8 +319,10 @@
 .anaIdx {
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: 16px;
-  color: var(--num);
+  font-size: var(--fs-2);
+  /* 16px은 대형 텍스트 기준(굵은 글자 18.66px 이상)에 못 미쳐 --num(3.58:1)을
+     쓸 수 없다. --faint(4.73:1)로 둔다 — .phaseName과 같은 이유다. */
+  color: var(--faint);
 }
 .anaWord {
   font-family: var(--font-serif), serif;
@@ -351,39 +333,16 @@
   color: var(--ink);
 }
 .anaMeaning {
-  font-size: 15.5px;
+  font-size: var(--fs-2);
   line-height: 1.7;
   color: var(--mute);
 }
 .anaFn {
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 14px;
+  font-size: var(--fs-1);
   letter-spacing: -0.01em;
   color: var(--ink);
-}
-
-/* ── 6. 선언문 ─────────────────────────────────────────────── */
-.manifesto {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(30px, 4.4vw, 52px);
-  max-width: 32em;
-}
-.stanza {
-  margin: 0;
-  font-family: var(--font-serif), serif;
-  font-weight: 400;
-  font-size: clamp(19px, 2.6vw, 26px);
-  line-height: 1.95;
-  letter-spacing: -0.015em;
-  color: var(--ink);
-}
-.stanzaSign {
-  font-weight: 700;
-  font-size: clamp(24px, 4.2vw, 38px);
-  line-height: 1.4;
-  letter-spacing: -0.03em;
 }
 
 /* ── 반응형 ────────────────────────────────────────────────── */

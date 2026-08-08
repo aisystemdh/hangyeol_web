@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
+import InstagramLink from "./InstagramLink";
 import { NAV, EVENT_HREF, EVENT_CTA_LABEL, SITE } from "@/lib/site";
 import s from "./SiteHeader.module.css";
 
@@ -92,7 +93,24 @@ export default function SiteHeader() {
 
   return (
     <header className="site-header">
+      {/* 배치는 왼쪽 로고 → 가운데 내비 → 오른쪽 CTA다. 각 칸이 grid-column을
+          직접 들고 있어서, 모바일에서 .nav가 display:none이 돼도 나머지가 밀리지 않는다. */}
       <div className={s.inner} ref={barRef}>
+        {/* 글씨 없는 심볼 로고(scripts/make-mark.py가 원본에서 잘라낸 것).
+            읽어줄 글자가 없으므로 alt는 비우고 링크에 aria-label로 이름을 준다 —
+            둘 다 비우면 스크린리더에 "링크"로만 읽힌다. */}
+        <Link href="/" className={s.brand} aria-label={`${SITE.name} 홈`}>
+          <Image
+            src="/hangyeol-mark.png"
+            alt=""
+            width={297}
+            height={266}
+            className="site-header__logo"
+            priority
+            loading="eager"
+          />
+        </Link>
+
         <nav className={s.nav} aria-label="주요 메뉴">
           {NAV.map((item) => {
             const active = isActive(pathname, item.href);
@@ -109,20 +127,10 @@ export default function SiteHeader() {
           })}
         </nav>
 
-        <Link href="/" className={s.brand} aria-label={`${SITE.name} 홈`}>
-          <Image
-            src="/hangyeol-logo.png"
-            alt=""
-            width={351}
-            height={489}
-            className="site-header__logo"
-            priority
-            loading="eager"
-          />
-          <span className="site-header__wordmark">{SITE.name}</span>
-        </Link>
-
         <div className={s.right}>
+          {/* CTA와 달리 모바일에서도 남긴다 — 하단 고정 바는 스크롤 120px 뒤에야
+              올라오므로, 첫 화면에서 문의할 곳이 아예 없어지는 걸 막는다. */}
+          <InstagramLink className="ig-link site-header__ig" />
           <Link
             href={EVENT_HREF}
             className={`pill site-header__cta ${s.ctaDesktop}`}

@@ -48,7 +48,9 @@ function Char({ ch, at, lit }: { ch: string; at: number; lit?: number }) {
 export default function Hero() {
   return (
     <section id="hero" className="hero" aria-label="한결 소개">
-      {/* 바로 아래 100px 헤드라인이 브랜드를 말하므로 이 이미지는 장식이다 */}
+      {/* 바로 아래 100px 헤드라인이 브랜드를 말하므로 이 이미지는 장식이다.
+          ⚠️ priority(=preload)를 다시 붙이지 말 것 — 3초에야 나타나는 장식 이미지가
+             LCP 경쟁 구간에서 대역폭을 먼저 가져간다. SiteHeader의 로고에만 남겨 두었다. */}
       <Image
         src="/hangyeol-logo.png"
         alt=""
@@ -56,8 +58,6 @@ export default function Hero() {
         height={489}
         className="hero__logo"
         style={{ animation: "logoIn .9s 3s var(--ease-out) both" }}
-        priority
-        loading="eager"
       />
 
       <div className="hero__headline-wrap">

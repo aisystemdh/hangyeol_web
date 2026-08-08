@@ -1,40 +1,14 @@
 import ApplyForm from "./ApplyForm";
-// SeatRow의 map 콜백이 `s`를 쓰므로 여기서는 `sh`로 받는다(섀도잉 방지)
 import sh from "./sectionHead.module.css";
-import { EVENT, SEATS } from "@/lib/event";
-
-/** 남은 수만큼 왼쪽부터 잉크색으로 채운다. */
-function seats(total: number, left: number) {
-  const n = Math.max(0, Math.min(total, left));
-  return Array.from({ length: total }, (_, i) => ({
-    fill: i < n ? "var(--ink)" : "transparent",
-    delay: `${(0.05 * i).toFixed(2)}s`,
-  }));
-}
-
-function SeatRow({ label, left }: { label: string; left: number }) {
-  return (
-    <div className="seats__row">
-      <div className="seats__label">{label}</div>
-      <div className="seats__track">
-        {seats(EVENT.capacityPerGender, left).map((s, i) => (
-          <div key={i} className="seats__cell">
-            <div
-              className="seats__fill"
-              data-bar
-              style={{ transitionDelay: s.delay, background: s.fill }}
-            />
-          </div>
-        ))}
-      </div>
-      <div className="seats__count">{left}자리</div>
-    </div>
-  );
-}
+import { AGE_RANGE, EVENT } from "@/lib/event";
 
 /**
  * 신청. 밴드 교차상 검정 차례지만 **반드시 흰 밴드**다 —
  * 입력 필드(.input/.gender__btn)가 흰 배경 고정이라 검정 위에서는 대비가 무너진다.
+ *
+ * ⚠️ "남은 자리" 막대는 없앴다. 폼 백엔드에 잔여석 API가 없어 손으로 고쳐야 했는데,
+ *    갱신을 놓치면 신청이 들어와도 계속 만석으로 보여 거짓 정보가 된다.
+ *    되살리려면 서버에서 실제 신청 수를 읽어 올 수단부터 만들 것.
  */
 export default function Apply() {
   return (
@@ -43,7 +17,7 @@ export default function Apply() {
         <div className="apply__left stagger">
           <div className={sh.head} data-reveal>
             <span className="eyebrow">신청</span>
-            <h2 className="display">1차 모임</h2>
+            <h2 className="display">1차</h2>
           </div>
 
           <dl className="facts" data-reveal>
@@ -77,20 +51,9 @@ export default function Apply() {
             </div>
             <div className="facts__row">
               <dt>참가 조건</dt>
-              <dd>
-                만 {EVENT.ageMin} – {EVENT.ageMax}세
-              </dd>
+              <dd>{AGE_RANGE}</dd>
             </div>
           </dl>
-
-          {/* ⚠️ .seats__cell이 [data-bar]의 부모다 — PageEffects가 그 부모를 관찰한다 */}
-          <div className="seats" data-reveal>
-            <div className="seats__title">남은 자리</div>
-            <div className="seats__rows">
-              <SeatRow label="남" left={SEATS.menLeft} />
-              <SeatRow label="여" left={SEATS.womenLeft} />
-            </div>
-          </div>
         </div>
 
         <div className="apply__right" data-reveal style={{ transitionDelay: ".12s" }}>
@@ -102,10 +65,10 @@ export default function Apply() {
             </summary>
             <div data-answer>
               <p>
-                만 {EVENT.ageMin}–{EVENT.ageMax}세, 미혼. 행사 중에는
-                실명·직업·연락처를 묻지 않으며, 다른 참가자의 정보를 캐묻거나
-                촬영·녹음하는 행위, 상대가 불편해하는 신체 접촉, 상업적 권유는
-                금지합니다. 어길 경우 즉시 퇴장이며 환불되지 않습니다.
+                {AGE_RANGE}, 미혼. 행사 중에는 실명·직업·연락처를 묻지 않으며,
+                다른 참가자의 정보를 캐묻거나 촬영·녹음하는 행위, 상대가
+                불편해하는 신체 접촉, 상업적 권유는 금지합니다. 어길 경우 즉시
+                퇴장이며 환불되지 않습니다.
               </p>
             </div>
           </details>

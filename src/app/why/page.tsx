@@ -7,8 +7,24 @@ import s from "./why.module.css";
 export const metadata: Metadata = {
   title: "왜 가치관인가",
   description:
-    "한결이 겨누는 것은 사람도 업체도 아닌 설계다. 기존 포맷의 네 가지 구조적 결함과, 그 대안을 뒷받침하는 세 편의 연구.",
+    "기존의 만남 서비스와 방향이 다른 이유. 네 가지 구조적 결함과, 그 대안을 뒷받침하는 세 편의 연구.",
+  alternates: { canonical: "/why" },
 };
+
+/* ─────────────────────────────────────────────────────────────
+   카피는 브랜드 철학 문서를 손님 언어(존댓말)로 옮긴 것이다.
+   사실·숫자·출처·인용은 원문 그대로 간다.
+
+   ⚠️ 선언문체로 남겨둔 것들 — 존댓말로 바꾸지 말 것.
+      · 결함 제목 4개("~한다") — 기존 포맷을 서술하는 말이라 존댓말로 바꾸면
+        한결이 그렇게 한다는 뜻이 된다.
+      · <dl className={s.facts}>의 factDesc — 표의 칸이라 명사구로 짧게 유지한다.
+      · 큰따옴표 안의 인용문 — 남의 말이거나 원문 인용이다.
+
+   ⚠️ h1에 특정 업종·서비스 이름을 넣지 말 것. CLAUDE.md의 금지어("소개팅앱")이자
+      §2.1의 경쟁사 폄하 금지에 걸린다. 잠재 고객 상당수가 그 서비스 이용자라
+      전략적으로도 자해다. "기존의 만남 서비스"처럼 범주로만 가리킨다.
+   ───────────────────────────────────────────────────────────── */
 
 export default function WhyPage() {
   return (
@@ -19,49 +35,33 @@ export default function WhyPage() {
           <span className="eyebrow" data-reveal>
             왜 가치관인가
           </span>
-          <h1 className={`display ${s.title}`} id="why-aim" data-reveal>
-            우리가 겨누는 것은
+          <h1 className={`display display--page ${s.title}`} id="why-aim" data-reveal>
+            기존의 만남 서비스와는
             <br />
-            오직 “설계”다.
+            방향이 다릅니다.
           </h1>
           <div className={s.prose} data-reveal>
             <p className="lede">
-              한결이 겨누는 것은 사람도, 업체도, 진정성도 아니다.
-            </p>
-            <p className="lede">
               기존 포맷은 나쁘게 만들어진 게 아니라 다른 목적에 맞게 잘
-              만들어졌다. 그 목적은 “제한된 시간에 최대한 많은 이성을 만나게
-              한다”이다. 그 목적에는 최적이다. 다만 그것은 깊이의 목적이 아니라
-              처리량의 목적이다.
+              만들어졌습니다. 그 목적은 “제한된 시간에 최대한 많은 이성을 만나게
+              한다”입니다. 하지만 저희는 목적 자체가 다릅니다.
             </p>
-          </div>
-
-          {/* 핵심 요약 — 이 페이지 전체(구조적 결함 5개 + 연구 3편)를 끝까지
-              읽지 않아도 결론과 다음 행동을 바로 알 수 있게 한다. */}
-          <div className="tldr" data-reveal>
-            <span className="tldr__label">핵심 요약</span>
-            <ul className="tldr__list">
-              <li>기존 포맷은 틀린 게 아니라 처리량이 목적이다. 우리는 깊이가 목적이다.</li>
-              <li>
-                <strong>Joel et al. 2020(PNAS)</strong> — 관계 만족도는 누구를 만났는지(21%)보다
-                만난 뒤의 관계 역학(45%)이 두 배 더 크게 좌우한다.
-              </li>
-              <li>그래서 완벽한 매칭은 약속하지 않는다. 약속하는 건 좋은 시작뿐이다.</li>
-            </ul>
+            <p className={s.big}>
+              {"“많이”가 아닌 “깊게”입니다."}
+            </p>
           </div>
         </div>
       </section>
 
-      {/* ── 2. 다섯 가지 구조적 결함 (검정) ────────────────── */}
+      {/* ── 2. 네 가지 구조적 결함 (검정) ──────────────────── */}
       <section className="band band--dark" aria-labelledby="why-flaws">
         <div className={`shell stagger ${s.head}`}>
           <span className="eyebrow" data-reveal>
-            문제 · 네 가지 구조적 결함
+            문제
           </span>
           <h2 className={`display ${s.title}`} id="why-flaws" data-reveal>
-            명사는 사람을 분류할 수 있게 해주지만
-            <br />
-            이해하게 해주지는 않는다.
+            기존의 시스템으로는
+            <br />왜 아쉬움이 남았을까요?
           </h2>
 
           <ol className={`stagger ${s.list}`}>
@@ -72,7 +72,7 @@ export default function WhyPage() {
                 <h3 className={s.itemTitle}>사람을 스펙 카드로 환원한다</h3>
                 <p className={s.text}>
                   MBTI·나이·직업 같은 명사형 정보는 사람을 분류하게 해줄 뿐,
-                  이해하게 해주지는 않는다.
+                  이해하게 해주지는 않습니다.
                 </p>
                 <table className={s.contrast}>
                   <thead>
@@ -101,8 +101,8 @@ export default function WhyPage() {
                 <div className={s.solution}>
                   <span className={s.solutionLabel}>한결의 해결책</span>
                   <p className={s.solutionText}>
-                    모든 문항에 &ldquo;왜 그렇게 생각했는지&rdquo; Follow-up을 붙인다 — 선택이
-                    아니라 선택 + 이유를 본다.
+                    모든 문항에 &ldquo;왜 그렇게 생각했는지&rdquo; Follow-up을 붙입니다 — 선택이
+                    아니라 선택 + 이유를 봅니다.
                   </p>
                 </div>
               </div>
@@ -115,13 +115,13 @@ export default function WhyPage() {
                 <h3 className={s.itemTitle}>대화를 스몰토크로 설계한다</h3>
                 <p className={s.text}>
                   가벼운 질문은 첫 30초엔 훌륭하지만, 그 다음이 없으면 남는 건
-                  정보 교환이지 이해가 아니다.
+                  정보 교환이지 이해가 아닙니다.
                 </p>
                 <div className={s.solution}>
                   <span className={s.solutionLabel}>한결의 해결책</span>
                   <p className={s.solutionText}>
                     사전에 10개 주제로 답변을 받아, 당일 대화가 처음부터 그
-                    답변에서 시작한다.
+                    답변에서 시작합니다.
                   </p>
                 </div>
               </div>
@@ -134,12 +134,12 @@ export default function WhyPage() {
                 <h3 className={s.itemTitle}>선택을 공개적으로 만든다</h3>
                 <p className={s.text}>
                   누구를 선택했는지가 드러나는 순간, 참가자는 거절의 두려움을
-                  안고 대화하게 된다.
+                  안고 대화하게 됩니다.
                 </p>
                 <div className={s.solution}>
                   <span className={s.solutionLabel}>한결의 해결책</span>
                   <p className={s.solutionText}>
-                    결1~결20 익명 배정, 선택 결과는 원칙적으로 비공개다.
+                    결1~결20 익명 배정, 선택 결과는 원칙적으로 비공개입니다.
                   </p>
                 </div>
               </div>
@@ -152,12 +152,12 @@ export default function WhyPage() {
                 <h3 className={s.itemTitle}>만남 이후가 없다</h3>
                 <p className={s.text}>
                   행사가 끝나면 관계는 참가자 개인의 몫으로 남고, 대부분의
-                  포맷엔 그 다음이 없다.
+                  포맷엔 그 다음이 없습니다.
                 </p>
                 <div className={s.solution}>
                   <span className={s.solutionLabel}>한결의 해결책</span>
                   <p className={s.solutionText}>
-                    성향 리포트를 드리고, 관계를 잇는 것까지 설계에 포함한다.
+                    성향 리포트를 드리고, 관계를 잇는 것까지 설계에 포함합니다.
                   </p>
                 </div>
               </div>
@@ -166,18 +166,21 @@ export default function WhyPage() {
         </div>
       </section>
 
-      {/* ── 3. 세 개의 랜드마크 연구 (흰) ──────────────────── */}
+      {/* ── 3. 세 개의 랜드마크 연구 (흰, 마지막 섹션) ─────────
+          "정직한 고백" 섹션을 걷어내면서 CTA를 이 아래로 옮겨 왔다 —
+          없으면 이 페이지의 전환 경로가 하단 고정 바 하나뿐이 된다. */}
       <section className="band" aria-labelledby="why-research">
         <div className={`shell stagger ${s.head}`}>
           <span className="eyebrow" data-reveal>
-            근거 · 세 개의 랜드마크 연구
+            근거
           </span>
           <h2 className={`display ${s.title}`} id="why-research" data-reveal>
-            누구를 만나느냐 {"<"}
-            <br />둘이 어떤 관계를 만드느냐
+            한결의 시스템은
+            <br />
+            근거에 기반합니다.
           </h2>
           <p className="lede" data-reveal>
-            한결의 매칭 철학은 세 편의 종단·대규모 연구 위에 서 있다.
+            한결의 매칭 철학은 세 편의 종단·대규모 연구 위에 서 있습니다.
           </p>
 
           <ol className={`stagger ${s.list}`}>
@@ -189,7 +192,7 @@ export default function WhyPage() {
                 <p className={s.text}>
                   15분간의 부부 대화를 관찰해 이혼 여부를{" "}
                   <strong className={s.stat}>90%</strong> 이상 정확도로
-                  예측했다.
+                  예측했습니다.
                 </p>
                 <dl className={s.facts}>
                   <div className={s.factRow}>
@@ -217,11 +220,11 @@ export default function WhyPage() {
                   </div>
                 </dl>
                 <p className={s.pull}>
-                  우리가 물어야 할 것은 “싸우십니까”가 아니라{" "}
+                  저희가 물어야 할 것은 “싸우십니까”가 아니라{" "}
                   <span className="mark">
                     <span>“어떻게 화해하십니까”</span>
                   </span>{" "}
-                  다.
+                  입니다.
                 </p>
                 <p className={s.source}>출처 — Gottman Institute</p>
               </div>
@@ -253,7 +256,12 @@ export default function WhyPage() {
                   </div>
                 </dl>
                 <p className={s.pull}>
-                  누구를 만나느냐 {"<"} 둘이 어떤 관계를 만드느냐
+                  <span aria-hidden="true">
+                    누구를 만나느냐 {"<"} 둘이 어떤 관계를 만드느냐
+                  </span>
+                  <span className="sr-only">
+                    누구를 만나느냐보다, 둘이 어떤 관계를 만드느냐가 더 중요합니다
+                  </span>
                 </p>
                 <p className={s.source}>출처 — Joel et al. 2020, PNAS</p>
               </div>
@@ -268,59 +276,21 @@ export default function WhyPage() {
                 </h3>
                 <p className={s.text}>
                   관계의 질(따뜻함·신뢰·지지)이 장기 행복과 건강의 최강
-                  예측인자. 50세의 관계 만족도가 80세의 건강을 예측했다.
-                  외로움은 흡연·음주에 준하는 건강 위험 요인이었다.
+                  예측인자입니다. 50세의 관계 만족도가 80세의 건강을
+                  예측했습니다. 외로움은 흡연·음주에 준하는 건강 위험
+                  요인이었습니다.
                 </p>
                 <p className={s.source}>출처 — Harvard Gazette</p>
               </div>
             </li>
           </ol>
-        </div>
-      </section>
 
-      {/* ── 4. 정직한 고백 (검정) ──────────────────────────── */}
-      <section className="band band--dark" aria-labelledby="why-honest">
-        <div className={`shell stagger ${s.head}`}>
-          <span className="eyebrow" data-reveal>
-            정직한 고백 — 매칭은 만능이 아니다
-          </span>
-          <h2 className={`display ${s.title}`} id="why-honest" data-reveal>
-            “완벽한 매칭 = 오래 가는 관계”는
-            <br />
-            과학이 지지하지 않는다.
-          </h2>
-          <div className={s.prose} data-reveal>
-            <p className="lede">
-              Joel et al.의 21% vs 45%를 다시 보자. 관계의 성패는 만난 뒤의
-              역학이 더 크게 좌우한다. 아무리 정교하게 매칭해도, 그것은 21% 쪽
-              항목에 대한 최적화다.
-            </p>
-            <p className="lede">그렇다면 왜 하는가?</p>
-          </div>
-          <p className={s.big} data-reveal>
-            매칭은 좋은 시작과 마찰의 감소다.
-            <br />그 이상을 약속하면 거짓말이 된다.
-          </p>
-          <div className={s.prose} data-reveal>
-            <p className="lede">
-              이 정직함은 브랜드의 약점이 아니라 가장 강한 자산이다. 시장의
-              모든 경쟁자가 “운명의 상대를 찾아드립니다”라고 말할 때, “우리는
-              시작을 잘 만들어드립니다. 나머지는 두 분이 만드는 겁니다”라고
-              말하는 브랜드는 단 하나뿐이다. 그리고 그 말은{" "}
-              <span className="mark">
-                <span>참이다.</span>
-              </span>
-            </p>
-            <p className="lede">
-              그래서 한결의 사업 범위는 매칭에서 끝나지 않는다.
-            </p>
-          </div>
           <div className={s.cta} data-reveal>
             <Link className={`pill ${s.ctaPill}`} href={EVENT_HREF}>
               {EVENT_CTA_LABEL}
             </Link>
             <Link className="link-arrow" href="/principles">
-              원칙과 안전 보기
+              원칙 보기
             </Link>
           </div>
         </div>

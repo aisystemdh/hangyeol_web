@@ -7,6 +7,60 @@
 :root {
   color-scheme: light;
 
+  /* 서체는 고딕 1종 + 명조 1종이다(layout.tsx 주석 참조).
+     --font-sans는 next/font가 <html>에 붙이는 변수고, 아래 둘은 그걸 가리키는 별칭이다.
+     제목용 고딕을 따로 쓰고 싶어지면 --font-display만 다른 변수로 바꾸면 된다. */
+  --font-display: var(--font-sans);
+  --font-body: var(--font-sans);
+
+  /* ── 글자 크기 스케일 ────────────────────────────────────────
+     고정 크기는 **이 5단계가 전부**다. 새 요소를 만들 때 px을 직접 적지 말고
+     여기서 한 단계를 고른다 — 고민이 사라지고, 나중에 "본문 좀 키우자"가
+     한 줄 수정이 된다.
+
+     이전에는 12.5 · 13 · 13.5 · 14 · 14.5 · 15 · 15.5 · 16 · 16.5 · 17 · 17.5 ·
+     18 · 19 · 19.5 · 20 · 21 · 23 · 26 — **18종**이 흩어져 있었다.
+     사람 눈은 크기 차이를 20% 가까이 나야 인식하므로 14 vs 14.5(3.5% 차)는
+     보이지 않으면서 고칠 곳만 늘렸다.
+
+     단계 간격이 아래쪽에서 좁은 것(14→16이 14%)은 의도적이다. UI는 작은 쪽에서
+     더 촘촘한 눈금이 필요해 Tailwind·Material 등 실제 시스템도 같은 모양이다.
+
+     | 토큰   | 값   | 쓰는 곳                                  |
+     |--------|------|------------------------------------------|
+     | --fs-1 | 14px | 작은 라벨 · 캡션 · 주석 · 표의 열 이름     |
+     | --fs-2 | 16px | 본문 · 목록 · 입력                        |
+     | --fs-3 | 18px | 리드 문단 · 버튼 · 카드 본문              |
+     | --fs-4 | 21px | 소제목 · 카드 번호                        |
+     | --fs-5 | 26px | 큰 카드 제목                              |
+
+     제목은 화면 폭에 따라 변해야 해서 여기 넣지 않았다 — .display,
+     .display--page, .hero__headline 등이 각자 clamp()로 가진다. */
+  --fs-1: 14px;
+  --fs-2: 16px;
+  --fs-3: 18px;
+  --fs-4: 21px;
+  --fs-5: 26px;
+
+  /* ── 여백 스케일 (4의 배수) ──────────────────────────────────
+     `gap`은 전부 이 7단계에서 고른다. 4의 배수인 것은 화면 픽셀이 정수라
+     어긋남 없이 떨어지기 때문이고, 값을 줄인 진짜 이유는 글자 크기와 같다 —
+     **고를 것이 적으면 고민이 사라진다.**
+     이전에는 4·5·6·7·8·9·10·12·14·16·18·24·26·28·30·34·44 — 17종이었다.
+
+     ⚠️ 여기 없는 것: padding·left·top·width·height·grid-template-columns.
+        여백처럼 보여도 정렬을 떠받치는 값이 섞여 있다. 예를 들어
+        `.timeline__line { left: 90px }`은 `.timeline__row`의 `112px` 트랙과
+        맞물려 있어 한쪽만 4의 배수로 바꾸면 세로선이 눈에 안 띄게 어긋난다.
+        그런 값은 손대지 않았다. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
   --ink: #111111;
   --mute: #6b6b6b; /* 흰 위 5.33:1 */
   /* 흰 위 4.73:1. 이전 값 #9b9b9b는 2.78:1로 WCAG AA 미달이었다 —
@@ -31,9 +85,68 @@
   --shell: 1000px;
 }
 
-html,
-body {
+/* ⚠️ 흰 배경은 **html에만** 둔다. body에 두면 나무결(.site-grain)이 가려진다 —
+   z-index:-1인 fixed 요소는 "html의 배경 위, body 같은 일반 블록의 배경 아래"에
+   그려지기 때문이다. body를 흰색으로 되돌리면 결이 통째로 사라진다. */
+html {
   background: #ffffff;
+}
+body {
+  background: transparent;
+}
+
+/* 사이트 전체에 깔리는 나무결 한 장. 문서 높이가 아니라 **화면 크기**라
+   페이지가 길어져도 메모리가 일정하다(GrainCanvas.tsx 주석 참조).
+
+   ⚠️ <canvas>는 replaced element라 inset:0만으로는 늘어나지 않는다.
+      width가 auto면 CSS 규격상 고유 크기 300×150을 쓴다(CSS 2.1 §10.3.8).
+      width/height를 반드시 명시할 것.
+
+   검정 밴드(.band--dark)는 일반 블록이라 이 위에 그려져 결을 덮는다 — 의도한 동작이다. */
+.site-grain {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+
+html {
+  /* 스티키 헤더(약 60px)와 하단 고정 바(약 88px)가 키보드로 이동 중인 요소를 덮지
+     않게 한다 — WCAG 2.4.11(Focus Not Obscured). 2.1을 통과한 사이트가 2.2에서
+     가장 많이 새로 걸리는 항목이고, 원인은 대개 이런 sticky/fixed 요소다.
+     .apply의 scroll-margin-top은 위쪽만 보정하고 있어 하단 바를 못 막았다. */
+  scroll-padding-top: 72px;
+  scroll-padding-bottom: 100px;
+}
+
+/* 본문 바로가기 — 키보드 사용자가 헤더 내비게이션을 매번 지나치지 않아도 되게 한다.
+   평소에는 화면 위로 숨어 있다가 포커스를 받으면 내려온다.
+   z-index는 인트로 오버레이(60)보다 위여야 첫 화면에서도 눌린다. */
+.skip-link {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -120%);
+  z-index: 70;
+  background: var(--ink);
+  color: #ffffff;
+  text-decoration: none;
+  font-size: var(--fs-1);
+  padding: 12px 22px;
+  border-radius: 0 0 12px 12px;
+  transition: transform 0.2s var(--ease-out);
+}
+/* 전역 a 규칙(밑줄·hover 회색)과 포커스 링(잉크색)이 잉크 배경 위에서는 안 보인다 */
+.skip-link:hover {
+  color: #ffffff;
+}
+.skip-link:focus-visible {
+  transform: translate(-50%, 0);
+  color: #ffffff;
+  outline: 2px solid #ffffff;
+  outline-offset: -5px;
 }
 
 body {
@@ -101,7 +214,7 @@ a:focus-visible {
 
 .body-text {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--fs-2);
   line-height: 1.75;
   color: var(--mute);
 }
@@ -129,6 +242,45 @@ a:focus-visible {
 .pill:active {
   transform: scale(0.97);
 }
+/* "1:1 문의" + 인스타그램 마크. **헤더와 하단 고정 바가 공유한다**(InstagramLink.tsx).
+   높이 44px라 WCAG 2.5.8(최소 24px)을 넉넉히 넘기고, 글자까지 누를 수 있어 타깃이 넓다.
+   전역 a 규칙(밑줄·hover 회색)을 여기서 끊는다. */
+.ig-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 44px;
+  padding: 0 var(--sp-3);
+  border-radius: 999px;
+  flex: none;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: var(--fs-1);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+}
+.ig-link:hover {
+  background: var(--tint);
+  color: var(--ink);
+}
+/* 헤더는 세로가 빠듯하다(로고 30px + 패딩 12px). 한 단계 작게 쓴다. */
+.site-header__ig {
+  height: 38px;
+  padding: 0 var(--sp-2);
+}
+
+/* 잠긴 상태 — 아직 신청을 받을 수 없을 때(폼 엔드포인트 미설정)와 전송 중.
+   --mute(#6b6b6b)를 --tint(#f5f4f2) 위에 올려 5:1로, 잠겨 있어도 읽히게 둔다. */
+.pill:disabled,
+.pill:disabled:hover {
+  background: var(--tint);
+  border: 1px solid var(--rule);
+  color: var(--mute);
+  cursor: not-allowed;
+  transform: none;
+}
 
 /* ═══════════════════════════════════════════════════════════
    힌지식 공통 프리미티브 — 모든 페이지가 공유한다.
@@ -140,8 +292,10 @@ a:focus-visible {
   display: block;
   margin: 0;
   font-family: var(--font-display), sans-serif;
-  font-weight: 600;
-  font-size: 14.5px;
+  /* 600은 로드하지 않는 굵기라 브라우저가 700으로 대체하고 있었다.
+     보이는 결과는 그대로 두고 선언만 사실과 맞췄다. */
+  font-weight: 700;
+  font-size: var(--fs-1);
   line-height: 1.4;
   letter-spacing: 0.08em;
   text-transform: none;
@@ -163,10 +317,21 @@ a:focus-visible {
   text-wrap: balance;
 }
 
+/* 페이지 대표 제목(h1) 전용. 문서형 3페이지(/mission /why /principles)는 h1과 h2가
+   둘 다 .display라 페이지 제목이 섹션 제목보다 커 보이지 않았다 — 마크업 위계는
+   맞는데 시각 위계가 없는 상태였다.
+   데스크톱에서 72 vs 58 = 24% 차이로 확실히 구분된다(사람 눈은 20% 미만 차이를
+   크기 차로 인식하지 못한다). 모바일은 48 vs 44로 차이를 줄였다 —
+   좁은 화면에서 h1을 더 키우면 두 줄이 네 줄이 되어 얻는 것보다 잃는 게 크다.
+   홈·/events/1의 히어로는 .hero__headline이라는 별도 스케일이라 무관하다. */
+.display--page {
+  font-size: clamp(48px, 8.4vw, 72px);
+}
+
 /* 본문 리드. .body-text(16px)보다 한 단계 큰, 제목 바로 아래용. */
 .lede {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--fs-3);
   line-height: 1.7;
   color: var(--mute);
   max-width: 34em;
@@ -229,7 +394,7 @@ a:focus-visible {
   text-decoration: none;
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 15px;
+  font-size: var(--fs-2);
   letter-spacing: -0.01em;
   color: var(--ink);
   transition: color 0.25s ease;
@@ -377,20 +542,16 @@ details[open] > [data-answer] {
 }
 /* 헤더 내부 배치(.inner)와 브랜드 묶음(.brand)은 SiteHeader.module.css가 갖는다.
    여기 남는 것은 밖에서 상태를 거는 것들(스티키·스크롤 축소)뿐이다. */
+/* 글씨 없는 심볼(297×266, 거의 정사각형)이라 세로 로고였을 때보다 조금 키웠다 —
+   같은 높이면 정사각 마크가 눈에 덜 들어온다. 워드마크 텍스트는 없앴다. */
 .site-header__logo {
-  height: 26px;
+  height: 30px;
   width: auto;
   display: block;
   transition: height 0.35s var(--ease-out);
 }
-.site-header__wordmark {
-  font-family: var(--font-display), sans-serif;
-  font-weight: 900;
-  font-size: 17px;
-  letter-spacing: -0.02em;
-}
 .site-header__cta {
-  font-size: 14px;
+  font-size: var(--fs-1);
   padding: 10px 20px;
 }
 html[data-scrolled] .site-header {
@@ -398,13 +559,13 @@ html[data-scrolled] .site-header {
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
 }
 html[data-scrolled] .site-header__logo {
-  height: 20px;
+  height: 24px;
 }
 
 /* ══════════════════════════════════════════════════════════════
    ══ 아래는 /events/1 전용 ══
    .hero__* / .identity__* / .timeline__* / .founders__* /
-   .apply__* / .seats__* 은 1차 모임 랜딩에서만 쓴다.
+   .apply__* 은 1차 모임 랜딩에서만 쓴다.
    다른 페이지에서는 위쪽 공통 프리미티브(.band .display .lede …)를 쓸 것.
    ══════════════════════════════════════════════════════════════ */
 
@@ -416,7 +577,7 @@ html[data-scrolled] .site-header__logo {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 34px;
+  gap: var(--sp-6);
   text-align: center;
 }
 .hero__intro {
@@ -427,7 +588,10 @@ html[data-scrolled] .site-header__logo {
   display: grid;
   place-items: center;
   pointer-events: none;
-  animation: introOut 2.5s linear both;
+  /* 2.5s → 1.2s. 아래 hero__* 지연값과 HomeHero.tsx의 인라인 지연을 함께 앞당겼다 —
+     순서와 모양은 원본 그대로고 속도만 줄인 것이다(/events/1의 Hero가 쓴 방식과 같다).
+     이 값을 되돌리면 뒤따르는 전 구간이 어긋난다. */
+  animation: introOut 1.2s linear both;
 }
 /* 첫 방문에만 재생한다. 속성은 layout.tsx의 렌더 전 인라인 스크립트가 붙인다. */
 html[data-intro-seen] .hero__intro {
@@ -442,7 +606,7 @@ html[data-intro-seen] .hero__intro {
   width: 78px;
   height: auto;
   display: block;
-  animation: logoIn 0.9s 5s var(--ease-out) both;
+  animation: logoIn 0.9s 2.2s var(--ease-out) both;
 }
 .hero__headline-wrap {
   position: relative;
@@ -493,7 +657,7 @@ html[data-intro-seen] .hero__intro {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 30px;
+  gap: var(--sp-6);
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
   font-size: clamp(24px, 6.5vw, 34px);
@@ -507,13 +671,14 @@ html[data-intro-seen] .hero__intro {
   font-size: clamp(26px, 7vw, 38px);
   letter-spacing: -0.03em;
   color: var(--mute);
-  animation: wpFadeIn 0.5s 7.6s var(--ease-out) both;
+  /* HomeHero용 기본값. /events/1의 Hero는 인라인 style로 5.6s를 덮어쓴다. */
+  animation: wpFadeIn 0.3s 3.55s var(--ease-out) both;
 }
 .hero__swap {
   display: inline-grid;
   vertical-align: top;
 }
-/* 인트로 건너뛰기 — 첫 방문자가 9초대 시퀀스를 강제로 다 보지 않아도 되게 한다.
+/* 인트로 건너뛰기 — 첫 방문자가 시퀀스를 강제로 다 보지 않아도 되게 한다.
    오버레이(z-index 60)보다 위, 헤더보다 위(z-index 20)에 둔다. */
 .hero__skip {
   position: fixed;
@@ -523,7 +688,7 @@ html[data-intro-seen] .hero__intro {
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid var(--rule);
   color: var(--mute);
-  font-size: 13px;
+  font-size: var(--fs-1);
   padding: 9px 18px;
   border-radius: 999px;
   cursor: pointer;
@@ -532,10 +697,10 @@ html[data-intro-seen] .hero__intro {
   transition:
     border-color 0.25s ease,
     color 0.25s ease;
-  /* 인트로 시퀀스가 다 끝나면(HomeHero 마지막 애니메이션 ~9.4s) 스스로 사라진다 —
+  /* 인트로 시퀀스가 다 끝나면(HomeHero 마지막 애니메이션 ~4.5s) 스스로 사라진다 —
      다 본 사용자에게 불필요한 버튼을 남기지 않기 위해서다. JS 타이머 없이
      CSS만으로 처리해 SkipIntroButton을 상태 없는 컴포넌트로 유지한다. */
-  animation: heroSkipOut 0.3s 9.4s both;
+  animation: heroSkipOut 0.3s 4.5s both;
 }
 .hero__skip:hover {
   border-color: var(--ink);
@@ -550,21 +715,25 @@ html[data-intro-seen] .hero__skip {
 }
 
 /* 슬로건의 언어유희("결")를 즉시 풀어주는 한 줄 — /mission까지 가지 않아도
-   첫 화면에서 뜻이 통하게 한다. */
+   첫 화면에서 뜻이 통하게 한다.
+   ⚠️ 9.15s → 1.7s. 이 한 줄이 "한결이 뭐 하는 곳인지"의 답이라, 예전 값에서는
+      5초 테스트(첫 화면 5초만 보여주고 뭐 하는 사이트인지 묻기)를 통과하지 못했다.
+      이제 워드플레이(2.4s~)보다 **먼저** 나와, 애니메이션이 뭘 하려는지 알고 보게 된다.
+      뒤로 미루지 말 것. */
 .hero__gloss {
   margin: -4px 0 0;
-  font-size: 13.5px;
+  font-size: var(--fs-1);
   line-height: 1.6;
   color: var(--faint);
   max-width: 26em;
-  animation: riseIn 0.8s 9.15s var(--ease-out) both;
+  animation: riseIn 0.8s 1.7s var(--ease-out) both;
 }
 
 .hero__replay {
   background: none;
   border: 1px solid var(--rule);
   color: var(--faint);
-  font-size: 12.5px;
+  font-size: var(--fs-1);
   padding: 7px 16px;
   border-radius: 999px;
   cursor: pointer;
@@ -581,33 +750,38 @@ html[data-intro-seen] .hero__skip {
   margin: 0;
   font-family: var(--font-serif), serif;
   font-weight: 400;
-  font-size: 21px;
+  font-size: var(--fs-4);
   line-height: 1.65;
   color: var(--lead);
   max-width: 20em;
-  animation: riseIn 0.8s 3.4s var(--ease-out) both;
+  /* HomeHero용 기본값. /events/1의 Hero는 인라인 style로 1.4s를 덮어쓴다. */
+  animation: riseIn 0.8s 1.5s var(--ease-out) both;
 }
 .hero__chips {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 8px;
+  gap: var(--sp-2);
   animation: riseIn 0.8s 3.15s var(--ease-out) both;
 }
 .chip {
   background: var(--tint);
   border-radius: 999px;
   padding: 9px 18px;
-  font-size: 14px;
+  font-size: var(--fs-1);
   font-weight: 500;
 }
 .hero__cta {
-  font-size: 17px;
+  font-size: var(--fs-3);
   padding: 20px 44px;
   /* 원본은 box-sizing:content-box라 min-width:240px가 좌우 패딩 88px을 뺀 값이었다
-     → border-box에서는 328px에 해당한다. max-width로 좁은 화면 넘침만 막는다. */
-  min-width: 328px;
-  max-width: 100%;
+     → border-box에서는 328px에 해당한다.
+     ⚠️ min-width + max-width 조합으로 되돌리지 말 것 — CSS에서 min-width가
+        max-width를 이기기 때문에 max-width:100%가 무시된다. .hero의 좌우 패딩이
+        22px씩이라 뷰포트 372px 미만에서 버튼이 넘쳤고, overflowX:hidden이 잘라냈다
+        (국내에서 흔한 360px 안드로이드에서 12px 잘림).
+        width: min()이라야 넓은 화면에서 328px을 지키고 좁은 화면에서만 줄어든다. */
+  width: min(328px, 100%);
   animation: riseIn 0.8s 3.3s var(--ease-out) both;
 }
 .hero__cta:hover {
@@ -621,7 +795,7 @@ html[data-intro-seen] .hero__skip {
 .identity__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 14px;
+  gap: var(--sp-4);
 }
 .card {
   background: var(--tint);
@@ -629,7 +803,7 @@ html[data-intro-seen] .hero__skip {
   padding: 32px 26px 36px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--sp-4);
   /* transition이 없으면 :hover에서 툭 튄다 */
   transition: transform 0.25s ease;
 }
@@ -639,14 +813,14 @@ html[data-intro-seen] .hero__skip {
 .card__num {
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: 19px;
+  font-size: var(--fs-4);
   letter-spacing: 0.02em;
   color: var(--num);
 }
 .card__title {
   font-family: var(--font-display), sans-serif;
   font-weight: 900;
-  font-size: 23px;
+  font-size: var(--fs-5);
   line-height: 1.3;
   letter-spacing: -0.025em;
   margin: 0;
@@ -690,7 +864,7 @@ html[data-intro-seen] .hero__skip {
 .timeline__row {
   display: grid;
   grid-template-columns: 112px 1fr;
-  gap: 18px;
+  gap: var(--sp-4);
   padding: 26px 0;
   border-top: 1px solid var(--rule);
 }
@@ -698,7 +872,7 @@ html[data-intro-seen] .hero__skip {
   border-bottom: 1px solid var(--rule);
 }
 .timeline__time {
-  font-size: 14px;
+  font-size: var(--fs-1);
   font-weight: 500;
   color: var(--faint);
   font-variant-numeric: tabular-nums;
@@ -707,12 +881,12 @@ html[data-intro-seen] .hero__skip {
 .timeline__body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-2);
 }
 .timeline__title {
   font-family: var(--font-display), sans-serif;
   font-weight: 900;
-  font-size: 21px;
+  font-size: var(--fs-4);
   letter-spacing: -0.025em;
   margin: 0;
 }
@@ -720,24 +894,17 @@ html[data-intro-seen] .hero__skip {
   max-width: 44em;
 }
 
-/* ── 운영자 ───────────────────────────────────────────────── */
-.two-col {
-  max-width: var(--shell);
-  margin: 0 auto;
-  padding: 76px 22px 84px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 44px;
-  align-items: start;
-}
+/* ── 운영자 ─────────────────────────────────────────────────
+   사진 자리를 걷어내면서 2열 레이아웃(.two-col)이 필요 없어졌다.
+   본문 아래에 운영자 줄만 가로로 놓는다. */
 .founders__copy {
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: var(--sp-5);
 }
 .founders__copy p {
   margin: 0;
-  font-size: 17px;
+  font-size: var(--fs-3);
   line-height: 1.85;
   color: var(--mute);
 }
@@ -747,32 +914,26 @@ html[data-intro-seen] .hero__skip {
   font-weight: 700;
   font-size: 1.08em;
 }
-.founders__photos {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
+.founders__people {
+  list-style: none;
+  margin: var(--sp-6) 0 0;
+  padding: var(--sp-5) 0 0;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-7);
 }
 .founders__person {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-.founders__slot {
-  width: 100%;
-  aspect-ratio: 4 / 5;
-  border-radius: 22px; /* .card/.stat/.seats/.refund와 통일 */
-  background: var(--tint);
-  border: 1px dashed var(--track);
-  display: grid;
-  place-items: center;
-  color: var(--faint);
-  font-size: 13px;
+  gap: var(--sp-1);
 }
 .founders__name {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--fs-2);
+  font-weight: 700;
 }
 .founders__role {
+  font-size: var(--fs-1);
   color: var(--faint);
   font-weight: 400;
 }
@@ -787,13 +948,13 @@ html[data-intro-seen] .hero__skip {
   padding: 76px 22px 84px;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 44px;
+  gap: var(--sp-7);
   align-items: start;
 }
 .apply__left {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: var(--sp-5);
 }
 .facts {
   display: flex;
@@ -804,14 +965,14 @@ html[data-intro-seen] .hero__skip {
 .facts__row {
   display: grid;
   grid-template-columns: 86px 1fr;
-  gap: 14px;
+  gap: var(--sp-4);
   padding: 16px 0;
   border-bottom: 1px solid var(--rule);
-  font-size: 16px;
+  font-size: var(--fs-2);
 }
 .facts__row dt {
   color: var(--faint);
-  font-size: 14px;
+  font-size: var(--fs-1);
   margin: 0;
 }
 .facts__row dd {
@@ -820,76 +981,24 @@ html[data-intro-seen] .hero__skip {
 }
 .facts__note {
   color: var(--faint);
-  font-size: 14px;
-}
-
-.seats {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 26px;
-  background: var(--tint);
-  border-radius: 22px;
-}
-.seats__title {
-  font-size: 14px;
-  font-weight: 700;
-}
-.seats__rows {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.seats__row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.seats__label {
-  font-size: 15px;
-  min-width: 22px;
-  color: var(--mute);
-}
-.seats__track {
-  display: flex;
-  gap: 4px;
-  flex: 1;
-}
-.seats__cell {
-  flex: 1;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--track);
-  overflow: hidden;
-}
-.seats__fill {
-  height: 100%;
-  width: 100%;
-  border-radius: 999px;
-}
-.seats__count {
-  font-size: 14px;
-  font-weight: 500;
-  min-width: 52px;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-1);
 }
 
 .apply__right {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--sp-4);
 }
 .form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--sp-3);
 }
 .input {
   border: 1px solid var(--rule);
   background: #ffffff;
   color: var(--ink);
-  font-size: 16px;
+  font-size: var(--fs-2);
   padding: 18px 20px;
   border-radius: 999px;
   transition: border-color 0.25s ease;
@@ -901,16 +1010,35 @@ html[data-intro-seen] .hero__skip {
 .input:focus {
   border-color: var(--ink);
 }
+/* 라디오 그룹. 진짜 <input type="radio">를 숨기고 <label>을 버튼처럼 그린다 —
+   그래야 스크린리더가 "성별, 2개 중 1개"로 읽고 방향키 이동도 공짜로 따라온다.
+   예전의 aria-pressed 버튼 두 개로 되돌리지 말 것.
+   ⚠️ <legend>와 .gender__input은 둘 다 position:absolute라 그리드 칸을 차지하지
+      않는다. 그래서 1fr 1fr에 라벨 두 개가 정확히 들어간다. */
 .gender {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: var(--sp-3);
+  /* fieldset 기본 스타일 제거. min-width:0이 없으면 grid/flex 안에서 줄어들지 않는다. */
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.gender__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 .gender__btn {
+  display: block;
+  text-align: center;
   border: 1px solid var(--rule);
   background: #ffffff;
   color: var(--mute);
-  font-size: 16px;
+  font-size: var(--fs-2);
   padding: 18px;
   border-radius: 999px;
   cursor: pointer;
@@ -923,14 +1051,106 @@ html[data-intro-seen] .hero__skip {
 .gender__btn:active {
   transform: scale(0.97);
 }
-.gender__btn[aria-pressed="true"] {
+.gender__input:checked + .gender__btn {
   border-color: var(--ink);
   background: var(--ink);
   color: #ffffff;
 }
+/* 입력이 숨어 있으므로 포커스 링을 라벨이 대신 받는다 */
+.gender__input:focus-visible + .gender__btn {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* 입력 한 칸 + 그 칸의 오류 문구를 묶는다. .form의 gap(12px)이 칸 사이 간격이고,
+   칸 안쪽 6px가 입력과 오류 문구 사이다. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+/* 색이 없는 사이트라 오류를 색으로 알릴 수 없다. 테두리를 두껍게 하는 것으로 알리되
+   border-width를 바꾸면 패딩이 밀리므로 inset 그림자로 겹쳐 그린다(레이아웃 이동 없음).
+   물론 색만으로 알리지 않는다 — 아래 .field__error가 문장으로 말해준다(WCAG 1.4.1). */
+.input[aria-invalid="true"] {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.field__error {
+  margin: 0;
+  padding-left: 20px; /* .input의 좌측 패딩과 맞춘다 */
+  font-size: var(--fs-1);
+  line-height: 1.5;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* 개인정보 수집 동의. 체크박스 자체는 20px이지만 라벨 전체가 클릭 대상이라
+   실제 터치 타깃은 줄 전체다(WCAG 2.5.8). */
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: 2px 4px;
+}
+.consent__input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--ink);
+  cursor: pointer;
+}
+.consent__label {
+  font-size: var(--fs-2);
+  line-height: 1.5;
+  color: var(--mute);
+  cursor: pointer;
+}
+.consent__req {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* 스팸 봇용 미끼 칸. 화면 밖으로 밀어내기만 하고 display:none은 쓰지 않는다 —
+   숨긴 칸은 봇도 건너뛰기 때문에 미끼 역할을 못 한다. .sr-only와 목적이 다르다
+   (저건 스크린리더에 읽히라고 있는 것이고, 이건 아무에게도 안 닿아야 한다). */
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* 엔드포인트가 없어 접수를 못 받는 동안의 안내. 버튼은 잠겨 있다. */
+.form__notice {
+  margin: 0;
+  font-size: var(--fs-1);
+  line-height: 1.6;
+  color: var(--faint);
+  text-align: center;
+}
+
+/* 완료 화면에서 폼으로 돌아가는 길. 입력값은 남아 있다. */
+.confirm__back {
+  align-self: center;
+  margin-top: 6px;
+  background: none;
+  border: 0;
+  padding: 8px 4px;
+  font-size: var(--fs-1);
+  color: var(--mute);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.confirm__back:hover {
+  color: var(--ink);
+}
 .form__submit {
   padding: 20px;
-  font-size: 17px;
+  font-size: var(--fs-3);
   margin-top: 6px;
   width: 100%;
 }
@@ -942,14 +1162,14 @@ html[data-intro-seen] .hero__skip {
 }
 .form__error {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-1);
   line-height: 1.6;
   color: var(--ink);
 }
 .confirm {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--sp-3);
   padding: 34px 26px;
   border: 1px solid var(--ink);
   border-radius: 22px;
@@ -959,12 +1179,12 @@ html[data-intro-seen] .hero__skip {
 .confirm__title {
   font-family: var(--font-display), sans-serif;
   font-weight: 900;
-  font-size: 20px;
+  font-size: var(--fs-4);
   letter-spacing: -0.02em;
 }
 .confirm p {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--fs-2);
   line-height: 1.75;
   color: var(--mute);
 }
@@ -981,15 +1201,15 @@ html[data-intro-seen] .hero__skip {
 .rules > summary {
   list-style: none;
   cursor: pointer;
-  font-size: 15px;
+  font-size: var(--fs-2);
   font-weight: 500;
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--sp-3);
 }
 .rules p {
   margin: 14px 0 0;
-  font-size: 15px;
+  font-size: var(--fs-2);
   line-height: 1.8;
   color: var(--mute);
 }
@@ -1009,14 +1229,14 @@ html[data-intro-seen] .hero__skip {
   cursor: pointer;
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: 19.5px;
+  font-size: var(--fs-4);
   display: flex;
   justify-content: space-between;
-  gap: 14px;
+  gap: var(--sp-4);
 }
 .faq__a {
   margin: 14px 0 0;
-  font-size: 16px;
+  font-size: var(--fs-2);
   line-height: 1.8;
   color: var(--mute);
   max-width: 46em;
@@ -1034,7 +1254,7 @@ details[open] > summary .plus {
 .refund {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--sp-4);
   padding: 32px 28px;
   background: var(--tint);
   border-radius: 22px;
@@ -1042,21 +1262,21 @@ details[open] > summary .plus {
 .refund__title {
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: 23px;
+  font-size: var(--fs-5);
   letter-spacing: -0.01em;
   margin: 0;
 }
 .refund__rows {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  font-size: 16px;
+  gap: var(--sp-3);
+  font-size: var(--fs-2);
   line-height: 1.75;
 }
 .refund__row {
   display: grid;
   grid-template-columns: 92px 1fr;
-  gap: 14px;
+  gap: var(--sp-4);
 }
 .refund__when {
   color: var(--faint);
@@ -1073,7 +1293,7 @@ details[open] > summary .plus {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: var(--sp-4);
   text-align: center;
 }
 .site-footer__logo {
@@ -1084,19 +1304,19 @@ details[open] > summary .plus {
 .site-footer__brand {
   font-family: var(--font-display), sans-serif;
   font-weight: 900;
-  font-size: 16px;
+  font-size: var(--fs-2);
   letter-spacing: -0.02em;
 }
 .site-footer__nav {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 8px 22px;
+  gap: var(--sp-2) var(--sp-5);
   margin-top: 6px;
 }
 .site-footer__nav a {
   text-decoration: none;
-  font-size: 14px;
+  font-size: var(--fs-1);
   color: var(--mute);
   transition: color 0.2s ease;
 }
@@ -1104,8 +1324,25 @@ details[open] > summary .plus {
   color: var(--ink);
 }
 .site-footer__people {
-  font-size: 13.5px;
+  font-size: var(--fs-1);
   color: var(--faint);
+}
+/* 문의 채널. 채워진 것이 하나도 없으면 Footer가 이 블록을 그리지 않는다. */
+.site-footer__contact {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-2) var(--sp-5);
+  margin-top: 4px;
+}
+.site-footer__contact a {
+  font-size: var(--fs-1);
+  color: var(--mute);
+  text-underline-offset: 3px;
+  transition: color 0.2s ease;
+}
+.site-footer__contact a:hover {
+  color: var(--ink);
 }
 
 .sticky-bar {
@@ -1131,19 +1368,53 @@ html[data-scrolled] .sticky-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--sp-4);
+}
+/* 왼쪽 정보 묶음. min-width:0이 없으면 flex 아이템 기본값(auto) 때문에 절대 줄지 않아,
+   오른쪽 행동 버튼들을 바 밖으로 밀어낸다. */
+.sticky-bar__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 .sticky-bar__price {
-  font-size: 14px;
+  font-size: var(--fs-1);
   font-weight: 700;
 }
 .sticky-bar__meta {
-  font-size: 12.5px;
+  font-size: var(--fs-1);
   color: var(--faint);
 }
+.sticky-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex: none;
+}
 .sticky-bar__cta {
-  font-size: 15px;
+  font-size: var(--fs-2);
   padding: 14px 30px;
+}
+
+/* 좁은 폰에서 [가격·날짜] + [1:1 문의] + [신청 버튼]이 한 줄에 안 들어간다.
+   날짜·장소는 페이지 안 정보표에도 있으므로 여기서만 접고, 값과 행동은 남긴다.
+   높이 40px도 최소 터치 타깃(24px)을 넉넉히 넘긴다. */
+@media (max-width: 420px) {
+  .sticky-bar__meta {
+    display: none;
+  }
+  .sticky-bar__cta {
+    padding: 13px 16px;
+    font-size: var(--fs-1);
+  }
+  .ig-link {
+    height: 40px;
+    padding: 0 var(--sp-2);
+  }
+  .sticky-bar__inner {
+    gap: var(--sp-2);
+  }
 }
 
 /* ── 동작 줄이기 ──────────────────────────────────────────── */
@@ -1188,7 +1459,7 @@ html[data-scrolled] .sticky-bar {
 .tldr {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--sp-3);
   padding: 24px 26px;
   background: var(--tint);
   border-radius: 22px;
@@ -1196,7 +1467,7 @@ html[data-scrolled] .sticky-bar {
 .tldr__label {
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--fs-1);
   letter-spacing: 0.06em;
   color: var(--faint);
 }
@@ -1205,8 +1476,8 @@ html[data-scrolled] .sticky-bar {
   padding-left: 1.15em;
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  font-size: 15.5px;
+  gap: var(--sp-2);
+  font-size: var(--fs-2);
   line-height: 1.65;
   color: var(--ink);
 }

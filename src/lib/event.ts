@@ -5,8 +5,9 @@
  * 이 시장의 대표적 불만 요인이다.
  */
 export const EVENT = {
-  /** 날짜 미정. 확정되면 이 한 곳만 고치면 히어로 칩·정보표·하단 바에 모두 반영된다. */
-  date: "날짜 미정",
+  /** 아직 일자까지는 미정이다. 확정되면 이 한 곳만 고치면 히어로 칩·정보표·하단 바·
+   *  메타 description에 모두 반영된다. */
+  date: "10월 중",
   time: "18:00–21:00",
   doorsOpen: "17:45 입장",
   place: "합정",
@@ -16,7 +17,7 @@ export const EVENT = {
   priceLabel: "39,000원",
   priceNote: "남녀 동일",
   ageMin: 20,
-  ageMax: 33,
+  ageMax: 32,
 } as const;
 
 /**
@@ -32,16 +33,8 @@ export const REFUND = [
   },
 ] as const;
 
-/** 카피에서 반복해 쓰는 문구. 숫자를 문장에 박아 넣지 않기 위한 헬퍼다. */
-export const AGE_RANGE = `만 ${EVENT.ageMin}–${EVENT.ageMax}세`;
-
 /**
- * 남은 자리. 지금은 상수다.
- * TODO(백엔드): 신청 수를 서버에서 읽어 내려줄 것.
- *   예) const { menLeft, womenLeft } = await getRemainingSeats()
- *   `Apply`는 서버 컴포넌트라 여기만 교체하면 된다.
+ * 카피에서 반복해 쓰는 문구. 숫자를 문장에 박아 넣지 않기 위한 헬퍼다.
+ * 참가 조건·FAQ·폼 검증 메시지가 전부 이 한 줄을 쓴다 — 나이가 바뀌면 여기만 고친다.
  */
-export const SEATS = {
-  menLeft: 10,
-  womenLeft: 10,
-} as const;
+export const AGE_RANGE = `${EVENT.ageMin}살~${EVENT.ageMax}살`;

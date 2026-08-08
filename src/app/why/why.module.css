@@ -50,7 +50,7 @@
 .num {
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: 19px;
+  font-size: var(--fs-4);
   letter-spacing: 0.02em;
   line-height: 1.55; /* 제목 첫 줄과 눈높이를 맞춘 값 */
   color: var(--num);
@@ -75,7 +75,7 @@
 
 .text {
   margin: 0;
-  font-size: 17px;
+  font-size: var(--fs-3);
   line-height: 1.85;
   color: var(--mute);
   max-width: 34em;
@@ -99,7 +99,7 @@
   padding-left: clamp(16px, 2.4vw, 24px);
   border-left: 2px solid var(--track);
   font-family: var(--font-serif), serif;
-  font-size: 17px;
+  font-size: var(--fs-3);
   line-height: 1.8;
   color: var(--lead);
   max-width: 32em;
@@ -107,7 +107,7 @@
 
 .note {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--fs-2);
   line-height: 1.7;
   color: var(--faint);
   max-width: 34em;
@@ -118,7 +118,7 @@
 .solution {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--sp-1);
   padding: 14px 20px;
   background: var(--tint);
   border-radius: 14px;
@@ -127,13 +127,13 @@
 .solutionLabel {
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: var(--fs-1);
   letter-spacing: 0.05em;
   color: var(--faint);
 }
 .solutionText {
   margin: 0;
-  font-size: 15.5px;
+  font-size: var(--fs-2);
   line-height: 1.6;
   color: var(--ink);
 }
@@ -151,7 +151,7 @@
 .contrast th {
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 13.5px;
+  font-size: var(--fs-1);
   line-height: 1.5;
   letter-spacing: -0.01em;
   color: var(--faint);
@@ -190,7 +190,7 @@
 .factRow {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 5px;
+  gap: var(--sp-1);
   padding: 13px 0;
   border-top: 1px solid var(--rule);
 }
@@ -211,14 +211,14 @@
 .factTerm {
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 14px;
+  font-size: var(--fs-1);
   line-height: 1.6;
   letter-spacing: -0.01em;
   color: var(--faint);
 }
 .factDesc {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--fs-2);
   line-height: 1.7;
   color: var(--mute);
 }
@@ -235,7 +235,7 @@
 .source {
   margin: 0;
   font-family: var(--font-display), sans-serif;
-  font-size: 13.5px;
+  font-size: var(--fs-1);
   line-height: 1.6;
   letter-spacing: -0.01em;
   color: var(--faint);
@@ -261,7 +261,7 @@
   padding-top: clamp(6px, 1.5vw, 14px);
 }
 .ctaPill {
-  font-size: 16px;
+  font-size: var(--fs-2);
   padding: 17px 34px;
 }
 
@@ -269,7 +269,7 @@
 @media (max-width: 640px) {
   .item {
     grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
+    gap: var(--sp-3);
   }
   .num {
     line-height: 1.4;

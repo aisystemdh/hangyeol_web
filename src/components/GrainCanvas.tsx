@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 
 /**
- * 나무결 배경.
+ * 나무결 배경 — **사이트 전체에 한 장**.
  *
  * 근거 — 01_brand_philosophy.md §4.1
  *   "결은 나무를 세로로 켰을 때 드러나는 무늬다. (…) 결은 살아온 시간의 흔적이고,
@@ -12,14 +12,19 @@ import { useEffect, useRef } from "react";
  * 그래서 여기 그려지는 선은 규칙적인 줄무늬가 아니다. 하나의 저주파 흐름(shared warp)을
  * 모든 선이 공유하되 선마다 조금씩 다르게 따라가고, 간격은 나이테처럼 불규칙하다.
  *
- * 성능 원칙: **결은 마운트/리사이즈 때 딱 한 번만 그린다.** 스크롤 패럴랙스는
- * 캔버스 픽셀을 다시 칠하지 않고 CSS transform만 갱신한다.
+ * ── 배치 (globals.css의 `.site-grain`) ──────────────────────────
+ * `layout.tsx`가 `<body>` 첫 자식으로 렌더하고, 화면 크기 그대로 `position: fixed`다.
+ * 페이지 전체 높이가 아니라 **뷰포트 한 장**이라 문서가 아무리 길어도 메모리가 일정하다.
+ *
+ * ⚠️ 스크롤 패럴랙스는 없앴다. 고정 요소에 스크롤량만큼 transform을 더하면 결이
+ *    화면 밖으로 흘러나간다. 움직이는 요소가 없으므로 prefers-reduced-motion 분기도
+ *    필요 없다 — 이 컴포넌트는 이제 정지 이미지 한 장이다.
+ *
+ * 성능 원칙: **결은 첫 페인트와 리사이즈 때만 그린다.** 스크롤 중에는 아무 일도 하지 않는다.
  */
 
-/** 패럴랙스로 밀려도 위아래가 비지 않도록 캔버스가 컨테이너 밖으로 나가는 여유(px). CSS와 맞출 것. */
-const PAD = 220;
-/** 스크롤량 대비 이동 비율. 0.15면 배경이 페이지보다 15% 느리게 흐른다. */
-const PARALLAX = 0.15;
+/** 화면 위아래로 조금 넘겨 그려 첫 선·마지막 선이 잘린 듯 보이지 않게 한다. */
+const EDGE = 60;
 /** 레티나에서 메모리가 터지지 않게 상한을 둔다. 배경이라 2배면 충분하다. */
 const MAX_DPR = 2;
 
@@ -81,7 +86,7 @@ function paint(ctx: CanvasRenderingContext2D, w: number, h: number) {
 
   // 나이테처럼 간격이 불규칙하다. rand()*rand()가 좁은 간격 쪽으로 치우친 분포를 만든다.
   const lines: Line[] = [];
-  for (let y = -PAD; y < h + PAD; ) {
+  for (let y = -EDGE; y < h + EDGE; ) {
     y += 8 + rand() * rand() * 52;
     lines.push({
       base: y,
@@ -145,11 +150,22 @@ export default function GrainCanvas({ className }: { className?: string }) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let raf = 0;
     let lastW = 0;
     let lastH = 0;
+    /**
+     * 첫 페인트를 한가할 때까지 미루기 위한 빗장.
+     *
+     * 선 수백 개 스트로크 + 96px 노이즈 타일의 픽셀 루프가 메인 스레드에서 도는데,
+     * 그 시각이 히어로 헤드라인(= 홈의 LCP 요소)이 그려지는 구간과 겹치면 LCP를 밀어낸다.
+     * 배경이라 한두 프레임 늦어도 눈에 띄지 않는다.
+     *
+     * ⚠️ ResizeObserver는 observe() 직후 초기 콜백을 한 번 보낸다. 그래서 아래 지연
+     *    호출만으로는 소용이 없고, draw() 자체가 이 빗장을 봐야 한다.
+     */
+    let painted = false;
 
     const draw = () => {
+      if (!painted) return;
       const w = Math.round(canvas.clientWidth);
       const h = Math.round(canvas.clientHeight);
       if (w === 0 || h === 0) return;
@@ -165,50 +181,26 @@ export default function GrainCanvas({ className }: { className?: string }) {
       paint(ctx, w, h);
     };
 
-    draw();
-
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
-
-    // 패럴랙스: 캔버스는 다시 칠하지 않고 transform만 바꾼다.
-    const applyParallax = () => {
-      raf = 0;
-      const offset = Math.min(window.scrollY * PARALLAX, PAD);
-      canvas.style.transform = `translate3d(0, ${offset.toFixed(1)}px, 0)`;
+    // Safari에는 requestIdleCallback이 없어 setTimeout으로 떨어뜨린다.
+    // timeout 600ms는 상한이다 — 계속 바쁜 페이지에서도 그 안에는 반드시 그린다.
+    const firstPaint = () => {
+      painted = true;
+      draw();
     };
-    const onScroll = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(applyParallax);
-    };
-
-    let scrolling = false;
-    const enableParallax = () => {
-      if (scrolling || reduce.matches) return;
-      scrolling = true;
-      window.addEventListener("scroll", onScroll, { passive: true });
-      applyParallax();
-    };
-    const disableParallax = () => {
-      if (!scrolling) return;
-      scrolling = false;
-      window.removeEventListener("scroll", onScroll);
-      if (raf) {
-        cancelAnimationFrame(raf);
-        raf = 0;
-      }
-      canvas.style.transform = "";
-    };
-
-    // reduce면 애니메이션 없이 위에서 그린 1회 렌더로 끝난다(정지 이미지).
-    const onPrefChange = () => (reduce.matches ? disableParallax() : enableParallax());
-    enableParallax();
-    reduce.addEventListener("change", onPrefChange);
+    const cancelFirstPaint =
+      typeof window.requestIdleCallback === "function"
+        ? ((id) => () => window.cancelIdleCallback(id))(
+            window.requestIdleCallback(firstPaint, { timeout: 600 }),
+          )
+        : ((id) => () => window.clearTimeout(id))(
+            window.setTimeout(firstPaint, 0),
+          );
 
     const ro = new ResizeObserver(draw);
     ro.observe(canvas);
 
     return () => {
-      disableParallax();
-      reduce.removeEventListener("change", onPrefChange);
+      cancelFirstPaint();
       ro.disconnect();
     };
   }, []);

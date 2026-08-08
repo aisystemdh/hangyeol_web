@@ -28,13 +28,13 @@
   margin-top: clamp(52px, 6.5vw, 84px);
 }
 
-/* 8개 원칙 목록의 캡션 h2. .eyebrow와 같은 크기라 시각적으로는 라벨이지만
+/* 5개 원칙 목록의 캡션 h2. .eyebrow와 같은 크기라 시각적으로는 라벨이지만
    마크업상으로는 h1(58px)과 원칙 제목(h3, 34px) 사이를 잇는 단계다. */
 .listCaption {
   margin: clamp(52px, 6.5vw, 84px) 0 0;
 }
 
-/* ═══ 8개 원칙 ═══════════════════════════════════════════════ */
+/* ═══ 5개 원칙 ═══════════════════════════════════════════════ */
 .principles {
   display: flex;
   flex-direction: column;
@@ -55,7 +55,7 @@
   display: block;
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--fs-1);
   letter-spacing: 0.12em;
   color: var(--faint);
 }
@@ -70,31 +70,18 @@
   color: var(--ink);
 }
 
-.principleLead {
-  margin: 14px 0 0;
-  font-size: 16px;
-  line-height: 1.75;
-  color: var(--lead);
-  max-width: 40em;
-}
-
-/* 적용 / 금지 2단. 두 칸의 무게를 일부러 비슷하게 맞췄다 —
-   "금지하는 것"이 이 페이지의 신뢰 장치라 부속물처럼 보이면 안 된다. */
-.pair {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 14px;
-  margin-top: clamp(20px, 2.4vw, 28px);
-}
-
+/* 원칙마다 붙는 단 하나의 칸.
+   예전에는 "적용 | 금지하는 것" 2단이었는데 적용 쪽을 걷어내 한 칸만 남았다.
+   배경 + 굵은 좌측 선으로 무게를 준다 — "금지하는 것"이 이 페이지의 신뢰 장치라
+   부속물처럼 보이면 안 된다. */
 .block {
   padding: 18px 20px;
   border-left: 1px solid var(--rule);
   background: transparent;
 }
 
-/* 금지 칸: 배경 + 굵은 좌측 선으로 시각적 무게를 올린다 */
 .blockDeny {
+  margin-top: clamp(20px, 2.4vw, 28px);
   border-left: 2px solid var(--ink);
   background: var(--tint);
 }
@@ -103,20 +90,13 @@
   display: block;
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: var(--fs-1);
   letter-spacing: 0.1em;
   color: var(--faint);
 }
 
 .blockDeny .blockLabel {
   color: var(--ink);
-}
-
-.blockBody {
-  margin: 10px 0 0;
-  font-size: 15.5px;
-  line-height: 1.7;
-  color: var(--lead);
 }
 
 /* ── × 표식이 붙는 금지 목록 ─────────────────────────────── */
@@ -126,13 +106,13 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-2);
 }
 
 .denyList li {
   position: relative;
   padding-left: 1.5em;
-  font-size: 15.5px;
+  font-size: var(--fs-2);
   line-height: 1.65;
   color: var(--ink);
 }
@@ -145,56 +125,6 @@
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
   color: var(--ink);
-}
-
-/* ═══ 충돌 우선순위 ══════════════════════════════════════════ */
-.chain {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 10px 14px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.chainItem {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 10px 14px;
-  font-family: var(--font-display), sans-serif;
-  font-weight: 700;
-  font-size: clamp(18px, 2.8vw, 26px);
-  letter-spacing: -0.02em;
-  color: var(--ink);
-  white-space: nowrap;
-}
-
-.chainRef {
-  font-size: 0.62em;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: var(--faint);
-}
-
-/* 항목 사이 꺾쇠. 마지막 항목 뒤에는 붙이지 않는다. */
-.chainItem:not(:last-child)::after {
-  content: "›";
-  font-weight: 400;
-  color: var(--faint);
-}
-
-/* [data-bar]는 시작 상태가 scaleX(0)이라 면적이 0 → 반드시 부모가 관찰돼야 한다.
-   이 막대는 .chainWrap 안에 있으므로 PageEffects가 부모를 잡는다. */
-.chainWrap {
-  margin-top: clamp(28px, 3.5vw, 40px);
-}
-
-.chainRule {
-  display: block;
-  height: 2px;
-  margin-top: 22px;
-  background: var(--ink);
 }
 
 /* ═══ 그라운드룰 ═════════════════════════════════════════════ */
@@ -212,11 +142,11 @@
   counter-increment: rule;
   display: grid;
   grid-template-columns: 3.2em 1fr;
-  gap: 0 14px;
+  gap: 0 var(--sp-4);
   align-items: baseline;
   padding: 20px 0;
   border-top: 1px solid var(--rule);
-  font-size: 16.5px;
+  font-size: var(--fs-2);
   line-height: 1.65;
   color: var(--ink);
 }
@@ -229,7 +159,7 @@
   content: "0" counter(rule);
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--fs-1);
   letter-spacing: 0.1em;
   color: var(--faint);
 }
@@ -238,7 +168,7 @@
 .infoGrid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 14px;
+  gap: var(--sp-4);
 }
 
 .infoCol {
@@ -255,7 +185,7 @@
   display: block;
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: var(--fs-1);
   letter-spacing: 0.1em;
   color: var(--faint);
 }
@@ -270,13 +200,13 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: var(--sp-2);
 }
 
 .infoList li {
   position: relative;
   padding-left: 1.5em;
-  font-size: 15.5px;
+  font-size: var(--fs-2);
   line-height: 1.6;
   color: var(--ink);
 }
@@ -304,16 +234,10 @@
   font-weight: 400;
 }
 
-/* 강조 인라인 */
-.em {
-  color: var(--ink);
-  font-weight: 700;
-}
-
 /* 각주 — 출처·범위를 밝히는 작은 글씨 */
 .note {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-1);
   line-height: 1.7;
   color: var(--faint);
   max-width: 44em;
@@ -322,23 +246,19 @@
 /* 마무리 CTA */
 .cta {
   padding: 15px 26px;
-  font-size: 15.5px;
+  font-size: var(--fs-2);
   letter-spacing: -0.01em;
   align-self: flex-start;
 }
 
 /* ── 넓은 화면 ───────────────────────────────────────────── */
 @media (min-width: 760px) {
-  .pair {
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
-  }
   .infoGrid {
     grid-template-columns: 1fr 1fr;
-    gap: 18px;
+    gap: var(--sp-4);
   }
   .rule {
     grid-template-columns: 4em 1fr;
-    gap: 0 20px;
+    gap: 0 var(--sp-5);
   }
 }

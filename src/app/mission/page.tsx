@@ -6,112 +6,116 @@ import { EVENT_CTA_LABEL, EVENT_HREF, SITE } from "@/lib/site";
 import s from "./mission.module.css";
 
 export const metadata: Metadata = {
-  title: "미션",
+  title: "목표",
   description:
-    "사람들이 서로를 더 깊이 이해하도록 대화를 설계한다. 한결의 미션과 비전, 그리고 '결'이라는 이름의 뜻.",
+    "사람들이 서로를 더 깊이 이해하도록 대화를 설계한다. 한결의 목표와 비전, 그리고 '결'이라는 이름의 뜻.",
+  alternates: { canonical: "/mission" },
 };
 
 /* ─────────────────────────────────────────────────────────────
-   이 페이지의 모든 카피는 브랜드 철학 문서의 원문이다.
-   요약·의역하지 말 것. 문장을 고쳐야 하면 문서를 먼저 고친다.
+   카피는 브랜드 철학 문서를 손님 언어(존댓말)로 옮긴 것이다.
+   사실·숫자·출처·인용은 원문 그대로 간다. 요약·의역은 금지다.
+
+   ⚠️ 용어: 화면에 나가는 말은 "미션"이 아니라 **"목표"** 다.
+      경로(/mission)와 파일 이름은 그대로 두었다 — 이미 공유된 링크가 깨진다.
+
+   ⚠️ 선언문체로 남겨둔 두 곳 — 존댓말로 바꾸지 말 것.
+      1) h1의 목표 문장 — 아래 WORDS가 이 문장을 여섯 단어로 쪼개 분석한다.
+         "설계한다"를 "설계합니다"로 바꾸면 WORDS의 word 값과 어긋난다.
+      2) echoQuote — 10년 뒤 제3자가 할 말을 옮긴 인용이다.
    ───────────────────────────────────────────────────────────── */
 
-/** §5.1 단어별 해설 — 미션 문장을 여섯 단어로 쪼갠다. */
-const WORDS: { word: string; why: ReactNode; excludes: string }[] = [
+/** §5.1 단어별 해설 — 목표 문장을 여섯 단어로 쪼갠다. */
+const WORDS: { word: string; why: ReactNode }[] = [
   {
     word: "사람들이",
     why: (
       <>
-        남녀가 아니다. 소개팅은 첫 시장일 뿐 — 팀·가족·교육으로 확장 가능한
-        여지를 이름에 남긴다
+        남녀가 아닙니다. 소개팅은 첫 시장일 뿐, 팀·가족·교육으로 확장할 여지를
+        이름에 남겼습니다
       </>
     ),
-    excludes: "“미혼 남녀가”",
   },
   {
     word: "서로를",
     why: (
-      <>한 방향이 아니다. 평가받는 사람과 평가하는 사람을 나누지 않는다</>
+      <>한 방향이 아닙니다. 평가받는 사람과 평가하는 사람을 나누지 않습니다</>
     ),
-    excludes: "“이성을”",
   },
   {
     word: "더 깊이",
     why: (
       <>
-        더 많이가 아니다. 우리는 처리량을 늘리지 않고{" "}
-        <strong>깊이를 늘린다</strong>
+        더 많이가 아닙니다. 처리량을 늘리지 않고 <strong>깊이를 늘립니다</strong>
       </>
     ),
-    excludes: "“더 많은 사람을”",
   },
   {
     word: "이해하도록",
-    why: <>매칭이 아니다. 이해는 매칭보다 크고, 매칭이 실패해도 남는다</>,
-    excludes: "“매칭되도록”",
+    why: (
+      <>매칭이 아닙니다. 이해는 매칭보다 크고, 매칭이 실패해도 남습니다</>
+    ),
   },
   {
     word: "대화를",
     why: (
       <>
-        만남이 아니다. 우리의 제품은 사람이 아니라 <strong>대화</strong>
+        만남이 아닙니다. 저희의 제품은 사람이 아니라 <strong>대화</strong>입니다
       </>
     ),
-    excludes: "“만남을”",
   },
   {
     word: "설계한다",
     why: (
       <>
-        주선이 아니다. 우리는 자리를 만드는 게 아니라{" "}
-        <strong>구조를 만든다</strong>
+        주선이 아닙니다. 자리를 만드는 게 아니라 <strong>구조를 만듭니다</strong>
       </>
     ),
-    excludes: "“주선한다”",
   },
 ];
 
-/** §5.2 미션이 아닌 것 — 이 페이지에서 가장 중요한 네 문장. */
+/**
+ * §5.2 목표가 아닌 것 — 이 페이지에서 가장 중요한 네 문장.
+ *
+ * 3번은 원칙 3("사람을 상품으로 전시하지 않는다")에서 가져왔다 —
+ * "사람은 세 줄로 요약되지 않습니다"는 삭제된 선언문에 있던 문장을 살려 온 것이다.
+ * 4번의 근거였던 "약속은 지킬 수 있는 만큼만 한다"는 웹의 원칙 목록에서 빠졌지만,
+ * 브랜드 문서에는 그대로 있고 이 문장 자체는 유효하다.
+ */
 const NOTS: { what: string; why: string }[] = [
-  { what: "커플을 많이 만드는 것", why: "그건 결과 지표이지 목적이 아니다" },
-  { what: "외로움을 없애는 것", why: "우리가 감당할 수 없는 약속이다" },
-  { what: "좋은 사람을 찾아주는 것", why: "‘좋은’을 우리가 정의할 수 없다" },
+  { what: "아무나 만나게 하는 것", why: "수를 늘리면 대화가 얕아집니다" },
   {
-    what: "결혼시키는 것",
-    why: "결혼정보업의 언어이며, 우리의 사업 범위가 아니다",
+    what: "주선에서 끝이 나는 것",
+    why: "만남은 시작일 뿐, 그 다음까지가 저희 몫입니다",
+  },
+  {
+    what: "조건으로 사람을 줄 세우는 것",
+    why: "사람은 세 줄로 요약되지 않습니다",
+  },
+  {
+    what: "완벽한 인연을 약속하는 것",
+    why: "지킬 수 없는 약속입니다. 저희가 파는 것은 좋은 시작입니다",
   },
 ];
 
-/** §6 비전 3단계. 원문 표의 '실패의 신호' 열은 내부 판단 기준이라 싣지 않는다. */
-const PHASES: {
-  name: string;
-  tag: string;
-  when: string;
-  goal: ReactNode;
-  win: ReactNode;
-}[] = [
+/**
+ * §6 비전 3단계.
+ * ⚠️ "실험"이라는 단어를 쓰지 않는다 — 읽는 사람이 자신을 실험 대상으로 느낀다.
+ *    원문 표의 '실패의 신호'와 '성공의 정의' 열도 싣지 않는다(내부 판단 기준이다).
+ *    goal은 표의 칸이라 명사구 그대로 둔다.
+ */
+const PHASES: { name: string; tag: string; when: string; goal: ReactNode }[] = [
   {
     name: "Phase 1",
     tag: "증명",
     when: "2026",
-    goal: <>오프라인 실험으로 핵심 가설 검증</>,
-    win: (
-      <>
-        {"“결이 맞는지는 대화로 안다”는 "}
-        <strong>데이터</strong> 확보
-      </>
-    ),
+    goal: <>오프라인 모임을 통해 대화 설계 시스템 도입</>,
   },
   {
     name: "Phase 2",
     tag: "확장",
     when: "2027~2028",
     goal: <>검증된 것만 앱으로 구현 + 안전 만남 인프라</>,
-    win: (
-      <>
-        매칭 → 안전한 첫 만남까지 <strong>하나의 흐름</strong>으로 작동
-      </>
-    ),
   },
   {
     name: "Phase 3",
@@ -122,11 +126,10 @@ const PHASES: {
         대화 설계 시스템의 <strong>B2B·비연애 영역 확장</strong>
       </>
     ),
-    win: <>{"“한결식 질문”이 소개팅 밖에서 쓰임"}</>,
   },
 ];
 
-/** §4.5 이름의 이중 의미. */
+/** §4.5 이름의 이중 의미. 표의 칸이라 명사구 그대로 둔다. */
 const LAYERS: {
   floor: string;
   split: ReactNode;
@@ -182,83 +185,33 @@ const ANATOMY: {
   },
 ];
 
-/** §7 브랜드 선언문. 첫 연은 아래 섹션의 제목으로 올라간다 — 문장은 하나도 빠지지 않는다. */
-const MANIFESTO: string[][] = [
-  ["우리는 당신이 무엇을 골랐는지 묻지 않는다.", "왜 그것을 골랐는지 묻는다."],
-  ["같은 답은 대화의 시작일 뿐이다.", "같은 이유는 관계의 이유가 된다."],
-  [
-    "우리는 당신을 메뉴판에 올리지 않는다.",
-    "매력 세 가지를 적어내라고 하지 않는다.",
-    "당신은 상품이 아니라 사람이고,",
-    "사람은 세 줄로 요약되지 않는다.",
-  ],
-  [
-    "우리는 더 많은 사람을 만나게 하지 않는다.",
-    "더 깊이 만나게 한다.",
-    "열 명을 스쳐 지나가는 것보다",
-    "한 사람을 제대로 아는 것이 어렵고, 또 귀하다.",
-  ],
-  [
-    "우리는 완벽한 상대를 약속하지 않는다.",
-    "그런 약속은 과학이 지지하지 않고,",
-    "지키지 못할 약속은 하지 않는 것이 우리의 방식이다.",
-  ],
-  [
-    "우리가 약속하는 것은 좋은 시작이다.",
-    "마찰이 적은 시작.",
-    "서로를 오해하지 않아도 되는 시작.",
-    "그 다음은 두 사람이 만든다.",
-  ],
-  ["나무의 결은 바꿀 수 없다.", "결을 거스르면 찢어지고,", "결을 따르면 매끄럽다."],
-  ["사람도 그렇다."],
-  [
-    "맞추려 애쓰지 않아도 되는 사람이 있다.",
-    "우리는 그 사람을 찾는 방법을 설계한다.",
-  ],
-];
-
 export default function MissionPage() {
   return (
     <div style={{ paddingBottom: 88 }}>
-      {/* ── 1. 미션 ─────────────────────────────────────────── */}
+      {/* ── 1. 목표 ─────────────────────────────────────────── */}
       <section className="band">
         <div className={`shell stagger ${s.stack}`}>
           <span className="eyebrow" data-reveal>
-            한결의 미션
+            한결의 목표
           </span>
-          <h1 className="display" data-reveal>
+          {/* ⚠️ 아래 WORDS가 이 문장을 단어 단위로 분해한다. 말투를 바꾸지 말 것. */}
+          <h1 className="display display--page" data-reveal>
             사람들이 서로를 더 깊이 이해하도록
             <br />
             대화를 설계한다.
           </h1>
 
-          {/* 핵심 요약 — 이 페이지 6개 섹션(미션·비전·이름·선언문)을 끝까지
-              읽지 않아도 결론을 먼저 알 수 있게 한다. */}
           <div className="tldr" data-reveal>
-            <span className="tldr__label">핵심 요약</span>
-            <ul className="tldr__list">
-              <li>
-                미션은 매칭이 아니라 이해다 — 커플 수·외로움 해소·결혼은 우리 목표가 아니다.
-              </li>
-              <li>
-                지금은 <strong>Phase 1(2026)</strong> — &ldquo;결이 맞는지는 대화로
-                안다&rdquo;는 가설을 오프라인에서 검증하는 단계다.
-              </li>
-              <li>
-                &lsquo;한결&rsquo;은 &lsquo;같은 결의 사람&rsquo;(시작)과 &lsquo;변함없음&rsquo;(지속),
-                두 뜻을 동시에 담는다.
-              </li>
-            </ul>
+            <p className={s.tldrLine}>
+              저희 대화 시스템 안에 저절로 녹아들고 서로를 알게 됩니다.
+            </p>
           </div>
 
           {/* 컨테이너에는 data-reveal을 걸지 않는다 — 자식이 이미 각자 등장하므로
-              겹치면 translateY가 두 번 쌓인다.
-              단어별 해설은 미션 문장의 각주에 해당해 기본 접힘으로 둔다 —
-              위 핵심 요약과 아래 "미션이 아닌 것"이 이 페이지의 핵심 논지다. */}
+              겹치면 translateY가 두 번 쌓인다. */}
           <details className={`rules ${s.spaced}`}>
             <summary>
-              단어별 해설 보기 — 미션 문장을 여섯 단어로 쪼갠다
-              <span className="plus">+</span>
+              한결의 시선 보기<span className="plus">+</span>
             </summary>
             <div data-answer>
               <ul className={`${s.words} stagger ${s.spaced}`}>
@@ -268,10 +221,6 @@ export default function MissionPage() {
                         목차가 어긋난다. */}
                     <p className={s.wordTitle}>{w.word}</p>
                     <p className={s.wordWhy}>{w.why}</p>
-                    <p className={s.wordExcl}>
-                      <span className={s.miniLabel}>이 단어가 배제하는 것</span>
-                      <span className={s.wordExclText}>{w.excludes}</span>
-                    </p>
                   </li>
                 ))}
               </ul>
@@ -280,16 +229,14 @@ export default function MissionPage() {
         </div>
       </section>
 
-      {/* ── 2. 미션이 아닌 것 ───────────────────────────────── */}
+      {/* ── 2. 목표가 아닌 것 ───────────────────────────────── */}
       <section className="band band--dark">
         <div className={`shell stagger ${s.stack}`}>
           <span className="eyebrow" data-reveal>
-            미션이 아닌 것
+            목표가 아닌 것
           </span>
           <h2 className="display" data-reveal>
-            철학을 이해했는지는
-            <br />
-            긍정문이 아니라 부정문에서 드러난다.
+            이런 건 한결의 목적이 아닙니다.
           </h2>
 
           <ul className={`${s.nots} stagger ${s.spaced}`}>
@@ -317,9 +264,6 @@ export default function MissionPage() {
             <br />
             표준으로 만든 회사.
           </h2>
-          <p className="lede" data-reveal>
-            비전은 시간축 위에 놓일 때만 의미가 있다. 한결은 3단계로 간다.
-          </p>
 
           <div className={`${s.phases} stagger ${s.spaced}`}>
             {PHASES.map((p) => (
@@ -331,23 +275,16 @@ export default function MissionPage() {
                 </div>
                 <div className={s.phaseBody}>
                   <p className={s.phaseGoal}>{p.goal}</p>
-                  <p className={s.phaseWin}>
-                    <span className={s.miniLabel}>성공의 정의</span>
-                    <span className={s.phaseWinText}>{p.win}</span>
-                  </p>
                 </div>
               </div>
             ))}
           </div>
 
           <div className={s.echo} data-reveal>
-            <span className={s.miniLabel}>10년 뒤 우리가 듣고 싶은 말</span>
+            <span className={s.miniLabel}>10년 뒤 한결이 듣고 싶은 말</span>
+            {/* ⚠️ 제3자의 발화를 옮긴 인용이다. 존댓말로 바꾸지 말 것. */}
             <p className={s.echoQuote}>
               {"“요즘은 어디서든 처음 만나면 한결식으로 물어보더라.”"}
-            </p>
-            <p className={s.echoNote}>
-              브랜드가 <strong>동사나 형용사가 되는 것</strong> — 그것이 표준이
-              되었다는 유일한 증거다.
             </p>
           </div>
         </div>
@@ -362,30 +299,30 @@ export default function MissionPage() {
           <h2 className="display" data-reveal>
             <span className={s.grainMark}>결</span>은 나무를 세로로 켰을 때
             <br />
-            드러나는 무늬다.
+            드러나는 무늬입니다.
           </h2>
 
           <div className={s.prose} data-reveal>
             <p>
-              나무의 결은 바깥에서 붙인 장식이 아니다. 그 나무가 어떤 땅에서,
-              어떤 바람을 맞으며, 몇 해를 자랐는지가 안쪽에 기록된 것이다. 결은{" "}
+              나무의 결은 바깥에서 붙인 장식이 아닙니다. 그 나무가 어떤 땅에서,
+              어떤 바람을 맞으며, 몇 해를 자랐는지가 안쪽에 기록된 것입니다. 결은{" "}
               <strong>살아온 시간의 흔적</strong>이고, 그래서{" "}
-              <strong>바꿀 수 없다.</strong>
+              <strong>바꿀 수 없습니다.</strong>
             </p>
             <p>
-              목수는 결을 거스르지 않는다. 결을 거슬러 대패를 밀면 나무가
-              찢어진다. 결을 따라 밀면 매끄럽게 깎인다. 같은 나무, 같은 대패,
-              같은 힘인데 방향 하나로 결과가 갈린다.
+              목수는 결을 거스르지 않습니다. 결을 거슬러 대패를 밀면 나무가
+              찢어집니다. 결을 따라 밀면 매끄럽게 깎입니다. 같은 나무, 같은 대패,
+              같은 힘인데 방향 하나로 결과가 갈립니다.
             </p>
           </div>
 
           <p className={s.beat} data-reveal>
-            사람도 그렇다.
+            사람도 그렇습니다.
           </p>
 
           <div className={s.stack} data-reveal>
             <p className="lede">
-              {"한결에서 ‘결’은 다음과 같이 정의된다. 핵심은 답과 결의 분리다."}
+              {"한결에서 ‘결’은 다음과 같이 정의됩니다. 핵심은 답과 결의 분리입니다."}
             </p>
             <div className={s.def}>
               <span className={s.defTerm}>결(Grain)</span>
@@ -402,21 +339,19 @@ export default function MissionPage() {
         </div>
       </section>
 
-      {/* ── 5. 이름과 슬로건 ────────────────────────────────── */}
+      {/* ── 5. 이름과 슬로건 (마지막 섹션) ──────────────────────
+          선언문 섹션을 걷어내면서 CTA를 이 아래로 옮겨 왔다 —
+          없으면 이 페이지의 전환 경로가 하단 고정 바 하나뿐이 된다. */}
       <section className="band">
         <div className={`shell stagger ${s.stack}`}>
           <span className="eyebrow" data-reveal>
             이름의 이중 의미
           </span>
           <h2 className="display" data-reveal>
-            이름 하나가
-            <br />
-            시작과 지속을 모두 담는다.
+            시작과 지속을 모두 담습니다.
           </h2>
           <p className="lede" data-reveal>
-            {
-              "‘한결’이라는 이름은 두 개의 뜻을 동시에 갖는다. 이것은 우연이 아니라 선택이다."
-            }
+            {"‘한결’이라는 이름은 두 개의 뜻을 동시에 갖습니다."}
           </p>
 
           <ul className={`${s.layers} stagger ${s.spaced}`}>
@@ -437,11 +372,6 @@ export default function MissionPage() {
               {SITE.slogan}
               {"”"}
             </p>
-            <p className="lede">
-              {
-                "이 한 문장에 ‘결’이 세 번 나온다. 그리고 세 번 모두 다른 뜻이다."
-              }
-            </p>
             <ul className={s.anatomy}>
               {ANATOMY.map((a) => (
                 <li key={a.idx} className={s.anaRow}>
@@ -457,37 +387,9 @@ export default function MissionPage() {
               ))}
             </ul>
           </div>
-        </div>
-      </section>
-
-      {/* ── 6. 브랜드 선언문 ────────────────────────────────── */}
-      <section className="band band--dark">
-        <div className={`shell stagger ${s.stack}`}>
-          <span className="eyebrow" data-reveal>
-            한결 선언문
-          </span>
-          <h2 className="display" data-reveal>
-            우리는 사람을 소개하지 않는다.
-            <br />
-            우리는 대화를 설계한다.
-          </h2>
-
-          <div className={`${s.manifesto} ${s.spaced}`} data-reveal>
-            {MANIFESTO.map((stanza) => (
-              <p key={stanza[0]} className={s.stanza}>
-                {stanza.map((line, i) => (
-                  <span key={line}>
-                    {i > 0 && <br />}
-                    {line}
-                  </span>
-                ))}
-              </p>
-            ))}
-            <p className={`${s.stanza} ${s.stanzaSign}`}>{SITE.slogan}.</p>
-          </div>
 
           <Link
-            className={`pill ${s.ctaPill} ${s.selfStart}`}
+            className={`pill ${s.ctaPill} ${s.selfStart} ${s.spaced}`}
             href={EVENT_HREF}
             data-reveal
           >

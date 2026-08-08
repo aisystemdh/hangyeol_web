@@ -1,12 +1,19 @@
 import s from "./sectionHead.module.css";
+import { SITE } from "@/lib/site";
 
-const PEOPLE = ["이현우", "여동현"];
-
-/** 두 번째 검정 밴드. `.two-col`은 `.shell`이 아니라서 세로 패딩을 직접 눌러야 한다. */
+/**
+ * 두 번째 검정 밴드.
+ *
+ * ⚠️ 사진 자리는 없앴다. 확보되지 않은 사진을 점선 상자로 비워두는 것보다
+ *    이름과 직함만 두는 편이 낫다. 사진이 생기면 옛 마크업을 되살리지 말고
+ *    `next/image`로 새로 짤 것.
+ *    사진이 빠지면서 2열 레이아웃이 필요 없어져 `.shell`로 갈아탔다 —
+ *    `.band > .shell`이 세로 패딩을 0으로 눌러주므로 인라인 style이 필요 없다.
+ */
 export default function Founders() {
   return (
     <section className="band band--dark" aria-label="운영자">
-      <div className="two-col" style={{ paddingTop: 0, paddingBottom: 0 }}>
+      <div className="shell">
         <div className="founders__copy" data-reveal>
           <div className={s.head}>
             <span className="eyebrow">왜 만들었나</span>
@@ -28,17 +35,15 @@ export default function Founders() {
             이번이 그 첫 번째 자리입니다.
           </p>
         </div>
-        <div className="founders__photos stagger">
-          {PEOPLE.map((name) => (
-            <div key={name} className="founders__person" data-reveal>
-              {/* TODO: 사진 확보 후 next/image로 교체 */}
-              <div className="founders__slot">{name} 사진</div>
-              <div className="founders__name">
-                {name} <span className="founders__role">기획 · 진행</span>
-              </div>
-            </div>
+
+        <ul className="founders__people stagger">
+          {SITE.operators.map(({ name, role }) => (
+            <li key={name} className="founders__person" data-reveal>
+              <span className="founders__name">{name}</span>
+              <span className="founders__role">{role}</span>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   );

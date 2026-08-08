@@ -6,10 +6,12 @@ import Founders from "@/components/Founders";
 import Apply from "@/components/Apply";
 import Faq from "@/components/Faq";
 import StickyBar from "@/components/StickyBar";
+import { EVENT_HREF } from "@/lib/site";
 
 /** layout의 template가 " — 한결"을 붙인다. 브랜드명을 또 쓰지 말 것. */
 export const metadata: Metadata = {
   title: "1차 오프라인 모임",
+  alternates: { canonical: EVENT_HREF },
 };
 
 /**
