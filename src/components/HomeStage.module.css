@@ -1,0 +1,110 @@
+/* 홈 무대 — 레이어 크로스페이드의 본체.
+   레이어는 전부 grid-area 1/1에 겹쳐 있어 무대 높이가 phase와 무관하게 일정하다
+   (스냅 지오메트리가 흔들리지 않는 근거). HomeDialog.module.css의 .layer는
+   여기 .layer를 composes로 상속한다 — 전환 진실은 이 파일 한 곳이다. */
+
+.stage {
+  position: relative;
+  display: grid;
+  width: 100%;
+}
+
+/* 나무결 베일 — 히어로·다이얼로그 공용. HomeHero.module.css에서 이주해 왔다.
+   DOM상 첫 자식이라 뒤따르는 레이어들이 자연히 위에 그려진다(z-index 불필요). */
+.veil {
+  grid-area: 1 / 1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    var(--paper) 0%,
+    rgba(245, 241, 232, 0) 26%,
+    rgba(245, 241, 232, 0) 68%,
+    var(--paper) 100%
+  );
+}
+
+/* ── 레이어 한 장 ──────────────────────────────────────────────
+   visibility는 이산 전환 — 페이드아웃이 끝난 '뒤에' hidden으로 떨어진다.
+   비활성 레이어는 HomeStage가 inert도 걸므로(포커스·클릭 즉시 차단)
+   0.5초의 시각 잔상 동안에도 상호작용 구멍이 없다. */
+.layer {
+  grid-area: 1 / 1;
+  /* ⚠️ position/z-index를 주지 말 것 — 스태킹 컨텍스트가 생기는 순간 안의
+     fixed 요소(건너뛰기 z:61)가 헤더(z:20) 아래에 갇혀 클릭이 막힌다.
+     모바일 메뉴가 헤더 backdrop-filter에 갇혔던 것과 같은 유형의 함정이고,
+     실제 1280px 클릭 테스트에서 재현됐다. 겹침 순서는 DOM 순서로 충분하다. */
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  width: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--xfade, 500ms) var(--ease-out),
+    visibility 0s var(--xfade, 500ms);
+}
+.layer[data-active="true"] {
+  opacity: 1;
+  visibility: visible;
+  /* 들어오는 쪽만 120ms 지연 — 종이 위 크로스페이드가 탁해지는 중간 블렌드 방지 */
+  transition:
+    opacity var(--xfade, 500ms) var(--ease-out) 120ms,
+    visibility 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .layer,
+  .layer[data-active="true"] {
+    transition: none; /* 즉시 교체 */
+  }
+}
+
+.layerHero {
+  justify-items: stretch; /* 히어로 섹션은 자체 중앙 정렬을 갖는다 */
+}
+
+/* reduced-motion 전용 수동 진입 — 인트로 애니메이션이 전부 꺼져 animationend가
+   오지 않으므로 이 버튼이 유일한 진입로다. JS 분기 금지(하이드레이션). */
+.startBtn {
+  display: none;
+  justify-self: center;
+  margin-top: var(--sp-4);
+  background: var(--ink);
+  color: var(--paper);
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 30px;
+  font-size: var(--fs-2);
+  font-weight: 700;
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) {
+  .startBtn {
+    display: inline-block;
+  }
+}
+
+/* ── 복귀 복원 — React가 마운트되기 전, 첫 페인트부터 CSS가 **보던 화면**을
+   보여준다(질문 도중 서브페이지에 다녀와도 그 질문으로 돌아온다 — 소유자 요구).
+   html[data-dialog-phase="…"]는 layout.tsx의 인라인 스크립트가 sessionStorage에서
+   읽어 붙이고, HomeStage가 마운트 동기화를 마치면 속성을 걷어 React에 제어를 넘긴다.
+   특이성: 숨김(0,2,1) > data-active(0,2,0), 표시(0,3,1) > 숨김 — 순서 무관하게 이긴다. */
+:global(html[data-dialog-phase]) .layer {
+  opacity: 0;
+  visibility: hidden;
+  transition: none;
+}
+:global(html[data-dialog-phase="q1"]) .layer[data-layer="q1"],
+:global(html[data-dialog-phase="r1"]) .layer[data-layer="r1"],
+:global(html[data-dialog-phase="q2"]) .layer[data-layer="q2"],
+:global(html[data-dialog-phase="r2"]) .layer[data-layer="r2"],
+:global(html[data-dialog-phase="q3"]) .layer[data-layer="q3"],
+:global(html[data-dialog-phase="r3"]) .layer[data-layer="r3"],
+:global(html[data-dialog-phase="hub"]) .layer[data-layer="hub"] {
+  opacity: 1;
+  visibility: visible;
+}
+/* 숨은 히어로 밑에서 인트로 애니메이션이 헛돌지 않게 멈춘다
+   (마운트 동기화가 속성을 제거하므로 다시 보기와 충돌하지 않는다) */
+:global(html[data-dialog-phase]) .layerHero * {
+  animation-play-state: paused;
+}

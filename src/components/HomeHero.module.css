@@ -1,77 +1,16 @@
-/* 회사 메인 히어로. 전역 .hero__* 는 그대로 재사용하고, 여기서는
-   베일 레이어링과 스크롤 힌트만 정의한다.
+/* 회사 메인 히어로. 전역 .hero__* 는 그대로 재사용한다.
 
-   나무결 캔버스는 더 이상 여기 없다 — layout.tsx가 사이트 전체에 한 장 깐다
-   (globals.css의 `.site-grain`). */
+   나무결 캔버스는 layout.tsx가 사이트 전체에 한 장 깔고(globals.css `.site-grain`),
+   그 위의 종이색 베일은 무대(HomeStage.module.css `.veil`)가 갖는다 — 히어로가
+   크로스페이드로 사라진 뒤에도 다이얼로그 글자 뒤의 결을 계속 눌러줘야 하기 때문이다.
+   스크롤 힌트(.hint)는 무대 허브로 이사했다(HomeDialog.module.css). */
 
 .stage {
   position: relative;
   overflow: hidden;
 }
 
-/* 전역 나무결이 헤드라인을 방해하지 않도록 히어로 위아래를 흰색으로 흘려보낸다. */
-.veil {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    #ffffff 0%,
-    rgba(255, 255, 255, 0) 26%,
-    rgba(255, 255, 255, 0) 68%,
-    #ffffff 100%
-  );
-}
-
 .inner {
   position: relative;
   z-index: 1;
-}
-
-/* 조용한 스크롤 유도. 워드플레이가 끝나는 4.5s 직후에 나타난다.
-   ⚠️ 히어로 시퀀스를 9.4s → 4.5s로 줄일 때 이 두 지연값(9.6s / 10.5s)을 놓쳐
-      힌트가 5초나 늦게 떴다. HomeHero.tsx의 타임라인을 바꾸면 여기도 같이 볼 것. */
-.hint {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-3);
-  margin-top: 6px;
-  font-family: var(--font-display), sans-serif;
-  font-size: var(--fs-1);
-  letter-spacing: 0.08em;
-  color: var(--faint);
-  animation: hintIn 0.8s 4.7s var(--ease-out) both;
-}
-
-.hintLine {
-  display: block;
-  width: 1px;
-  height: 40px;
-  background: linear-gradient(to bottom, var(--rule), transparent);
-  animation: hintDrift 2.8s 5.6s ease-in-out infinite;
-}
-
-@keyframes hintIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes hintDrift {
-  0%,
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  50% {
-    transform: translateY(7px);
-    opacity: 0.45;
-  }
 }

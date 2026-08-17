@@ -9,7 +9,12 @@
 export default function SkipIntroButton() {
   const skip = () => {
     const hero = document.getElementById("hero");
-    hero?.getAnimations({ subtree: true }).forEach((a) => a.finish());
+    hero?.getAnimations({ subtree: true }).forEach((a) => {
+      /* ⚠️ finish()는 무한 반복 애니메이션에 InvalidStateError를 던진다.
+         무대(HomeStage)의 스크롤 힌트처럼 infinite인 것은 건너뛴다. */
+      if (a.effect?.getTiming().iterations === Infinity) return;
+      a.finish();
+    });
     document.documentElement.setAttribute("data-intro-seen", "");
     try {
       sessionStorage.setItem("intro-seen", "1");

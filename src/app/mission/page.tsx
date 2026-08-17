@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import BackToDialog from "@/components/BackToDialog";
 import StickyBar from "@/components/StickyBar";
 import { EVENT_CTA_LABEL, EVENT_HREF, SITE } from "@/lib/site";
 import s from "./mission.module.css";
@@ -187,10 +188,12 @@ const ANATOMY: {
 
 export default function MissionPage() {
   return (
-    <div style={{ paddingBottom: 88 }}>
+    <div style={{ overflowX: "hidden", paddingBottom: 88 }}>
       {/* ── 1. 목표 ─────────────────────────────────────────── */}
       <section className="band">
         <div className={`shell stagger ${s.stack}`}>
+          {/* 홈 대화 도중 온 방문자에게만 보인다(마운트 후 sessionStorage 판정) */}
+          <BackToDialog />
           <span className="eyebrow" data-reveal>
             한결의 목표
           </span>

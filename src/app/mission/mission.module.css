@@ -32,8 +32,8 @@
   /* 600은 로드하지 않는 굵기다 — 브라우저가 700으로 대체하므로 선언을 사실과 맞췄다 */
   font-weight: 700;
   font-size: var(--fs-1);
-  line-height: 1.4;
-  letter-spacing: 0.08em;
+  line-height: var(--lh-ui);
+  letter-spacing: var(--ls-label);
   color: var(--faint);
 }
 
@@ -47,7 +47,7 @@
 .prose p {
   margin: 0;
   font-size: var(--fs-3);
-  line-height: 1.85;
+  line-height: var(--lh-prose);
   color: var(--mute);
 }
 .prose strong {
@@ -60,8 +60,8 @@
   margin: 0;
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: clamp(23px, 3.4vw, 32px);
-  line-height: 1.4;
+  font-size: var(--fs-7);
+  line-height: var(--lh-ui);
   letter-spacing: -0.02em;
   color: var(--ink);
 }
@@ -75,7 +75,7 @@
 .tldrLine {
   margin: 0;
   font-size: var(--fs-3);
-  line-height: 1.7;
+  line-height: var(--lh-body);
   color: var(--ink);
 }
 
@@ -95,8 +95,8 @@
   margin: 0;
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: clamp(24px, 2.8vw, 29px);
-  line-height: 1.2;
+  font-size: var(--fs-7);
+  line-height: var(--lh-display);
   letter-spacing: -0.025em;
   color: var(--ink);
 }
@@ -106,7 +106,7 @@
   margin: 0;
   font-size: var(--fs-3);
   font-weight: 500;
-  line-height: 1.7;
+  line-height: var(--lh-body);
   color: var(--ink);
 }
 
@@ -131,22 +131,22 @@
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
   font-size: var(--fs-4);
-  line-height: 1.35;
+  line-height: var(--lh-title);
   color: var(--faint);
 }
 .notTitle {
   margin: 0;
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: clamp(21px, 2.7vw, 28px);
-  line-height: 1.3;
+  font-size: var(--fs-7);
+  line-height: var(--lh-title);
   letter-spacing: -0.025em;
   color: var(--ink);
 }
 .notWhy {
   margin: 0;
   font-size: var(--fs-2);
-  line-height: 1.75;
+  line-height: var(--lh-body);
   color: var(--mute);
 }
 
@@ -174,7 +174,7 @@
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
   font-size: var(--fs-1);
-  letter-spacing: 0.06em;
+  letter-spacing: var(--ls-label);
   /* --num이 아니라 --faint다. --num(3.58:1)은 globals.css 주석대로 19px 이상
      굵은 글자에서만 쓸 수 있고, 14px은 일반 텍스트라 4.5:1이 필요하다.
      --faint는 4.73:1로 통과한다. 되돌리지 말 것. */
@@ -183,8 +183,8 @@
 .phaseTag {
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: clamp(24px, 3vw, 30px);
-  line-height: 1.15;
+  font-size: var(--fs-7);
+  line-height: var(--lh-display);
   letter-spacing: -0.025em;
   color: var(--ink);
 }
@@ -192,7 +192,6 @@
   font-family: var(--font-display), sans-serif;
   font-weight: 500;
   font-size: var(--fs-1);
-  letter-spacing: 0.02em;
   color: var(--faint);
 }
 .phaseBody {
@@ -203,7 +202,7 @@
 .phaseGoal {
   margin: 0;
   font-size: var(--fs-3);
-  line-height: 1.65;
+  line-height: var(--lh-body);
   color: var(--ink);
 }
 /* 10년 뒤 듣고 싶은 말 */
@@ -217,8 +216,8 @@
   margin: 0;
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: clamp(22px, 3.4vw, 34px);
-  line-height: 1.45;
+  font-size: var(--fs-7);
+  line-height: var(--lh-ui);
   letter-spacing: -0.025em;
   color: var(--ink);
 }
@@ -235,15 +234,14 @@
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
   font-size: var(--fs-2);
-  letter-spacing: 0.02em;
   color: var(--faint);
 }
 .defText {
   margin: 0;
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: clamp(19px, 2.5vw, 26px);
-  line-height: 1.65;
+  font-size: var(--fs-6);
+  line-height: var(--lh-body);
   letter-spacing: -0.02em;
   color: var(--ink);
 }
@@ -264,15 +262,15 @@
   margin: 0;
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: clamp(21px, 2.6vw, 27px);
-  line-height: 1.35;
+  font-size: var(--fs-7);
+  line-height: var(--lh-title);
   letter-spacing: -0.025em;
   color: var(--ink);
 }
 .layerMeaning {
   margin: 0;
   font-size: var(--fs-2);
-  line-height: 1.75;
+  line-height: var(--lh-body);
   color: var(--mute);
 }
 .roleChip {
@@ -293,8 +291,8 @@
   margin: 0;
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: clamp(27px, 5vw, 44px);
-  line-height: 1.3;
+  font-size: var(--fs-8);
+  line-height: var(--lh-title);
   letter-spacing: -0.03em;
   color: var(--ink);
 }
@@ -327,14 +325,14 @@
 .anaWord {
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: clamp(20px, 2.4vw, 25px);
-  line-height: 1.3;
+  font-size: var(--fs-6);
+  line-height: var(--lh-title);
   letter-spacing: -0.02em;
   color: var(--ink);
 }
 .anaMeaning {
   font-size: var(--fs-2);
-  line-height: 1.7;
+  line-height: var(--lh-body);
   color: var(--mute);
 }
 .anaFn {

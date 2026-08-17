@@ -1,5 +1,4 @@
 import Image from "next/image";
-import ReplayButton from "./ReplayButton";
 import SkipIntroButton from "./SkipIntroButton";
 import styles from "./HomeHero.module.css";
 
@@ -8,7 +7,7 @@ const EASE = "cubic-bezier(.22,1,.36,1)";
 /**
  * 로고 마크의 왼쪽 획. 좌우 대칭이라 오른쪽은 translate(100 0) scale(-1 1)로 뒤집어 쓴다.
  *
- * public/hangyeol-logo.png의 실제 획을 100×100 viewBox로 옮긴 것이다.
+ * public/hangyeol-logo-v2.png의 실제 획을 100×100 viewBox로 옮긴 것이다.
  * 픽셀에서 잰 값(원본 351×489):
  *   중심선 타원 center(99.4, 200) rx 50.4 ry 71 · 획 두께 38
  *   위쪽 끝 (139, 138) · 아래쪽 끝 (152, 287) — 둘 다 안쪽(중앙)으로 갈고리처럼 휜다
@@ -75,7 +74,7 @@ function LogoStroke({ dir }: { dir: "L" | "R" }) {
     <path
       d={STROKE}
       fill="none"
-      stroke="#111111"
+      stroke="currentColor"
       strokeWidth="11"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -127,9 +126,8 @@ function LogoStroke({ dir }: { dir: "L" | "R" }) {
 export default function HomeHero() {
   return (
     <section id="hero" className={styles.stage} aria-label="한결 소개">
-      {/* 나무결은 layout.tsx가 사이트 전체에 한 장 깐다. 여기 베일은 그 결을
-          히어로 위아래에서 흰색으로 흘려보내 100px 헤드라인의 가독성을 지킨다. */}
-      <div className={styles.veil} aria-hidden="true" />
+      {/* 나무결 베일은 무대(HomeStage)가 한 장 깐다 — 히어로가 페이드아웃된 뒤에도
+          다이얼로그 글자 뒤의 결을 계속 눌러줘야 하기 때문이다. */}
 
       {/* 오버레이 밖에 둔다 — .hero__intro는 aria-hidden이라 안에 넣으면
           스크린리더와 탭 순서에서 이 버튼이 함께 숨는다. */}
@@ -139,7 +137,13 @@ export default function HomeHero() {
         {/* 0–2.5초 인트로 오버레이.
             prefers-reduced-motion과 재방문(html[data-intro-seen])에서는 CSS가 통째로 숨긴다. */}
         <div className="hero__intro" data-intro aria-hidden="true">
-          <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+          {/* 획·점이 전부 currentColor라 여기 color 하나로 로고색이 정해진다 */}
+          <svg
+            viewBox="0 0 100 100"
+            aria-hidden="true"
+            focusable="false"
+            style={{ color: "var(--ink)" }}
+          >
             <g
               style={{
                 transformBox: "view-box",
@@ -150,8 +154,8 @@ export default function HomeHero() {
               <LogoStroke dir="L" />
               <LogoStroke dir="R" />
               {/* 두 점은 로고의 일부다. 깜빡이거나 사라지지 않고 끝까지 보인다. */}
-              <circle cx={DOT.cx} cy={DOT.cy} r={DOT.r} fill="#111111" />
-              <circle cx={100 - DOT.cx} cy={DOT.cy} r={DOT.r} fill="#111111" />
+              <circle cx={DOT.cx} cy={DOT.cy} r={DOT.r} fill="currentColor" />
+              <circle cx={100 - DOT.cx} cy={DOT.cy} r={DOT.r} fill="currentColor" />
             </g>
           </svg>
         </div>
@@ -161,7 +165,7 @@ export default function HomeHero() {
                LCP 경쟁 구간에서 대역폭을 먼저 가져간다. 첫 화면에 즉시 보이는 로고는
                SiteHeader의 것 하나뿐이고, priority는 거기에만 남겨 두었다. */}
         <Image
-          src="/hangyeol-logo.png"
+          src="/hangyeol-logo-v2.png"
           alt=""
           width={351}
           height={489}
@@ -249,16 +253,12 @@ export default function HomeHero() {
           결 = 나뭇결처럼 바뀌지 않는 성향과 가치관. 결이 같은 사람과 이야기하는 자리입니다.
         </p>
 
-        <ReplayButton />
-
         <p className="hero__lead">
           한결은 사람들이 서로를 더 깊이 이해하도록 대화를 설계하는 브랜드입니다.
         </p>
-
-        <div className={styles.hint} aria-hidden="true">
-          <span>아래로</span>
-          <span className={styles.hintLine} />
-        </div>
+        {/* "처음부터 다시 보기"는 무대(HomeStage) 허브로 이사했다 — 인트로가 끝나면
+            이 레이어 자체가 크로스페이드로 사라지므로 여기 두면 죽은 버튼이 된다.
+            스크롤 힌트도 같은 이유로 허브로 갔다. */}
       </div>
     </section>
   );

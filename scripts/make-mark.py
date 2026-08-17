@@ -1,9 +1,9 @@
 """
-public/hangyeol-mark.png 생성 — 헤더용 **심볼만** 로고.
+public/hangyeol-mark-v2.png 생성 — 헤더용 **심볼만** 로고.
 
     python scripts/make-mark.py
 
-원본 `public/hangyeol-logo.png`(351×489)는 심볼 아래에 "한결" 워드마크가 함께 들어 있다.
+원본 `public/hangyeol-logo-v2.png`(351×489)는 심볼 아래에 "한결" 워드마크가 함께 들어 있다.
 헤더는 높이 26px로 쓰기 때문에 그 글씨가 뭉개져 읽히지도 않으면서 심볼만 작아 보이게 만든다.
 그래서 헤더에는 글씨를 잘라낸 심볼만 쓴다.
 
@@ -12,7 +12,7 @@ public/hangyeol-mark.png 생성 — 헤더용 **심볼만** 로고.
     y 109~304   마주보는 획 2개
     y 340~477   "한결" 워드마크   ← 이 부분을 버린다
 
-⚠️ 원본(hangyeol-logo.png)은 그대로 둔다. 히어로·푸터·OG 이미지는 워드마크가 있는
+⚠️ 원본(hangyeol-logo-v2.png)은 그대로 둔다. 히어로·푸터·OG 이미지는 워드마크가 있는
    전체 로고를 계속 쓴다 — 거기서는 크게 나와 글씨가 제 역할을 한다.
 """
 
@@ -25,8 +25,9 @@ from PIL import Image
 sys.stdout.reconfigure(encoding="utf-8")
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "public" / "hangyeol-logo.png"
-OUT = ROOT / "public" / "hangyeol-mark.png"
+# ⚠️ 파일명의 -v2는 캐시 버스터다(팔레트 변경 시 버전을 올린다) — src 참조도 함께 갱신할 것
+SRC = ROOT / "public" / "hangyeol-logo-v2.png"
+OUT = ROOT / "public" / "hangyeol-mark-v2.png"
 
 
 def ink_rows(im: Image.Image) -> list[bool]:

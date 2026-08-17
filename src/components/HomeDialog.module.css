@@ -1,0 +1,298 @@
+/* 다이얼로그 레이어(질문·반응·허브) 표현.
+   크로스페이드·겹침은 HomeStage.module.css의 .layer가 정의하고 여기서 composes로
+   상속만 한다 — 전환 타이밍의 진실을 두 곳으로 나누지 않기 위해서다. */
+
+.layer {
+  composes: layer from "./HomeStage.module.css";
+}
+.layerHub {
+  composes: layerHub from "./HomeStage.module.css";
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--sp-5);
+  width: 100%;
+  max-width: 680px;
+  padding: 0 22px;
+  margin: 0 auto;
+}
+
+/* ── 레이어 내부 순차 등장 ─────────────────────────────────────
+   ⚠️ data-reveal 금지 — PageEffects의 IO는 기하 교차만 보므로 visibility:hidden
+      레이어도 로드 직후 소진돼 버린다. 대신 data-active가 새로 매치되는 순간
+      애니메이션이 시작되고, 비활성화되면 리셋돼 재진입 때 다시 재생된다.
+   ⚠️ 베이스에 opacity:0을 두지 않는다 — reduced-motion(animation: none)에서
+      그대로 보여야 한다. */
+.layer[data-active="true"] .inner > * {
+  animation: dlgItem 0.45s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 90ms + 150ms);
+}
+@keyframes dlgItem {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 질문 카운터 — 진행 표시. 모바일 상단 진행 바(페이지 구간)와 혼동되지 않게
+   가로 바가 아니라 숫자다. --num 규칙(19px+ 굵은 글자) 준수. */
+.counter {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: var(--fs-4);
+  color: var(--num);
+}
+.counterOf {
+  color: var(--faint);
+  font-weight: 400;
+}
+
+/* 질문 — 히어로 헤드라인(명조 아님·고딕 900)과 구분되는 명조 700의 "말 거는" 목소리.
+   하한 28px: 최장 어절 "판단해야"(4자)·"가보셨죠."(4자+.)가 320px에서 안전하다. */
+.q {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: clamp(28px, 4.6vw, 44px);
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.answers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+.answerBtn {
+  min-width: 128px;
+  padding: 16px 34px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: var(--field);
+  color: var(--ink);
+  font-size: var(--fs-3);
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+.answerBtn:hover {
+  background: var(--ink);
+  color: var(--paper);
+  transform: translateY(-1px);
+}
+.answerBtn:active {
+  transform: scale(0.97);
+}
+
+/* 반응 멘트 — 한결의 대답. 질문보다 한 단계 작게. */
+.reaction {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: var(--fs-6);
+  line-height: var(--lh-title);
+  color: var(--ink);
+  max-width: 22em;
+  text-wrap: balance;
+}
+
+/* "그래서 한결은 이렇게 합니다" + 타자기 해결 문장 — 박스 카드를 대체한다(7차) */
+.solution {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  max-width: 26em;
+}
+.solutionLead {
+  font-size: var(--fs-1);
+  font-weight: 700;
+  letter-spacing: var(--ls-label);
+  color: var(--faint);
+}
+.solutionText {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: var(--fs-6);
+  line-height: var(--lh-title);
+  color: var(--ink);
+  text-align: center;
+  /* 타이핑으로 글이 자라는 동안 아래 요소들이 밀리지 않게 두 줄 높이를 예약한다 */
+  min-height: calc(2 * var(--lh-title) * 1em);
+}
+/* 타자기 캐럿 — 장식이라 테라코타 허용 지점. 무한 blink는 SkipIntroButton의
+   finish() 필터가 전제하는 종류다(무한 애니메이션은 건너뛴다). */
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.12em;
+  background: var(--terra);
+  animation: caretBlink 0.9s step-end infinite;
+}
+.caretDone {
+  animation: caretFade 0.4s 0.6s ease both;
+}
+@keyframes caretBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes caretFade {
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* 전역 RM 블록이 blink·fade를 다 꺼서 캐럿이 영구히 남는다 — 통째로 숨긴다 */
+  .caret {
+    display: none;
+  }
+}
+
+/* "다음 질문 →" — 답 버튼과 같은 급의 행동 버튼이다. 처음엔 14px 라인 버튼이었는데
+   소유자 피드백("너무 작다")으로 답 버튼과 같은 시각 언어로 키웠다. */
+.nextBtn {
+  min-width: 160px;
+  padding: 15px 32px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: var(--field);
+  color: var(--ink);
+  font-size: var(--fs-2);
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+.nextBtn:hover {
+  background: var(--ink);
+  color: var(--paper);
+  transform: translateY(-1px);
+}
+.nextBtn:active {
+  transform: scale(0.97);
+}
+
+/* "← 이전 질문으로" — 보조 동선이라 답 버튼보다 한 급 조용하게 */
+.prevBtn {
+  background: none;
+  border: 1px solid var(--rule);
+  color: var(--mute);
+  font-size: var(--fs-1);
+  padding: 10px 22px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    border-color 0.25s ease,
+    color 0.25s ease;
+}
+.prevBtn:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+/* ── 허브 ── */
+.identity {
+  margin: 0;
+  font-size: var(--fs-6);
+  line-height: var(--lh-body);
+  color: var(--mute);
+  max-width: 24em;
+}
+.hubActions {
+  margin-top: var(--sp-2);
+}
+.hubCta {
+  font-size: var(--fs-3);
+  padding: 20px 44px;
+  width: min(328px, 100%);
+}
+.hubLinks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-5);
+}
+.hubLinksLabel {
+  font-size: var(--fs-1);
+  color: var(--faint);
+  letter-spacing: var(--ls-label);
+}
+.hubMini {
+  display: flex;
+  gap: var(--sp-3);
+}
+.miniBtn {
+  background: none;
+  border: 1px solid var(--rule);
+  color: var(--faint);
+  font-size: var(--fs-1);
+  padding: 7px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    border-color 0.25s ease,
+    color 0.25s ease;
+}
+.miniBtn:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+/* 아래로 스크롤 유도 — 옛 히어로 힌트의 이주.
+   ⚠️ hintDrift는 무한 반복 — SkipIntroButton의 finish() 필터가 이걸 전제한다. */
+.hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-label);
+  color: var(--faint);
+}
+.hintLine {
+  display: block;
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--rule), transparent);
+  animation: hintDrift 2.8s 1s ease-in-out infinite;
+}
+@keyframes hintDrift {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(7px);
+    opacity: 0.45;
+  }
+}

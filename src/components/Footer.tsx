@@ -23,7 +23,7 @@ export default function Footer() {
       <div className="site-footer__inner">
         {/* 바로 아래 .site-footer__brand가 "한결"을 텍스트로 읽어준다 → 여기는 장식 */}
         <Image
-          src="/hangyeol-logo.png"
+          src="/hangyeol-logo-v2.png"
           alt=""
           width={351}
           height={489}

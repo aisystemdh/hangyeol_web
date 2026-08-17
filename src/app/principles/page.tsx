@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import BackToDialog from "@/components/BackToDialog";
 import StickyBar from "@/components/StickyBar";
 import { EVENT_CTA_LABEL, EVENT_HREF } from "@/lib/site";
 import styles from "./principles.module.css";
@@ -121,10 +122,12 @@ const ALLOWED = [
  */
 export default function PrinciplesPage() {
   return (
-    <div style={{ paddingBottom: 88 }}>
+    <div style={{ overflowX: "hidden", paddingBottom: 88 }}>
       {/* ── 1. 5개 원칙 (흰) ─────────────────────────────────── */}
       <section className="band" aria-labelledby="principles-intro">
         <div className={`shell stagger ${styles.stack}`}>
+          {/* 홈 대화 도중 온 방문자에게만 보인다(마운트 후 sessionStorage 판정) */}
+          <BackToDialog />
           <span className="eyebrow" data-reveal>
             원칙
           </span>

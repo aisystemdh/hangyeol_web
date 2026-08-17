@@ -52,12 +52,14 @@ const description = `가치관이 맞는 사람을 오프라인에서 만나는 
 /**
  * 카카오톡·인스타에 링크를 붙였을 때 뜨는 썸네일.
  *
- * `public/og.png`는 `scripts/make-og.py`가 그린 정적 이미지다(재생성: `python scripts/make-og.py`).
+ * `public/og-v2.png`는 `scripts/make-og.py`가 그린 정적 이미지다(재생성: `python scripts/make-og.py`).
  * ⚠️ 날짜·참가비는 일부러 그림에 넣지 않았다 — 캐시된 썸네일이 옛 숫자를 계속 보여주면
  *    "광고와 실제가 다르다"가 된다. 자세한 근거는 그 스크립트 상단 주석에 있다.
+ * ⚠️ 파일명의 `-v2`는 캐시 버스터다 — 팔레트가 바뀔 때(흑백→딥그린) 같은 URL이면
+ *    카카오톡·브라우저·이미지 옵티마이저가 옛 그림을 계속 내보낸다. 색을 갈면 버전을 올릴 것.
  */
 const OG_IMAGE = {
-  url: "/og.png",
+  url: "/og-v2.png",
   width: 1200,
   height: 630,
   alt: title,
@@ -99,7 +101,7 @@ const ORGANIZATION_JSONLD = {
   name: SITE.name,
   slogan: SITE.slogan,
   url: SITE_URL,
-  logo: new URL("/hangyeol-logo.png", SITE_URL).toString(),
+  logo: new URL("/hangyeol-logo-v2.png", SITE_URL).toString(),
   description,
   founder: SITE.operators.map(({ name, role }) => ({
     "@type": "Person",
@@ -109,24 +111,35 @@ const ORGANIZATION_JSONLD = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#f5f1e8", // --paper. 브라우저 UI(모바일 주소창)가 종이색과 이어진다
+  // env(safe-area-inset-*)가 0이 아니려면 필수 — 하단 고정 바·오버레이가 쓴다
+  viewportFit: "cover",
 };
 
 /**
- * 인트로는 세션당 한 번만 재생한다.
- * useEffect로 하면 재방문자가 흰 오버레이를 한 프레임 보게 되므로
- * 반드시 **첫 페인트 전**에 <html>에 속성을 붙여야 한다.
+ * 홈 전용 세션 플래그 2종 — 반드시 **첫 페인트 전**에 <html>에 속성을 붙인다.
+ * useEffect로 하면 재방문자가 오버레이/히어로를 한 프레임 이상 보게 된다.
  * 프라이빗 모드에서 sessionStorage 접근이 throw할 수 있어 try/catch로 감쌌다.
+ *
+ * - `intro-seen` → html[data-intro-seen]: 인트로 오버레이는 세션당 한 번.
+ *   자동 재생이라 스크립트가 첫 방문에 즉시 기록한다.
+ * - `dialog-phase` → html[data-dialog-phase="q2" 등]: 대화 시퀀스의 진행 위치.
+ *   **HomeStage만** 기록하고, 여기서는 읽어서 속성만 붙인다 — 질문 도중 카드
+ *   링크로 서브페이지에 다녀와도 React 마운트 전에 CSS(HomeStage.module.css)가
+ *   **보던 화면 그대로** 복원하기 위해서다. 정규식 화이트리스트 밖의 값은
+ *   버린다(저장소가 오염돼도 임의 속성값이 html에 붙지 않게).
  *
  * 인트로 오버레이(.hero__intro)는 **"/"의 HomeHero에만** 있다. /events/1의 Hero에는
  * 없으므로, 거기서 플래그를 세워 버리면 그 세션에서 홈의 인트로가 한 번도
  * 재생되지 않는다. 그래서 경로가 "/"일 때만 읽고 쓴다.
  *
- * ⚠️ 이 스크립트가 하이드레이션 전에 <html>에 data-intro-seen을 붙이므로 재방문 시
+ * ⚠️ 이 스크립트가 하이드레이션 전에 <html>에 속성을 붙이므로 재방문 시
  *    서버 HTML과 속성이 어긋난다 → <html>에 suppressHydrationWarning이 반드시 필요하다.
  *    (next-themes와 같은 패턴. 한 단계에만 적용되어 자식 검사에는 영향이 없다.)
+ * ⚠️ React 컴포넌트가 이 속성들을 **렌더에서 읽으면 안 된다** — 서버 HTML과 달라
+ *    하이드레이션이 어긋난다. 이벤트 핸들러/이펙트에서만 읽는다(HomeStage 참조).
  */
-const INTRO_SEEN_SCRIPT = `try{if(location.pathname==='/'){if(sessionStorage.getItem('intro-seen')){document.documentElement.setAttribute('data-intro-seen','')}else{sessionStorage.setItem('intro-seen','1')}}}catch(e){}`;
+const HOME_FLAGS_SCRIPT = `try{if(location.pathname==='/'){if(sessionStorage.getItem('intro-seen')){document.documentElement.setAttribute('data-intro-seen','')}else{sessionStorage.setItem('intro-seen','1')}var p=sessionStorage.getItem('dialog-phase');if(p&&/^(q[123]|r[123]|hub)$/.test(p)){document.documentElement.setAttribute('data-dialog-phase',p)}}}catch(e){}`;
 
 export default function RootLayout({
   children,
@@ -140,7 +153,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: INTRO_SEEN_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: HOME_FLAGS_SCRIPT }} />
       </head>
       <body>
         {/* 사이트 전체 배경. 화면 고정 한 장이라 페이지가 길어져도 비용이 일정하다.

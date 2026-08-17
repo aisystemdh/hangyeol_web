@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import BackToDialog from "@/components/BackToDialog";
 import StickyBar from "@/components/StickyBar";
 import { EVENT_CTA_LABEL, EVENT_HREF } from "@/lib/site";
 import s from "./why.module.css";
@@ -28,10 +29,12 @@ export const metadata: Metadata = {
 
 export default function WhyPage() {
   return (
-    <div style={{ paddingBottom: 88 }}>
+    <div style={{ overflowX: "hidden", paddingBottom: 88 }}>
       {/* ── 1. 문제를 정확히 겨누기 (흰) ───────────────────── */}
       <section className="band" aria-labelledby="why-aim">
         <div className={`shell stagger ${s.head}`}>
+          {/* 홈 대화 도중 온 방문자에게만 보인다(마운트 후 sessionStorage 판정) */}
+          <BackToDialog />
           <span className="eyebrow" data-reveal>
             왜 가치관인가
           </span>

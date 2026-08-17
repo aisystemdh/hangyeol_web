@@ -25,6 +25,11 @@ import { useEffect, useRef } from "react";
 
 /** 화면 위아래로 조금 넘겨 그려 첫 선·마지막 선이 잘린 듯 보이지 않게 한다. */
 const EDGE = 60;
+/** 결의 잉크색 = 딥그린(#1E3A2F). globals.css의 --green-900과 같은 값이어야 한다.
+    ⚠️ 딥그린은 검정보다 명도 대비가 낮아 알파를 검정 시절보다 살짝 올려 두었다 —
+       색만 바꾸고 알파를 되돌리면 결이 있는지 없는지 모르게 흐려진다. */
+const GRAIN_RGB = "30, 58, 47";
+const GRAIN_TILE_RGB = [30, 58, 47] as const;
 /** 레티나에서 메모리가 터지지 않게 상한을 둔다. 배경이라 2배면 충분하다. */
 const MAX_DPR = 2;
 
@@ -95,7 +100,7 @@ function paint(ctx: CanvasRenderingContext2D, w: number, h: number) {
       ownScale: 220 + rand() * 260,
       ownSeed: rand() * 1000,
       width: 0.6 + rand() * 1.7,
-      alpha: 0.03 + rand() * 0.07,
+      alpha: 0.045 + rand() * 0.085,
     });
   }
 
@@ -113,7 +118,7 @@ function paint(ctx: CanvasRenderingContext2D, w: number, h: number) {
       if (x <= -step) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
-    ctx.strokeStyle = `rgba(17, 17, 17, ${line.alpha.toFixed(3)})`;
+    ctx.strokeStyle = `rgba(${GRAIN_RGB}, ${line.alpha.toFixed(3)})`;
     ctx.lineWidth = line.width;
     ctx.stroke();
   }
@@ -127,10 +132,10 @@ function paint(ctx: CanvasRenderingContext2D, w: number, h: number) {
     const img = tctx.createImageData(96, 96);
     const d = img.data;
     for (let i = 0; i < d.length; i += 4) {
-      d[i] = 17;
-      d[i + 1] = 17;
-      d[i + 2] = 17;
-      d[i + 3] = rand() * 13; // 최대 알파 0.05 — 있는지 없는지 모를 정도로만
+      d[i] = GRAIN_TILE_RGB[0];
+      d[i + 1] = GRAIN_TILE_RGB[1];
+      d[i + 2] = GRAIN_TILE_RGB[2];
+      d[i + 3] = rand() * 16; // 최대 알파 0.06 — 있는지 없는지 모를 정도로만
     }
     tctx.putImageData(img, 0, 0);
     const pattern = ctx.createPattern(tile, "repeat");

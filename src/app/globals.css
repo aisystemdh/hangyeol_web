@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────────
-   한결 디자인 토큰 — design/design_handoff_hangyeol_landing/README.md
-   흰 바탕 위 무채색 단일 테마. 다크 모드 대응 없음(디자인 확정 사항).
+   한결 디자인 토큰 — 로고 확정 팔레트(2026-08 리브랜딩)
+   오프화이트(#F5F1E8) 바탕 + 딥그린(#1E3A2F) 잉크 + 테라코타 액센트.
+   다크 모드 대응 없음(디자인 확정 사항).
+   ⚠️ 핸드오프(design/…)는 구팔레트(흰/검정) 기록물이다 — 색은 이 파일이 정본.
    ───────────────────────────────────────────────────────────── */
 :root {
   color-scheme: light;
@@ -34,13 +36,41 @@
      | --fs-4 | 21px | 소제목 · 카드 번호                        |
      | --fs-5 | 26px | 큰 카드 제목                              |
 
-     제목은 화면 폭에 따라 변해야 해서 여기 넣지 않았다 — .display,
-     .display--page, .hero__headline 등이 각자 clamp()로 가진다. */
+     제목은 화면 폭에 따라 변해야 해서 아래 clamp 토큰(--fs-6~8, --fs-display*)을
+     쓴다 — 예전엔 19~34px 사이에 clamp 14종이 3~4% 간격으로 흩어져 "같아야 할
+     것들이 미세하게 다른" 상태였다(글자가 불규칙하다는 인상의 주범). */
   --fs-1: 14px;
   --fs-2: 16px;
   --fs-3: 18px;
   --fs-4: 21px;
   --fs-5: 26px;
+
+  /* ── 제목 스케일 (반응형) ────────────────────────────────────
+     | 토큰              | 값                      | 쓰는 곳                    |
+     |-------------------|-------------------------|----------------------------|
+     | --fs-6            | clamp(20, 2.5vw, 25px)  | 인용 · 풀쿼트 · 정의        |
+     | --fs-7            | clamp(22, 3vw, 30px)    | 카드 · 항목 제목            |
+     | --fs-8            | clamp(28, 4.6vw, 42px)  | 밴드 보조 대형 · 모바일 메뉴 |
+     | --fs-display      | clamp(44, 7vw, 58px)    | 섹션 제목 (.display)        |
+     | --fs-display-page | clamp(48, 8.4vw, 72px)  | 페이지 h1 (.display--page)  |
+     예외로 남는 일점물: .hero__headline(홈 간판 100px), 워드플레이 2종. */
+  --fs-6: clamp(20px, 2.5vw, 25px);
+  --fs-7: clamp(22px, 3vw, 30px);
+  --fs-8: clamp(28px, 4.6vw, 42px);
+  --fs-display: clamp(44px, 7vw, 58px);
+  --fs-display-page: clamp(48px, 8.4vw, 72px);
+
+  /* 라벨 자간 1종 — 예전엔 같은 위계의 작은 라벨에 0.05~0.12em 6종이 섞여
+     페이지마다 자간이 달랐다("글자가 들쭉날쭉하다"는 인상의 두 번째 주범). */
+  --ls-label: 0.08em;
+
+  /* 행간 5종 — 예전엔 21종이 흩어져 있었다. 역할로 고른다:
+     display(큰 제목) · title(카드 제목) · ui(라벨·버튼·캡션) · body(본문) · prose(긴 문단) */
+  --lh-display: 1.1;
+  --lh-title: 1.3;
+  --lh-ui: 1.5;
+  --lh-body: 1.7;
+  --lh-prose: 1.85;
 
   /* ── 여백 스케일 (4의 배수) ──────────────────────────────────
      `gap`은 전부 이 7단계에서 고른다. 4의 배수인 것은 화면 픽셀이 정수라
@@ -61,35 +91,48 @@
   --sp-6: 32px;
   --sp-7: 48px;
 
-  --ink: #111111;
-  --mute: #6b6b6b; /* 흰 위 5.33:1 */
-  /* 흰 위 4.73:1. 이전 값 #9b9b9b는 2.78:1로 WCAG AA 미달이었다 —
-     .eyebrow가 이 토큰을 쓰므로 모든 페이지의 첫 줄이 미달이었다. 되돌리지 말 것. */
-  --faint: #757370;
-  --rule: #e6e6e6;
-  --tint: #f5f4f2;
-  --track: #e2e0dc;
+  /* ── 베이스 팔레트 — 절대 반전되지 않는 원색. 하드코딩 대신 이걸 참조한다. ── */
+  --green-900: #1e3a2f; /* 딥 포레스트그린(주조). 로고 카드 확정값 */
+  --paper: #f5f1e8; /* 오프화이트(배경). 로고 카드 확정값 */
+  --field: #fbf8f1; /* 입력 필드 — 종이보다 반 단계 밝아 필드가 필드로 읽힌다 */
+  /* ⚠️ 테라코타 원색은 종이 위 2.88:1 — **장식(선·점·바) 전용, 글자 금지.**
+     글자로 쓸 일이 있으면 --terra-ink(4.95:1)를 쓴다. */
+  --terra: #c97b5a;
+  --terra-ink: #9a5637;
 
-  --headline-grey: #8a8781; /* 헤드라인 비강조 글자, 섹션 제목 뒷부분 */
-  --hl-bar: #cfccc6; /* 히어로 `결` 하이라이트 */
-  --hl-bar-body: #e2e0dc; /* 본문 하이라이트 */
-  --btn-hover: #3a3a3a;
-  --input-hover: #c9c7c2;
-  /* 카드 번호 01/02/03. **19px 이상 굵은 글자 전용**(대형 텍스트 3:1 기준으로
-     흰 위 3.58:1 / --tint 위 3.26:1). 13px짜리 작은 번호에는 --faint를 쓸 것.
-     이전 값 #a8a5a0은 2.45:1이라 대형 기준도 못 넘겼다. */
-  --num: #8a8781;
-  --lead: #55534f; /* 히어로 한 줄 설명 */
+  --ink: var(--green-900); /* 종이 위 10.95:1 */
+  --mute: #4a5d52; /* 종이 위 6.25:1 */
+  /* 종이 위 4.79:1. 구팔레트 시절 #9b9b9b(2.78:1) 같은 미달값으로 되돌리지 말 것 —
+     .eyebrow가 이 토큰을 쓰므로 모든 페이지의 첫 줄이 걸린다. */
+  --faint: #5e6e64;
+  --rule: #dcd5c6;
+  --tint: #ede7da;
+  --track: #dbd4c5;
+
+  --headline-grey: #66786c; /* 헤드라인 비강조 글자(대형 전용). 종이 위 4.17:1 */
+  --hl-bar: #dfb29c; /* 히어로 `결` 하이라이트 — 테라코타 워시(장식) */
+  --hl-bar-body: #ebcdbe; /* 본문 하이라이트(장식) */
+  --btn-hover: #2a4a3c; /* 종이색 글자 얹혀 8.69:1 */
+  --input-hover: #b0aa9b;
+  /* 카드 번호 01/02/03. **19px 이상 굵은 글자 전용** 규칙 유지.
+     테라코타 잉크(#9a5637) — 종이 위 4.95:1이라 대형 기준(3:1)을 넉넉히 넘긴다.
+     ⚠️ 테라코타 원색(--terra, 2.88:1)으로 되돌리지 말 것 — 대형 기준도 미달이다. */
+  --num: var(--terra-ink);
+  --lead: #3e5449; /* 히어로 한 줄 설명. 종이 위 7.25:1 */
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --shell: 1000px;
+  /* 스티키 헤더 실측 높이(패딩 12×2 + 햄버거/로고 40px). 앵커 보정·스냅 패딩이
+     전부 이 값 하나를 본다 — 예전처럼 56/60/72px 세 값이 흩어지면 앵커 이동마다
+     대상이 헤더에 몇 px씩 가려진다. */
+  --header-h: 64px;
 }
 
-/* ⚠️ 흰 배경은 **html에만** 둔다. body에 두면 나무결(.site-grain)이 가려진다 —
+/* ⚠️ 종이색 배경은 **html에만** 둔다. body에 두면 나무결(.site-grain)이 가려진다 —
    z-index:-1인 fixed 요소는 "html의 배경 위, body 같은 일반 블록의 배경 아래"에
-   그려지기 때문이다. body를 흰색으로 되돌리면 결이 통째로 사라진다. */
+   그려지기 때문이다. body에 배경을 주면 결이 통째로 사라진다. */
 html {
-  background: #ffffff;
+  background: var(--paper);
 }
 body {
   background: transparent;
@@ -107,18 +150,53 @@ body {
   position: fixed;
   inset: 0;
   width: 100%;
-  height: 100%;
+  /* 100%(레이아웃 뷰포트)면 모바일 주소창이 접힐 때마다 높이가 변해 캔버스가
+     전면 재드로우된다 — 스크롤 시작마다 메인 스레드가 결을 다시 그렸다.
+     lvh(최대 뷰포트 고정값)면 크기가 불변이라 ResizeObserver가 발화하지 않는다.
+     주소창이 펼쳐진 동안 하단 몇십 px이 화면 밖일 뿐이고, fixed 배경이라 무해하다. */
+  height: 100vh; /* lvh 미지원 폴백 */
+  height: 100lvh;
   z-index: -1;
   pointer-events: none;
 }
 
 html {
-  /* 스티키 헤더(약 60px)와 하단 고정 바(약 88px)가 키보드로 이동 중인 요소를 덮지
+  /* 스티키 헤더(--header-h)와 하단 고정 바(약 88px)가 키보드로 이동 중인 요소를 덮지
      않게 한다 — WCAG 2.4.11(Focus Not Obscured). 2.1을 통과한 사이트가 2.2에서
-     가장 많이 새로 걸리는 항목이고, 원인은 대개 이런 sticky/fixed 요소다.
-     .apply의 scroll-margin-top은 위쪽만 보정하고 있어 하단 바를 못 막았다. */
-  scroll-padding-top: 72px;
+     가장 많이 새로 걸리는 항목이고, 원인은 대개 이런 sticky/fixed 요소다. */
+  scroll-padding-top: calc(var(--header-h) + 8px);
   scroll-padding-bottom: 100px;
+  /* 앵커 이동(레일·CTA→#apply)을 부드럽게. PageEffects의 수동 스크롤 계산(-56px)을
+     지우고 이걸로 대체했다 — scroll-padding은 fragment 이동에도 적용되므로
+     JS 보정이 필요 없다. reduced-motion에서는 아래 블록이 즉시 이동으로 되돌린다. */
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ── 홈 퍼널 스냅 ──────────────────────────────────────────────
+   홈에만 [data-funnel] 래퍼가 있어, 그때만 루트 스크롤러에 스냅이 걸린다.
+   서브페이지는 일반 스크롤 그대로다. :has() 미지원 구형 브라우저는 스냅 없는
+   일반 스크롤로 자연 강등된다 — 폴백이 곧 정상 동작이다.
+
+   ⚠️ proximity지 mandatory가 아니다. Footer가 스냅 영역 밖이라 mandatory면
+      "Footer만 보이는 스크롤 위치"가 유효 정지점이 아니게 되어 도달 불가/튕김이
+      생기고, 콘텐츠가 화면보다 길어지는 소형 폰에서도 같은 함정이 있다.
+   ⚠️ scroll-padding-top은 헤더 높이 **정확히**다(전역 기본값은 +8px 여유) —
+      스냅 화면의 min-height(100svh - 헤더)와 짝이라 8px가 끼면 화면마다 8px씩 민다. */
+html:has([data-funnel]) {
+  scroll-snap-type: y proximity;
+  scroll-padding-top: var(--header-h);
+}
+/* 스냅 해제 탈출구: 동작 줄이기(자동 정렬도 전정기관 자극이다) +
+   낮은 화면(가로로 돌린 폰 — 화면 단위 강제가 오히려 콘텐츠를 가둔다) */
+@media (prefers-reduced-motion: reduce), (max-height: 520px) {
+  html:has([data-funnel]) {
+    scroll-snap-type: none;
+  }
 }
 
 /* 본문 바로가기 — 키보드 사용자가 헤더 내비게이션을 매번 지나치지 않아도 되게 한다.
@@ -131,21 +209,21 @@ html {
   transform: translate(-50%, -120%);
   z-index: 70;
   background: var(--ink);
-  color: #ffffff;
+  color: var(--paper);
   text-decoration: none;
   font-size: var(--fs-1);
   padding: 12px 22px;
   border-radius: 0 0 12px 12px;
   transition: transform 0.2s var(--ease-out);
 }
-/* 전역 a 규칙(밑줄·hover 회색)과 포커스 링(잉크색)이 잉크 배경 위에서는 안 보인다 */
+/* 전역 a 규칙(밑줄·hover 색)과 포커스 링(잉크색)이 잉크 배경 위에서는 안 보인다 */
 .skip-link:hover {
-  color: #ffffff;
+  color: var(--paper);
 }
 .skip-link:focus-visible {
   transform: translate(-50%, 0);
-  color: #ffffff;
-  outline: 2px solid #ffffff;
+  color: var(--paper);
+  outline: 2px solid var(--paper);
   outline-offset: -5px;
 }
 
@@ -161,7 +239,7 @@ body {
   word-break: keep-all;
   /* 핸드오프 원본에는 CSS 리셋이 없어 행간이 normal이다. Tailwind preflight의
      1.5를 그대로 두면 제목·버튼 높이가 원본보다 5~6px씩 커진다.
-     행간이 필요한 곳(.body-text, .h2 등)에는 개별로 지정해 두었다. */
+     행간이 필요한 곳에는 --lh-* 토큰으로 개별 지정해 두었다. */
   line-height: normal;
 }
 
@@ -193,29 +271,13 @@ a:focus-visible {
   margin: 0 auto;
   padding: 76px 22px 84px;
 }
-.section {
-  border-top: 1px solid var(--rule);
-}
-
-/* 서체 역할 */
-.h2 {
-  font-family: var(--font-display), sans-serif;
-  font-weight: 900;
-  font-size: clamp(32px, 8.5vw, 60px);
-  line-height: 1.05;
-  letter-spacing: -0.04em;
-  margin: 0;
-}
-.h2 .tail {
-  font-family: var(--font-serif), serif;
-  font-weight: 700;
-  color: var(--headline-grey);
-}
+/* (죽은 규칙 정리 — .section과 .h2/.h2 .tail은 TSX 사용처가 0이라 삭제했다.
+   제목 꼬리 회색은 sectionHead.module.css의 .tail이 맡는다.) */
 
 .body-text {
   margin: 0;
   font-size: var(--fs-2);
-  line-height: 1.75;
+  line-height: var(--lh-body);
   color: var(--mute);
 }
 
@@ -224,7 +286,7 @@ a:focus-visible {
   display: inline-block;
   text-decoration: none;
   background: var(--ink);
-  color: #ffffff;
+  color: var(--paper);
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
   border: 0;
@@ -236,7 +298,7 @@ a:focus-visible {
 }
 .pill:hover {
   background: var(--btn-hover);
-  color: #ffffff;
+  color: var(--paper);
   transform: translateY(-1px);
 }
 .pill:active {
@@ -272,7 +334,7 @@ a:focus-visible {
 }
 
 /* 잠긴 상태 — 아직 신청을 받을 수 없을 때(폼 엔드포인트 미설정)와 전송 중.
-   --mute(#6b6b6b)를 --tint(#f5f4f2) 위에 올려 5:1로, 잠겨 있어도 읽히게 둔다. */
+   --mute를 --tint 위에 올려 4.5:1 이상으로, 잠겨 있어도 읽히게 둔다. */
 .pill:disabled,
 .pill:disabled:hover {
   background: var(--tint);
@@ -296,8 +358,8 @@ a:focus-visible {
      보이는 결과는 그대로 두고 선언만 사실과 맞췄다. */
   font-weight: 700;
   font-size: var(--fs-1);
-  line-height: 1.4;
-  letter-spacing: 0.08em;
+  line-height: var(--lh-ui);
+  letter-spacing: var(--ls-label);
   text-transform: none;
   color: var(--faint);
 }
@@ -310,8 +372,8 @@ a:focus-visible {
   margin: 0;
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: clamp(44px, 7vw, 58px);
-  line-height: 1.1;
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
   letter-spacing: -0.02em;
   color: var(--ink);
   text-wrap: balance;
@@ -325,14 +387,14 @@ a:focus-visible {
    좁은 화면에서 h1을 더 키우면 두 줄이 네 줄이 되어 얻는 것보다 잃는 게 크다.
    홈·/events/1의 히어로는 .hero__headline이라는 별도 스케일이라 무관하다. */
 .display--page {
-  font-size: clamp(48px, 8.4vw, 72px);
+  font-size: var(--fs-display-page);
 }
 
 /* 본문 리드. .body-text(16px)보다 한 단계 큰, 제목 바로 아래용. */
 .lede {
   margin: 0;
   font-size: var(--fs-3);
-  line-height: 1.7;
+  line-height: var(--lh-body);
   color: var(--mute);
   max-width: 34em;
 }
@@ -349,33 +411,34 @@ a:focus-visible {
   padding-bottom: 0;
 }
 
-/* 검정 밴드. 배경색을 바꾸는 게 아니라 **토큰을 반전**시킨다.
+/* 딥그린 밴드("dark"는 색이 아니라 명도 역할명 — rename 금지, 9곳이 쓴다).
+   배경색을 바꾸는 게 아니라 **토큰을 반전**시킨다.
    그래서 안에 든 .pill/.card/.eyebrow/.display/.lede가 전부 자동으로 따라온다.
-   모든 값은 #111 위 4.5:1 이상으로 맞춰 두었다(--mute 11.2:1, --faint 5.7:1,
-   --headline-grey 5.3:1, --num 7.7:1, --lead 12.7:1). */
+   모든 값은 딥그린(#1e3a2f) 위 기준으로 검증했다(--mute 7.89:1, --faint 5.17:1,
+   --headline-grey 4.56:1, --num 3.80:1 — 19px+ 굵은 글자 전용, --lead 9.50:1). */
 .band--dark {
-  --ink: #fffefd;
-  --mute: #c9c7c2;
-  --faint: #8f8d89;
-  --rule: #333333;
-  /* #1e1e1e는 배경 #111 대비 1.13:1이라 카드가 카드로 안 읽혔다 → 1.35:1 */
-  --tint: #232323;
-  --track: #333333;
-  --headline-grey: #8a8781;
-  --hl-bar: #4a4a4a;
-  --hl-bar-body: #3a3a3a;
-  --num: #a8a5a0;
-  --lead: #d6d3ce;
-  --btn-hover: #e6e4e0;
-  --input-hover: #6b6b6b;
+  --ink: var(--paper);
+  --mute: #c6d2c4;
+  --faint: #9bac9e;
+  --rule: #33503f;
+  /* 배경 대비 1.20:1 — 너무 붙으면 카드가 카드로 안 읽힌다(구팔레트에서 겪은 함정) */
+  --tint: #27473a;
+  --track: #33503f;
+  --headline-grey: #8fa294;
+  --hl-bar: #a9684d; /* 테라코타를 딥그린 톤으로 눌러서 */
+  --hl-bar-body: #3e5a4b;
+  --num: var(--terra); /* 딥그린 위 3.80:1 — 여기서만 원색 허용(19px+ 굵은 숫자) */
+  --lead: #dde4d8;
+  --btn-hover: #e8e2d3;
+  --input-hover: #6e8577;
 
-  background: #111111;
+  background: var(--green-900);
   color: var(--ink);
 }
-/* .pill은 글자색이 #fff로 고정이라 반전되면 흰 위 흰이 된다 → 여기서만 뒤집는다 */
+/* .pill은 글자색이 종이색으로 고정이라 반전되면 종이 위 종이가 된다 → 여기서만 뒤집는다 */
 .band--dark .pill,
 .band--dark .pill:hover {
-  color: #111111;
+  color: var(--green-900);
 }
 
 /* 자식 순차 등장. [data-reveal]의 transition에 지연만 얹는다. */
@@ -398,6 +461,9 @@ a:focus-visible {
   letter-spacing: -0.01em;
   color: var(--ink);
   transition: color 0.25s ease;
+  /* 16px 글자만으로는 타깃 22px — 패딩으로 24px+를 확보하고 마진으로 상쇄 */
+  padding: 8px 0;
+  margin: -8px 0;
 }
 .link-arrow::after {
   content: "→";
@@ -409,6 +475,7 @@ a:focus-visible {
 }
 .link-arrow:hover::after {
   transform: translateX(4px);
+  color: var(--terra); /* 화살표만 — 글자는 --mute 유지(대비 4.5:1 이상) */
 }
 
 /* ── 스크롤 리빌 ─────────────────────────────────────────── */
@@ -490,13 +557,16 @@ a:focus-visible {
   from { opacity: 0; transform: translateY(10px); filter: blur(5px); }
   to { opacity: 1; transform: none; filter: none; }
 }
+/* ⚠️ px로 되돌리지 말 것 — 글자는 6.5vw로 변하는데 이동량이 28px 고정이면
+   320px 폰에서 '결'(24px 폭)이 24px 겹침에 통째로 파묻힌다.
+   em은 적용 요소(.hero__wp-parts, 34px 기준)의 글자 크기에 비례한다: 0.82em ≈ 28px. */
 @keyframes wpMergeR {
   from { transform: translateX(0); }
-  to { transform: translateX(28px); }
+  to { transform: translateX(0.82em); }
 }
 @keyframes wpMergeL {
   from { transform: translateX(0); }
-  to { transform: translateX(-28px); }
+  to { transform: translateX(-0.82em); }
 }
 @keyframes wpFadeOut {
   from { opacity: 1; }
@@ -506,9 +576,10 @@ a:focus-visible {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
+/* 히어로 밑줄 — 장식이라 테라코타 원색을 쓸 수 있는 지점이다 */
 @keyframes ulIn {
-  from { box-shadow: inset 0 -3px 0 rgba(17, 17, 17, 0); }
-  to { box-shadow: inset 0 -3px 0 rgba(17, 17, 17, 1); }
+  from { box-shadow: inset 0 -3px 0 rgba(201, 123, 90, 0); }
+  to { box-shadow: inset 0 -3px 0 rgba(201, 123, 90, 1); }
 }
 @keyframes hlIn {
   from { transform: scaleX(0); }
@@ -531,7 +602,7 @@ details[open] > [data-answer] {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(245, 241, 232, 0.88); /* --paper의 알파판 */
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid transparent;
@@ -556,7 +627,7 @@ details[open] > [data-answer] {
 }
 html[data-scrolled] .site-header {
   border-bottom-color: var(--rule);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 24px rgba(30, 58, 47, 0.08); /* 딥그린 그림자 */
 }
 html[data-scrolled] .site-header__logo {
   height: 24px;
@@ -584,7 +655,7 @@ html[data-scrolled] .site-header__logo {
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: #ffffff;
+  background: var(--paper);
   display: grid;
   place-items: center;
   pointer-events: none;
@@ -601,6 +672,13 @@ html[data-intro-seen] .hero__intro {
   width: min(54vw, 40vh);
   height: auto;
   overflow: visible;
+}
+/* 세로가 긴 폰에서는 54vw가 이겨서 줌(×2.9) 종료 프레임이 뷰포트를 크게 넘는다
+   (390px 폰에서 611px — 획이 화면 밖에서 잘리며 사라졌다). 시작 크기를 줄인다. */
+@media (max-width: 480px) {
+  .hero__intro svg {
+    width: min(44vw, 34vh);
+  }
 }
 .hero__logo {
   width: 78px;
@@ -619,7 +697,7 @@ html[data-intro-seen] .hero__intro {
   font-family: var(--font-display), sans-serif;
   font-weight: 900;
   font-size: clamp(44px, 12.5vw, 100px);
-  line-height: 1.12;
+  line-height: var(--lh-display);
   letter-spacing: -0.045em;
   margin: 0;
   color: var(--headline-grey);
@@ -657,7 +735,8 @@ html[data-intro-seen] .hero__intro {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--sp-6);
+  /* wpMerge의 ±0.82em과 짝이다 — 병합 후 살짝(0.13em)만 겹치는 간격 */
+  gap: 0.95em;
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
   font-size: clamp(24px, 6.5vw, 34px);
@@ -685,7 +764,7 @@ html[data-intro-seen] .hero__intro {
   top: 18px;
   right: 20px;
   z-index: 61;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(245, 241, 232, 0.92); /* --paper의 알파판 */
   border: 1px solid var(--rule);
   color: var(--mute);
   font-size: var(--fs-1);
@@ -709,6 +788,17 @@ html[data-intro-seen] .hero__intro {
 html[data-intro-seen] .hero__skip {
   display: none;
 }
+/* 모바일에서는 우상단이 햄버거 버튼 자리와 정확히 겹쳐(z 61 > 20) 인트로 4.5초 동안
+   메뉴를 열 수 없었다. 하단 중앙으로 옮겨 물리적으로 분리한다. */
+@media (max-width: 767px) {
+  .hero__skip {
+    top: auto;
+    right: auto;
+    left: 50%;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+  }
+}
 @keyframes heroSkipOut {
   from { opacity: 1; visibility: visible; }
   to { opacity: 0; visibility: hidden; }
@@ -723,35 +813,19 @@ html[data-intro-seen] .hero__skip {
 .hero__gloss {
   margin: -4px 0 0;
   font-size: var(--fs-1);
-  line-height: 1.6;
+  line-height: var(--lh-ui);
   color: var(--faint);
   max-width: 26em;
   animation: riseIn 0.8s 1.7s var(--ease-out) both;
 }
 
-.hero__replay {
-  background: none;
-  border: 1px solid var(--rule);
-  color: var(--faint);
-  font-size: var(--fs-1);
-  padding: 7px 16px;
-  border-radius: 999px;
-  cursor: pointer;
-  margin-top: -18px;
-  transition:
-    border-color 0.25s ease,
-    color 0.25s ease;
-}
-.hero__replay:hover {
-  border-color: var(--ink);
-  color: var(--ink);
-}
+/* (.hero__replay는 삭제 — "처음부터 다시 보기"는 무대 허브의 .miniBtn이 맡는다) */
 .hero__lead {
   margin: 0;
   font-family: var(--font-serif), serif;
   font-weight: 400;
   font-size: var(--fs-4);
-  line-height: 1.65;
+  line-height: var(--lh-body);
   color: var(--lead);
   max-width: 20em;
   /* HomeHero용 기본값. /events/1의 Hero는 인라인 style로 1.4s를 덮어쓴다. */
@@ -814,14 +888,13 @@ html[data-intro-seen] .hero__skip {
   font-family: var(--font-serif), serif;
   font-weight: 700;
   font-size: var(--fs-4);
-  letter-spacing: 0.02em;
   color: var(--num);
 }
 .card__title {
   font-family: var(--font-display), sans-serif;
   font-weight: 900;
   font-size: var(--fs-5);
-  line-height: 1.3;
+  line-height: var(--lh-title);
   letter-spacing: -0.025em;
   margin: 0;
   text-wrap: balance;
@@ -893,6 +966,20 @@ html[data-intro-seen] .hero__skip {
 .timeline__body p {
   max-width: 44em;
 }
+/* 320px에서 112px 시간 열을 빼면 본문 열이 148px뿐이라, keep-all 한국어가
+   한 줄 1~2어절로 찢어졌다. 좁은 화면에서는 시간표를 세로로 푼다. */
+@media (max-width: 480px) {
+  .timeline__line {
+    display: none; /* left:90px가 112px 트랙과 맞물린 값 — 스택되면 의미가 없다 */
+  }
+  .timeline__row {
+    grid-template-columns: 1fr;
+    gap: var(--sp-2);
+  }
+  .timeline__time {
+    padding-top: 0;
+  }
+}
 
 /* ── 운영자 ─────────────────────────────────────────────────
    사진 자리를 걷어내면서 2열 레이아웃(.two-col)이 필요 없어졌다.
@@ -905,7 +992,7 @@ html[data-intro-seen] .hero__skip {
 .founders__copy p {
   margin: 0;
   font-size: var(--fs-3);
-  line-height: 1.85;
+  line-height: var(--lh-prose);
   color: var(--mute);
 }
 .founders__q {
@@ -940,14 +1027,16 @@ html[data-intro-seen] .hero__skip {
 
 /* ── 신청 ─────────────────────────────────────────────────── */
 .apply {
-  scroll-margin-top: 60px;
+  scroll-margin-top: var(--header-h);
 }
 .apply__grid {
   max-width: var(--shell);
   margin: 0 auto;
   padding: 76px 22px 84px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  /* ⚠️ min() 없이 minmax(300px, 1fr)로 되돌리면 344px 미만 뷰포트에서 트랙이
+     300px로 확정되어 폼 오른쪽 24px이 잘린다(320px 폰에서 실제로 깨졌다). */
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
   gap: var(--sp-7);
   align-items: start;
 }
@@ -983,6 +1072,12 @@ html[data-intro-seen] .hero__skip {
   color: var(--faint);
   font-size: var(--fs-1);
 }
+@media (max-width: 480px) {
+  .facts__row {
+    grid-template-columns: 1fr;
+    gap: var(--sp-1);
+  }
+}
 
 .apply__right {
   display: flex;
@@ -996,7 +1091,7 @@ html[data-intro-seen] .hero__skip {
 }
 .input {
   border: 1px solid var(--rule);
-  background: #ffffff;
+  background: var(--field);
   color: var(--ink);
   font-size: var(--fs-2);
   padding: 18px 20px;
@@ -1036,7 +1131,7 @@ html[data-intro-seen] .hero__skip {
   display: block;
   text-align: center;
   border: 1px solid var(--rule);
-  background: #ffffff;
+  background: var(--field);
   color: var(--mute);
   font-size: var(--fs-2);
   padding: 18px;
@@ -1054,7 +1149,7 @@ html[data-intro-seen] .hero__skip {
 .gender__input:checked + .gender__btn {
   border-color: var(--ink);
   background: var(--ink);
-  color: #ffffff;
+  color: var(--paper);
 }
 /* 입력이 숨어 있으므로 포커스 링을 라벨이 대신 받는다 */
 .gender__input:focus-visible + .gender__btn {
@@ -1080,7 +1175,7 @@ html[data-intro-seen] .hero__skip {
   margin: 0;
   padding-left: 20px; /* .input의 좌측 패딩과 맞춘다 */
   font-size: var(--fs-1);
-  line-height: 1.5;
+  line-height: var(--lh-ui);
   color: var(--ink);
   font-weight: 500;
 }
@@ -1103,7 +1198,7 @@ html[data-intro-seen] .hero__skip {
 }
 .consent__label {
   font-size: var(--fs-2);
-  line-height: 1.5;
+  line-height: var(--lh-ui);
   color: var(--mute);
   cursor: pointer;
 }
@@ -1127,7 +1222,7 @@ html[data-intro-seen] .hero__skip {
 .form__notice {
   margin: 0;
   font-size: var(--fs-1);
-  line-height: 1.6;
+  line-height: var(--lh-ui);
   color: var(--faint);
   text-align: center;
 }
@@ -1163,7 +1258,7 @@ html[data-intro-seen] .hero__skip {
 .form__error {
   margin: 0;
   font-size: var(--fs-1);
-  line-height: 1.6;
+  line-height: var(--lh-ui);
   color: var(--ink);
 }
 .confirm {
@@ -1185,7 +1280,7 @@ html[data-intro-seen] .hero__skip {
 .confirm p {
   margin: 0;
   font-size: var(--fs-2);
-  line-height: 1.75;
+  line-height: var(--lh-body);
   color: var(--mute);
 }
 
@@ -1210,7 +1305,7 @@ html[data-intro-seen] .hero__skip {
 .rules p {
   margin: 14px 0 0;
   font-size: var(--fs-2);
-  line-height: 1.8;
+  line-height: var(--lh-prose);
   color: var(--mute);
 }
 
@@ -1237,7 +1332,7 @@ html[data-intro-seen] .hero__skip {
 .faq__a {
   margin: 14px 0 0;
   font-size: var(--fs-2);
-  line-height: 1.8;
+  line-height: var(--lh-prose);
   color: var(--mute);
   max-width: 46em;
 }
@@ -1251,27 +1346,16 @@ details[open] > summary .plus {
   transform: rotate(45deg);
 }
 
-.refund {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  padding: 32px 28px;
-  background: var(--tint);
-  border-radius: 22px;
-}
-.refund__title {
-  font-family: var(--font-serif), serif;
-  font-weight: 700;
-  font-size: var(--fs-5);
-  letter-spacing: -0.01em;
-  margin: 0;
-}
+/* 환불 규정 행들 — 7차부터 FAQ 접이식(.faq__item) 안에 들어간다.
+   상자(.refund)와 제목(.refund__title)은 summary가 대신하므로 삭제했다. */
 .refund__rows {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
+  margin: 14px 0 0; /* .faq__a와 같은 리듬 */
   font-size: var(--fs-2);
-  line-height: 1.75;
+  line-height: var(--lh-body);
+  max-width: 46em;
 }
 .refund__row {
   display: grid;
@@ -1280,6 +1364,13 @@ details[open] > summary .plus {
 }
 .refund__when {
   color: var(--faint);
+}
+/* 320px에서 92px 라벨 열을 빼면 본문 열이 너무 좁다 — 세로로 푼다 */
+@media (max-width: 480px) {
+  .refund__row {
+    grid-template-columns: 1fr;
+    gap: var(--sp-1);
+  }
 }
 
 /* ── 푸터 · 하단 고정 바 ──────────────────────────────────── */
@@ -1319,6 +1410,11 @@ details[open] > summary .plus {
   font-size: var(--fs-1);
   color: var(--mute);
   transition: color 0.2s ease;
+  /* 14px 글자만으로는 타깃이 19px — WCAG 2.5.8(최소 24px) 미달이었다.
+     패딩으로 타깃을 키우고 음수 마진으로 시각 간격은 그대로 둔다. */
+  display: inline-block;
+  padding: 8px 6px;
+  margin: -8px -6px;
 }
 .site-footer__nav a:hover {
   color: var(--ink);
@@ -1340,6 +1436,9 @@ details[open] > summary .plus {
   color: var(--mute);
   text-underline-offset: 3px;
   transition: color 0.2s ease;
+  display: inline-block;
+  padding: 8px 6px;
+  margin: -8px -6px;
 }
 .site-footer__contact a:hover {
   color: var(--ink);
@@ -1351,11 +1450,12 @@ details[open] > summary .plus {
   right: 0;
   bottom: 0;
   z-index: 30;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(245, 241, 232, 0.92); /* --paper의 알파판 */
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-top: 1px solid var(--rule);
-  padding: 12px 22px;
+  /* iOS 홈 바 안전 영역만큼 더 띄운다 — 없으면 버튼 아랫단이 홈 바에 눌린다 */
+  padding: 12px 22px calc(12px + env(safe-area-inset-bottom, 0px));
   transform: translateY(110%);
   transition: transform 0.5s var(--ease-out);
 }
@@ -1381,6 +1481,11 @@ html[data-scrolled] .sticky-bar {
 .sticky-bar__price {
   font-size: var(--fs-1);
   font-weight: 700;
+  /* 부모 .sticky-bar__info(min-width:0)가 줄어들 때 "39,000원"이 끊기지 않고
+     오른쪽 버튼과 겹치는 대신, 말줄임으로 안에서 끝나게 한다 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sticky-bar__meta {
   font-size: var(--fs-1);
@@ -1414,6 +1519,13 @@ html[data-scrolled] .sticky-bar {
   }
   .sticky-bar__inner {
     gap: var(--sp-2);
+  }
+}
+/* 320px 계열: 가격 + 1:1 문의 + 신청 버튼이 산술적으로 안 들어간다(필요 276px 초과).
+   문의 링크는 헤더·푸터에 그대로 있으므로 바에서만 접는다. */
+@media (max-width: 359px) {
+  .sticky-bar .ig-link {
+    display: none;
   }
 }
 
@@ -1468,7 +1580,7 @@ html[data-scrolled] .sticky-bar {
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
   font-size: var(--fs-1);
-  letter-spacing: 0.06em;
+  letter-spacing: var(--ls-label);
   color: var(--faint);
 }
 .tldr__list {
@@ -1478,7 +1590,7 @@ html[data-scrolled] .sticky-bar {
   flex-direction: column;
   gap: var(--sp-2);
   font-size: var(--fs-2);
-  line-height: 1.65;
+  line-height: var(--lh-body);
   color: var(--ink);
 }
 .tldr__list strong {

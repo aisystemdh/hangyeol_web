@@ -11,10 +11,15 @@
   gap: var(--sp-4);
 }
 
-/* ── 좌: 브랜드 심볼 ──────────────────────────────────────── */
-.brand {
+/* ── 좌: 브랜드 심볼 + "홈" 버튼 묶음 ─────────────────────── */
+.left {
   grid-column: 1;
   justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.brand {
   display: flex;
   align-items: center;
   text-decoration: none;
@@ -23,6 +28,44 @@
 .brand:hover {
   color: var(--ink);
 }
+/* 명시적 홈 링크 — .navLink와 같은 시각 언어. 패딩으로 타깃 24px+를 확보하고
+   음수 마진으로 시각 간격은 유지한다. */
+.homeLink {
+  position: relative;
+  text-decoration: none;
+  color: var(--mute);
+  font-size: var(--fs-1);
+  font-weight: 500;
+  padding: 8px 6px;
+  margin: -8px -2px;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+.homeLink:hover {
+  color: var(--ink);
+}
+.homeLink::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--terra);
+  opacity: 0;
+  transform: translate(-50%, -0.25rem);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.homeLinkActive {
+  color: var(--ink);
+}
+.homeLinkActive::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
 
 /* ── 중앙: 데스크톱 내비 ──────────────────────────────────── */
 .nav {
@@ -30,7 +73,12 @@
   justify-self: center;
   display: flex;
   align-items: center;
-  gap: var(--sp-5);
+  gap: var(--sp-4);
+}
+/* 목표·왜 가치관인가·원칙 사이 구분선 — 항목 경계가 필요하다는 소유자 피드백(8차) */
+.navLink + .navLink {
+  padding-left: var(--sp-4);
+  border-left: 1px solid var(--rule);
 }
 
 .navLink {
@@ -48,7 +96,7 @@
   color: var(--ink);
 }
 
-/* 활성 표시는 밑줄이 아니라 글자 아래 4px 점 */
+/* 활성 표시는 밑줄이 아니라 글자 아래 4px 점 — 장식이라 테라코타 원색 허용 */
 .navLink::after {
   content: "";
   position: absolute;
@@ -57,7 +105,7 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: currentColor;
+  background: var(--terra);
   opacity: 0;
   transform: translate(-50%, -0.25rem);
   transition:
@@ -103,20 +151,19 @@
   border-radius: 2px;
 }
 
-/* ── 모바일 오버레이 ──────────────────────────────────────── */
+/* ── 모바일 오버레이 ──────────────────────────────────────────
+   ⚠️ SiteHeader.tsx가 **포털로 body에** 렌더한다(열렸을 때만 존재).
+      헤더 안으로 되돌리면 backdrop-filter 컨테이닝 블록에 갇혀 64px 띠가 된다. */
 .overlay {
   position: fixed;
   inset: 0;
   z-index: 70;
-  background: #ffffff;
+  background: var(--paper);
   display: flex;
   flex-direction: column;
-  padding: 12px 22px 40px;
+  /* iOS 하단 툴바·홈 바에 마지막 CTA가 가리지 않게 안전 영역만큼 더 띄운다 */
+  padding: 12px 22px calc(40px + env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
-}
-/* display:flex가 hidden 속성을 이기므로 명시적으로 눌러 준다 */
-.overlay[hidden] {
-  display: none;
 }
 .overlayTop {
   display: flex;
@@ -150,8 +197,8 @@
   color: var(--ink);
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: clamp(32px, 9vw, 44px);
-  line-height: 1.15;
+  font-size: var(--fs-8);
+  line-height: var(--lh-display);
   letter-spacing: -0.02em;
 }
 .overlayLinkActive {
@@ -161,7 +208,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--ink);
+  background: var(--terra); /* 장식 점 — 테라코타 허용 지점 */
   flex: none;
 }
 .overlayCta {
@@ -181,8 +228,17 @@
   .ctaDesktop {
     display: none;
   }
+  /* 내비가 숨었는데 3열(1fr auto 1fr)을 유지하면 빈 중앙 칸 양옆 gap 32px이
+     그대로 소비된다 — 320px에서 여유가 정확히 0px였다. 2열로 접는다. */
   .inner {
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: auto 1fr;
+    gap: var(--sp-2);
+  }
+  .left {
+    grid-column: 1;
+  }
+  .right {
+    grid-column: 2;
   }
 }
 

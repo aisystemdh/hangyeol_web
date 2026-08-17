@@ -1,0 +1,98 @@
+/* FunnelNav 전용 — 홈 퍼널의 점 레일(데스크톱)과 진행 바(모바일).
+   z-index 15: 헤더(20) 아래, 인트로 오버레이(60) 아래 — 인트로 4.5초 동안은
+   오버레이가 자연히 덮으므로 별도 숨김 로직이 필요 없다. */
+
+/* ── 데스크톱: 우측 점 레일 ───────────────────────────────── */
+.rail {
+  position: fixed;
+  right: clamp(12px, 3vw, 28px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 15;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 점 8px + 세로 패딩 8px = 타깃 24px — WCAG 2.5.8 최소치를 정확히 맞춘다 */
+.link {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding: 8px 0;
+  text-decoration: none;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  /* 레일은 종이/딥그린 화면 위를 오가며 떠 있다 — 어느 쪽에서도 보이는 중간톤 */
+  background: var(--track);
+  border: 1px solid rgba(30, 58, 47, 0.35);
+  flex: none;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+.link[aria-current="true"] .dot {
+  background: var(--terra); /* 장식 점 — 테라코타 허용 지점 */
+  border-color: transparent;
+  transform: scale(1.4);
+}
+
+/* 라벨은 활성·hover·포커스에서만 보인다. 떠 있는 위치라 뒤가 종이든 딥그린이든
+   읽히도록 종이색 칩을 깐다 — 칩 위 --mute는 6.25:1. */
+.label {
+  font-size: var(--fs-1);
+  font-weight: 500;
+  color: var(--mute);
+  white-space: nowrap;
+  background: rgba(245, 241, 232, 0.92);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 4px 12px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.link[aria-current="true"] .label,
+.link:hover .label,
+.link:focus-visible .label {
+  opacity: 1;
+}
+
+@media (max-width: 767px) {
+  .rail {
+    display: none;
+  }
+}
+
+/* ── 모바일: 헤더 아래 진행 바 ────────────────────────────── */
+.progress {
+  display: none;
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 15;
+  pointer-events: none;
+}
+.progressFill {
+  display: block;
+  height: 100%;
+  background: var(--terra); /* 장식 바 — 테라코타 허용 지점 */
+  transform-origin: left center;
+  transition: transform 0.4s var(--ease-out);
+}
+@media (max-width: 767px) {
+  .progress {
+    display: block;
+  }
+}

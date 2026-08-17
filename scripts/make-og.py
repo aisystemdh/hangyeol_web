@@ -1,5 +1,5 @@
 """
-public/og.png (1200x630) 생성기 — 링크를 공유했을 때 뜨는 썸네일.
+public/og-v2.png (1200x630) 생성기 — 링크를 공유했을 때 뜨는 썸네일.
 
     python scripts/make-og.py
 
@@ -25,12 +25,15 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGO = ROOT / "public" / "hangyeol-logo.png"
-OUT = ROOT / "public" / "og.png"
+# ⚠️ 파일명의 -v2는 캐시 버스터다(팔레트 변경 시 버전을 올린다) — layout.tsx의 OG_IMAGE도 함께
+LOGO = ROOT / "public" / "hangyeol-logo-v2.png"
+OUT = ROOT / "public" / "og-v2.png"
 
 W, H = 1200, 630
-INK = (17, 17, 17)        # --ink
-MUTE = (107, 107, 107)    # --mute (흰 위 5.33:1)
+# 2026-08 리브랜딩 팔레트 — globals.css의 토큰과 같은 값이어야 한다
+PAPER = (245, 241, 232)   # --paper (#F5F1E8)
+INK = (30, 58, 47)        # --ink = --green-900 (#1E3A2F)
+MUTE = (74, 93, 82)       # --mute (#4A5D52, 종이 위 6.25:1)
 
 
 FONT_BOLD = "C:/Windows/Fonts/malgunbd.ttf"
@@ -48,10 +51,10 @@ def centered(draw: ImageDraw.ImageDraw, y: int, text: str, font, fill) -> int:
 
 
 def main() -> None:
-    canvas = Image.new("RGB", (W, H), "white")
+    canvas = Image.new("RGB", (W, H), PAPER)
     draw = ImageDraw.Draw(canvas)
 
-    # 로고 — 원본 351x489 흑백 PNG. 알파를 흰 배경에 합성한다.
+    # 로고 — 원본 351x489 딥그린 PNG(recolor-logo.py가 염색). 알파를 종이색 배경에 합성한다.
     logo = Image.open(LOGO).convert("RGBA")
     logo_h = 190
     logo_w = round(logo.width * logo_h / logo.height)

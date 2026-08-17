@@ -46,26 +46,34 @@ export default function Faq() {
               </div>
             </details>
           ))}
-        </div>
 
-        {/* 환불 규정은 접지 않는다 — 숨기지 않는 것 자체가 신뢰 신호다 */}
-        <div className="refund" data-reveal style={{ transitionDelay: ".12s" }}>
-          <h3 className="refund__title">환불이 되나요?</h3>
-          <div className="refund__rows">
-            {REFUND.map((r, i) => (
-              <div key={r.when} className="refund__row">
-                <span className="refund__when">{r.when}</span>
-                {/* 마지막 줄(환불 불가)만 톤을 낮춘다 — 강조하면 협박문이 된다 */}
-                <span
-                  style={
-                    i === REFUND.length - 1 ? { color: "var(--mute)" } : undefined
-                  }
-                >
-                  {r.what}
-                </span>
+          {/* 환불 규정 — 7차부터 다른 문답과 같은 접이식이다(소유자 결정).
+              내용 자체는 REFUND 한 곳에서 온다 — 규정을 숨기는 게 아니라 형식만 통일. */}
+          <details className="faq__item" data-reveal>
+            <summary className="faq__q">
+              환불이 되나요?
+              <span className="plus">+</span>
+            </summary>
+            <div data-answer>
+              <div className="refund__rows">
+                {REFUND.map((r, i) => (
+                  <div key={r.when} className="refund__row">
+                    <span className="refund__when">{r.when}</span>
+                    {/* 마지막 줄(환불 불가)만 톤을 낮춘다 — 강조하면 협박문이 된다 */}
+                    <span
+                      style={
+                        i === REFUND.length - 1
+                          ? { color: "var(--mute)" }
+                          : undefined
+                      }
+                    >
+                      {r.what}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          </details>
         </div>
       </div>
     </section>

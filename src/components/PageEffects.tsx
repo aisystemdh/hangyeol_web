@@ -9,7 +9,11 @@ import { useEffect } from "react";
  *
  * - 스크롤 리빌 옵저버 2개
  * - scrollY > 120 → <html data-scrolled> (헤더 축소·하단 바 등장은 CSS가 처리)
- * - 앵커 부드러운 이동 (헤더 높이 보정)
+ *
+ * 앵커 이동은 이제 JS가 하지 않는다 — globals.css의
+ * `scroll-behavior: smooth` + `scroll-padding-top: calc(var(--header-h) + 8px)`이
+ * fragment 이동에도 적용되므로 수동 보정(-56px 하드코딩)이 필요 없어졌다.
+ * 예전엔 56/60/72px 세 값이 흩어져 앵커마다 대상이 헤더에 몇 px씩 가려졌다.
  *
  * ⚠️ 의존성 배열에 pathname이 들어 있는 이유:
  *   이 컴포넌트는 layout에 있어 클라이언트 라우팅 중에 언마운트되지 않는다.
@@ -70,26 +74,10 @@ export default function PageEffects() {
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
 
-    // scrollIntoView는 헤더 높이를 보정할 수 없어 쓰지 않는다
-    const onClick = (ev: MouseEvent) => {
-      const target = ev.target as HTMLElement | null;
-      const anchor = target?.closest?.('a[href^="#"]');
-      if (!anchor) return;
-      const id = anchor.getAttribute("href")?.slice(1);
-      if (!id) return;
-      const el = document.getElementById(id);
-      if (!el) return;
-      ev.preventDefault();
-      const top = el.getBoundingClientRect().top + window.scrollY - 56;
-      window.scrollTo({ top, behavior: "smooth" });
-    };
-    document.addEventListener("click", onClick);
-
     return () => {
       reveal.disconnect();
       bars.disconnect();
       window.removeEventListener("scroll", onScroll);
-      document.removeEventListener("click", onClick);
       root.removeAttribute("data-scrolled");
     };
   }, [pathname]);

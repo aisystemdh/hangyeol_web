@@ -51,8 +51,7 @@
   font-family: var(--font-serif), serif;
   font-weight: 700;
   font-size: var(--fs-4);
-  letter-spacing: 0.02em;
-  line-height: 1.55; /* 제목 첫 줄과 눈높이를 맞춘 값 */
+  line-height: var(--lh-ui); /* 제목 첫 줄과 눈높이를 맞춘 값 */
   color: var(--num);
 }
 
@@ -65,18 +64,20 @@
 
 .itemTitle {
   margin: 0;
-  font-family: var(--font-display), sans-serif;
-  font-weight: 900;
-  font-size: clamp(21px, 3.2vw, 27px);
-  line-height: 1.32;
-  letter-spacing: -0.03em;
+  /* /principles의 .principleTitle과 같은 역할(번호 목록의 항목 제목)이라
+     서체·굵기·크기를 맞췄다 — 페이지마다 고딕 900/명조 700으로 갈리던 지점. */
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: var(--fs-7);
+  line-height: var(--lh-title);
+  letter-spacing: -0.02em;
   color: var(--ink);
 }
 
 .text {
   margin: 0;
   font-size: var(--fs-3);
-  line-height: 1.85;
+  line-height: var(--lh-prose);
   color: var(--mute);
   max-width: 34em;
 }
@@ -86,32 +87,14 @@
   margin: 0;
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: clamp(19px, 2.6vw, 24px);
-  line-height: 1.55;
+  font-size: var(--fs-6);
+  line-height: var(--lh-ui);
   letter-spacing: -0.015em;
   color: var(--ink);
   max-width: 26em;
 }
 
-/* 참가자 후기 등 외부 인용 */
-.quote {
-  margin: 0;
-  padding-left: clamp(16px, 2.4vw, 24px);
-  border-left: 2px solid var(--track);
-  font-family: var(--font-serif), serif;
-  font-size: var(--fs-3);
-  line-height: 1.8;
-  color: var(--lead);
-  max-width: 32em;
-}
-
-.note {
-  margin: 0;
-  font-size: var(--fs-2);
-  line-height: 1.7;
-  color: var(--faint);
-  max-width: 34em;
-}
+/* (죽은 규칙 정리 — .quote와 .note는 이 페이지 TSX 사용처가 0이라 삭제했다.) */
 
 /* 한결의 해결책 — 문제 바로 아래, 시각적으로 분리된 박스에 놓는다.
    "문제 지적"으로 끝나지 않고 각 결함이 곧바로 우리 원칙/설계로 이어짐을 보여준다. */
@@ -128,13 +111,13 @@
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
   font-size: var(--fs-1);
-  letter-spacing: 0.05em;
+  letter-spacing: var(--ls-label);
   color: var(--faint);
 }
 .solutionText {
   margin: 0;
   font-size: var(--fs-2);
-  line-height: 1.6;
+  line-height: var(--lh-ui);
   color: var(--ink);
 }
 
@@ -152,7 +135,7 @@
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
   font-size: var(--fs-1);
-  line-height: 1.5;
+  line-height: var(--lh-ui);
   letter-spacing: -0.01em;
   color: var(--faint);
   vertical-align: bottom;
@@ -160,8 +143,8 @@
   border-bottom: 1px solid var(--rule);
 }
 .contrast td {
-  font-size: clamp(13.5px, 2.6vw, 15.5px);
-  line-height: 1.65;
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
   color: var(--mute);
   vertical-align: top;
   padding: 14px clamp(12px, 2vw, 20px) 14px 0;
@@ -212,14 +195,14 @@
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
   font-size: var(--fs-1);
-  line-height: 1.6;
+  line-height: var(--lh-ui);
   letter-spacing: -0.01em;
   color: var(--faint);
 }
 .factDesc {
   margin: 0;
   font-size: var(--fs-2);
-  line-height: 1.7;
+  line-height: var(--lh-body);
   color: var(--mute);
 }
 
@@ -236,7 +219,7 @@
   margin: 0;
   font-family: var(--font-display), sans-serif;
   font-size: var(--fs-1);
-  line-height: 1.6;
+  line-height: var(--lh-ui);
   letter-spacing: -0.01em;
   color: var(--faint);
 }
@@ -246,8 +229,8 @@
   margin: 0;
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: clamp(24px, 4.2vw, 36px);
-  line-height: 1.4;
+  font-size: var(--fs-8);
+  line-height: var(--lh-ui);
   letter-spacing: -0.02em;
   color: var(--ink);
   max-width: 20em;
@@ -272,6 +255,6 @@
     gap: var(--sp-3);
   }
   .num {
-    line-height: 1.4;
+    line-height: var(--lh-ui);
   }
 }

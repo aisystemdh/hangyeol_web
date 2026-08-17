@@ -51,8 +51,9 @@ export const SITE = {
  *    (`ApplyForm`의 전송 실패 안내도 인스타그램 메시지를 언급하므로 함께 채울 것)
  */
 export const CONTACT = {
-  /** ⚠️ 계정명은 `offical`이 맞다(`official` 아님). 소유자가 확인한 철자다. */
-  instagram: "https://instagram.com/hangyeol_offical",
+  /** 계정명은 `hangyeol_kr` — 2026-08 소유자가 계정을 이전·확정했다.
+      (옛 계정 `hangyeol_offical`은 더 이상 쓰지 않는다 — 1:1 문의가 빈 화면으로 갔었다.) */
+  instagram: "https://instagram.com/hangyeol_kr",
   /** 카카오톡 채널 또는 오픈채팅. 예: "http://pf.kakao.com/_xxxxxx" */
   kakao: "",
   /** `mailto:`는 Footer가 붙인다 */
