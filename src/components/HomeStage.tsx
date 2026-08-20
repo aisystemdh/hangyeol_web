@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import HomeHero from "./HomeHero";
 import HomeDialog, { SIM } from "./HomeDialog";
+import { track } from "@/lib/track";
 import s from "./HomeStage.module.css";
 
 /**
@@ -144,6 +145,12 @@ export default function HomeStage() {
   /** 답 선택: a1·a2는 되돌림으로, a3는 이유 선택(why)으로 */
   const answer = useCallback(
     (stepIndex: number, choice: 0 | 1) => {
+      /* 어느 질문에서 이탈하는지 = 어느 훅이 안 먹히는지. 답의 **짧은 라벨**을 함께 싣는다
+         (전문은 길어서 집계 화면에서 잘린다). 한쪽으로 심하게 쏠리는 질문은 공감대가
+         좁다는 뜻이라 인스타 훅으로도 약하다 — 질문 교체 판단을 여기서 한다. */
+      track(`q${stepIndex + 1}_answer` as "q1_answer" | "q2_answer" | "q3_answer", {
+        choice: SIM.steps[stepIndex].options[choice].label,
+      });
       setSim((prev) => {
         const answers = [...prev.answers];
         answers[stepIndex] = choice;
@@ -158,10 +165,23 @@ export default function HomeStage() {
   /** 이유 선택(a3 전용) → 같은 답·다른 이유 비교 화면 */
   const chooseReason = useCallback(
     (r: 0 | 1 | 2) => {
+      /* 이 사이트에서 가장 값나가는 한 줄이다 — **같은 답을 고른 사람들의 이유 분포**를
+         실측한다. 분포가 흩어져 있으면 "답이 같아도 이유가 다르다"가 주장이 아니라
+         우리 데이터가 되고, 그대로 통계 콘텐츠의 원본 집계가 된다.
+         이유 전문은 길어서 인덱스로 싣고, 어느 답을 고른 뒤의 이유인지를 함께 남긴다. */
+      /* ⚠️ setSim 업데이터 안에서 부르면 안 된다 — StrictMode가 업데이터를 두 번
+         호출해 이벤트가 중복 집계된다. 상태는 밖에서 읽는다. */
+      const a3 = sim.answers[2];
+      if (a3 !== null && a3 !== undefined) {
+        track("q3_reason", {
+          answer: SIM.steps[2].options[a3].label,
+          reason: r,
+        });
+      }
       setSim((prev) => ({ ...prev, reason: r }));
       go("cmp", { focus: true });
     },
-    [go],
+    [go, sim],
   );
 
   const next = useCallback(() => {
@@ -258,6 +278,20 @@ export default function HomeStage() {
       /* 프라이빗 모드 등 접근 불가 시 무시 */
     }
   }, [phase, sim]);
+
+  /* 허브 도달 = 체험을 끝까지 본 사람. 세션당 한 번만 센다 —
+     서브페이지에 다녀오면 복원 이펙트가 phase를 hub로 되돌리는데,
+     그때마다 세면 "끝까지 본 사람"이 부풀어 전환율이 거짓이 된다. */
+  useEffect(() => {
+    if (phase !== "hub") return;
+    try {
+      if (sessionStorage.getItem("hub-tracked")) return;
+      sessionStorage.setItem("hub-tracked", "1");
+    } catch {
+      /* 프라이빗 모드 등 접근 불가 시 중복을 감수하고 보낸다 */
+    }
+    track("hub_reached");
+  }, [phase]);
 
   useEffect(() => clearTimer, [clearTimer]);
 

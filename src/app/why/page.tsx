@@ -192,10 +192,13 @@ export default function WhyPage() {
               <div className={s.num}>01</div>
               <div className={s.itemBody}>
                 <h3 className={s.itemTitle}>Gottman — 40년 종단연구</h3>
+                {/* ⚠️ "이혼 여부를 90% 이상 정확도로 예측" 문장을 되살리지 말 것.
+                    재검증에 실패한 수치이고 사내 기준이 인용을 금지했다.
+                    이 항목이 실제로 뒷받침하는 것은 예측 정확도가 아니라
+                    "관계가 무너질 때 반복되는 패턴"이므로 그것만 남긴다. */}
                 <p className={s.text}>
-                  15분간의 부부 대화를 관찰해 이혼 여부를{" "}
-                  <strong className={s.stat}>90%</strong> 이상 정확도로
-                  예측했습니다.
+                  수십 년간 부부의 대화를 관찰해, 관계가 무너질 때 반복되는
+                  패턴을 정리했습니다.
                 </p>
                 <dl className={s.facts}>
                   <div className={s.factRow}>
