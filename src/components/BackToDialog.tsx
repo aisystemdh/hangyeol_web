@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import s from "./BackToDialog.module.css";
 
-/** 홈 무대의 질문·반응 phase — 이 값들일 때만 "하던 대화"가 있다(hub는 완주 상태) */
-const IN_DIALOG = ["q1", "r1", "q2", "r2", "q3", "r3"];
+/** 홈 무대의 진행 중 phase — 이 값들일 때만 "하던 대화"가 있다(hub는 완주 상태) */
+const IN_DIALOG = ["a1", "t1", "a2", "t2", "a3", "why", "cmp", "a4"];
 
 /**
  * "← 하던 대화로 돌아가기" — 홈 대화 도중 카드 링크로 서브페이지에 온 방문자에게

@@ -69,16 +69,18 @@
   text-wrap: balance;
 }
 
-.answers {
+/* 보기 버튼 — 문장 전체가 들어가므로 세로 스택. 두 보기의 무게를 똑같이 둔다
+   (한쪽을 강조하면 정답처럼 읽힌다 — 판정하지 않는 것이 이 체험의 규칙이다). */
+.answerCol {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: var(--sp-3);
+  width: min(400px, 100%);
   margin-top: var(--sp-2);
 }
 .answerBtn {
-  min-width: 128px;
-  padding: 16px 34px;
+  padding: 17px 28px;
   border: 1px solid var(--ink);
   border-radius: 999px;
   background: var(--field);
@@ -112,21 +114,9 @@
   text-wrap: balance;
 }
 
-/* "그래서 한결은 이렇게 합니다" + 타자기 해결 문장 — 박스 카드를 대체한다(7차) */
-.solution {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-3);
-  max-width: 26em;
-}
-.solutionLead {
-  font-size: var(--fs-1);
-  font-weight: 700;
-  letter-spacing: var(--ls-label);
-  color: var(--faint);
-}
-.solutionText {
+/* 타자기로 써지는 한 줄 — 되돌림 둘째 줄과 cmp의 마침 문장이 쓴다.
+   타이핑으로 글이 자라는 동안 아래 요소가 밀리지 않게 한 줄 높이를 예약한다. */
+.typedLine {
   margin: 0;
   font-family: var(--font-serif), serif;
   font-weight: 700;
@@ -134,8 +124,121 @@
   line-height: var(--lh-title);
   color: var(--ink);
   text-align: center;
-  /* 타이핑으로 글이 자라는 동안 아래 요소들이 밀리지 않게 두 줄 높이를 예약한다 */
-  min-height: calc(2 * var(--lh-title) * 1em);
+  min-height: calc(var(--lh-title) * 1em);
+  max-width: 22em;
+}
+
+/* why — 방금 고른 답을 상기시키는 작은 칩 */
+.chosenChip {
+  margin: 0;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--tint);
+  font-size: var(--fs-1);
+  font-weight: 700;
+  color: var(--mute);
+}
+
+/* why — 이유 3택. 문장형이라 세로 스택, 답 버튼보다 한 톤 조용하게(테두리 rule) —
+   여기부터가 "생각을 고르는" 단계라 시각 무게를 낮춘다. */
+.reasonCol {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-3);
+  width: min(420px, 100%);
+  margin-top: var(--sp-2);
+}
+.reasonBtn {
+  padding: 15px 24px;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--field);
+  color: var(--ink);
+  font-size: var(--fs-2);
+  line-height: var(--lh-ui);
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+.reasonBtn:hover {
+  border-color: var(--ink);
+  transform: translateY(-1px);
+}
+.reasonBtn:active {
+  transform: scale(0.98);
+}
+
+/* cmp — 제목이 .q보다 한 단계 작다(질문이 아니라 관찰이라서) */
+.qSmall {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: clamp(24px, 3.6vw, 36px);
+  line-height: var(--lh-title);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.cmpList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: min(420px, 100%);
+}
+.cmpRow,
+.cmpMine {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-2);
+  line-height: var(--lh-ui);
+  color: var(--faint);
+  font-style: normal;
+}
+.cmpMine {
+  color: var(--ink);
+  font-weight: 700;
+}
+.youMark {
+  flex: none;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: var(--fs-1);
+  color: var(--num); /* 테라코타 잉크 — 19px 미만 글자라 원색(--terra) 금지 */
+  white-space: nowrap;
+}
+
+/* a4 — 오늘 고른 것 리캡 */
+.recap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.recapLabel {
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-label);
+  color: var(--faint);
+}
+.recapChips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-2);
+}
+.grainNote {
+  margin: 0;
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--mute);
+  max-width: 24em;
 }
 /* 타자기 캐럿 — 장식이라 테라코타 허용 지점. 무한 blink는 SkipIntroButton의
    finish() 필터가 전제하는 종류다(무한 애니메이션은 건너뛴다). */

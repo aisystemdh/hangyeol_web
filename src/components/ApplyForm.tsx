@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AGE_RANGE, EVENT } from "@/lib/event";
+import { track } from "@/lib/track";
 
 type Gender = "m" | "f" | null;
 type Status = "idle" | "submitting" | "done" | "error";
@@ -69,6 +70,32 @@ export default function ApplyForm() {
 
   const submitting = status === "submitting";
 
+  /**
+   * 신청 폼이 실제로 화면에 들어온 순간을 1회 기록한다.
+   *
+   * 마운트 시점이 아니라 **보였을 때**인 이유: 이 폼은 /events/1 페이지 하단에 있어
+   * 페이지를 연 사람 전부가 마운트시킨다. 마운트를 세면 "폼을 본 사람"이
+   * 페이지 조회수와 같아져서 지표가 아무것도 구분하지 못한다.
+   *
+   * threshold 0.3 — 폼의 30%가 보이면 "봤다"로 친다. 0에 가깝게 두면 스크롤이
+   * 스쳐 지나가는 것까지 세고, 1로 두면 화면보다 긴 폼은 영원히 안 잡힌다.
+   */
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    const el = formRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        io.disconnect();
+        track("apply_view");
+      },
+      { threshold: 0.3 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   /** 포커스가 빠질 때 그 칸만 검사한다 — 다 채운 뒤 한꺼번에 틀렸다고 하면 대부분 이탈한다. */
   const checkField = (key: string, message: string | null) => {
     setErrors((prev) => {
@@ -117,6 +144,10 @@ export default function ApplyForm() {
         }),
       });
       if (!res.ok) throw new Error(String(res.status));
+      /* 성공했을 때만 센다 — 전송 실패는 신청이 아니다.
+         성별만 싣는 이유: 게이트 1의 판정 기준이 "여성 25명"이라 성비를 매일 봐야 한다.
+         이름·연락처·나이는 절대 싣지 않는다. */
+      track("apply_submit", { gender: gender === "m" ? "남" : "여" });
       setStatus("done");
     } catch {
       setStatus("error");
@@ -144,7 +175,7 @@ export default function ApplyForm() {
   }
 
   return (
-    <form className="form" onSubmit={onSubmit} noValidate>
+    <form ref={formRef} className="form" onSubmit={onSubmit} noValidate>
       <div className="field">
         <label className="sr-only" htmlFor="name">
           이름

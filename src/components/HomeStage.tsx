@@ -3,65 +3,90 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import HomeHero from "./HomeHero";
-import HomeDialog, { STEPS } from "./HomeDialog";
+import HomeDialog, { SIM } from "./HomeDialog";
 import s from "./HomeStage.module.css";
 
 /**
- * 홈 무대 — 히어로 인트로와 대화형 질문 시퀀스를 **한 화면**에서 잇는 상태 머신.
+ * 홈 무대 — 히어로 인트로와 **체험형 시퀀스**(9차, A안)를 한 화면에서 잇는 상태 머신.
  *
- *   intro → q1 → r1 → q2 → r2 → q3 → r3 → hub
+ *   intro → a1 → t1 → a2 → t2 → a3 → why → cmp → a4 → hub
+ *          질문1 되돌림 질문2 되돌림 질문3 이유3택 같은답 착지   (기존 허브)
+ *
+ * 사용자가 가치 2지선다에 답하고, 마지막 질문에서는 **이유까지 고른다** —
+ * 원칙 1("답보다 이유를 묻는다")을 설명이 아니라 동작으로 보여주는 구조다.
+ * 질문·이유의 근거는 볼트 사전질문 10주제, 숫자(10명·9분)는 event.ts에서 온다.
  *
  * 전이 주체:
- *  - intro→q1: 인트로 마지막 애니메이션(ulIn, 4.5s)의 animationend + 700ms 여유.
- *    setTimeout(고정 시각)을 쓰지 않는 이유 — 건너뛰기(finish())도 animationend를
- *    발화시키므로 스킵과 자동으로 동기화되고, 타임라인의 진실이 CSS 한 곳에 남는다.
- *  - q→r: 답 버튼 클릭. r→다음 q: **"다음 질문" 버튼만** — 자동 진행은 7차에서
- *    소유자 결정으로 제거했다(읽는 속도를 강제하지 않는다). 되살리지 말 것.
- *  - hub→q1(질문 다시 보기) / hub→intro(처음부터 다시 보기 — 옛 ReplayButton 흡수).
+ *  - intro→a1: 인트로 마지막 애니메이션(ulIn, 4.5s)의 animationend + 700ms 여유.
+ *    setTimeout(고정 시각) 금지 — 건너뛰기(finish())도 animationend를 발화시키므로
+ *    스킵과 자동 동기화되고, 타임라인의 진실이 CSS 한 곳에 남는다.
+ *  - a→t/why: 답 버튼 클릭. why→cmp: 이유 버튼 클릭.
+ *  - t·cmp·a4의 진행은 **버튼만** — 자동 진행은 7차 소유자 결정으로 없다.
  *
- * ⚠️ 레이어는 **전부 상시 마운트**하고 opacity/visibility + inert로만 토글한다.
- *    언마운트하면 ① CSS animation-delay가 마운트 기준이라 인트로가 재생되고
- *    ② 무대 높이가 요동쳐 스냅 지점이 흔들리고 ③ SSR HTML에서 콘텐츠가 사라진다.
- *
- * ⚠️ React는 html의 data-intro-seen / data-dialog-phase를 **렌더에서 읽지 않는다**
- *    (첫 페인트 전 인라인 스크립트가 붙이는 속성이라 서버 HTML과 다르다 —
- *    읽는 순간 하이드레이션이 어긋난다). 초기 phase는 항상 "intro"이고,
- *    복귀 화면은 CSS(html[data-dialog-phase] 규칙)가 먼저 만들며, 마운트 후
- *    이펙트가 상태를 따라잡고 속성을 걷어 React에 제어를 넘긴다.
- *
- * 진행 상태는 phase가 바뀔 때마다 세션에 기록한다 — 질문 도중 "왜 가치관인가 보기"
- * 같은 링크로 서브페이지에 다녀와도 **보던 화면 그대로** 돌아오기 위해서다
- * (소유자 요구). 답 선택(chosen)도 함께 저장해 반응 멘트가 유지된다.
+ * ⚠️ 레이어는 전부 상시 마운트 + opacity/visibility + inert. 언마운트 금지
+ *    (인트로 재생·스냅 높이 요동·SSR 콘텐츠 소실).
+ * ⚠️ React는 html의 data-intro-seen / data-dialog-phase를 렌더에서 읽지 않는다
+ *    (하이드레이션). 복귀의 진실은 sessionStorage다 — html 속성은 전체 로드의
+ *    첫 페인트용 보조일 뿐이다(SPA 뒤로가기는 인라인 스크립트가 안 돈다).
  */
-export type Phase = "intro" | "q1" | "r1" | "q2" | "r2" | "q3" | "r3" | "hub";
+export type Phase =
+  | "intro"
+  | "a1"
+  | "t1"
+  | "a2"
+  | "t2"
+  | "a3"
+  | "why"
+  | "cmp"
+  | "a4"
+  | "hub";
 
 /** 세션 복원 시 신뢰할 수 있는 값만 통과시킨다 (layout.tsx의 정규식과 짝) */
-const RESUMABLE: readonly Phase[] = ["q1", "r1", "q2", "r2", "q3", "r3", "hub"];
+const RESUMABLE: readonly Phase[] = [
+  "a1",
+  "t1",
+  "a2",
+  "t2",
+  "a3",
+  "why",
+  "cmp",
+  "a4",
+  "hub",
+];
 
 const NEXT: Record<Phase, Phase | null> = {
-  intro: "q1",
-  q1: "r1",
-  r1: "q2",
-  q2: "r2",
-  r2: "q3",
-  q3: "r3",
-  r3: "hub",
+  intro: "a1",
+  a1: "t1",
+  t1: "a2",
+  a2: "t2",
+  t2: "a3",
+  a3: "why",
+  why: "cmp",
+  cmp: "a4",
+  a4: "hub",
   hub: null,
 };
 
+/** 답·이유 선택 상태. answers는 a1·a2·a3, reason은 a3의 이유(0~2). */
+export type SimState = {
+  answers: (0 | 1 | null)[];
+  reason: 0 | 1 | 2 | null;
+};
+const EMPTY_STATE: SimState = { answers: [null, null, null], reason: null };
+
 /** 크로스페이드 길이 — 인라인 --xfade로 CSS에 주입해 진실을 한 곳에 둔다 */
 const XFADE_MS = 500;
-/** 인트로 종료(ulIn) 후 질문까지의 숨 고르기 */
+/** 인트로 종료(ulIn) 후 첫 질문까지의 숨 고르기 */
 const INTRO_TO_Q1_MS = 700;
 
 export default function HomeStage() {
   const [phase, setPhase] = useState<Phase>("intro");
-  const [chosen, setChosen] = useState<(0 | 1 | null)[]>([null, null, null]);
+  const [sim, setSim] = useState<SimState>(EMPTY_STATE);
   const [liveText, setLiveText] = useState("");
   const stageRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /* 이벤트 핸들러(animationend·클릭)가 최신 phase를 클로저 없이 읽기 위한 미러.
-     렌더 중 대입은 금지라 이펙트에서 동기화한다 — 이벤트는 커밋 후에만 오므로 안전하다. */
+  /* 이벤트 핸들러가 최신 phase를 클로저 없이 읽기 위한 미러.
+     렌더 중 대입은 금지라 이펙트에서 동기화한다 — 이벤트는 커밋 후에만 온다. */
   const phaseRef = useRef<Phase>("intro");
   useEffect(() => {
     phaseRef.current = phase;
@@ -83,8 +108,8 @@ export default function HomeStage() {
   /**
    * phase 전이. 사용자가 시킨 전이(focus)만 새 레이어의 [data-focus-target]으로
    * 포커스를 옮긴다 — 자동 전이가 포커스를 훔치면 맥락 변화(WCAG 3.2.1)가 된다.
-   * 자동 전이는 대신 live region으로 알린다. 예외: 포커스가 사라지는 레이어 안에
-   * 있었으면 유실 방지를 위해 옮긴다.
+   * 자동 전이(intro→a1뿐)는 live region으로 알린다. 예외: 포커스가 사라지는
+   * 레이어 안에 있었으면 유실 방지를 위해 옮긴다.
    */
   const go = useCallback(
     (next: Phase, opts: { focus?: boolean; auto?: boolean } = {}) => {
@@ -98,12 +123,8 @@ export default function HomeStage() {
             ?.querySelector<HTMLElement>("[data-focus-target]")
             ?.focus({ preventScroll: true });
         });
-      } else if (opts.auto) {
-        const n = Number(next.slice(1));
-        const step = STEPS[n - 1];
-        if (next.startsWith("q") && step) {
-          setLiveText(`질문 ${n}. ${step.question.join(" ")}`);
-        }
+      } else if (opts.auto && next === "a1") {
+        setLiveText(`질문 1. ${SIM.steps[0].situation.join(" ")}`);
       }
     },
     [clearTimer, layerEl],
@@ -115,19 +136,30 @@ export default function HomeStage() {
       if (phaseRef.current !== "intro" || e.animationName !== "ulIn") return;
       // ulIn은 '결'·'같이' 두 요소에서 발화 — 두 번째가 타이머를 리셋해도 결과 동일
       clearTimer();
-      timerRef.current = setTimeout(() => go("q1", { auto: true }), INTRO_TO_Q1_MS);
+      timerRef.current = setTimeout(() => go("a1", { auto: true }), INTRO_TO_Q1_MS);
     },
     [clearTimer, go],
   );
 
+  /** 답 선택: a1·a2는 되돌림으로, a3는 이유 선택(why)으로 */
   const answer = useCallback(
     (stepIndex: number, choice: 0 | 1) => {
-      setChosen((prev) => {
-        const nextArr = [...prev];
-        nextArr[stepIndex] = choice;
-        return nextArr;
+      setSim((prev) => {
+        const answers = [...prev.answers];
+        answers[stepIndex] = choice;
+        // a3의 답을 바꾸면 이전에 고른 이유는 무효다
+        return { answers, reason: stepIndex === 2 ? null : prev.reason };
       });
-      go(`r${stepIndex + 1}` as Phase, { focus: true });
+      go(stepIndex < 2 ? (`t${stepIndex + 1}` as Phase) : "why", { focus: true });
+    },
+    [go],
+  );
+
+  /** 이유 선택(a3 전용) → 같은 답·다른 이유 비교 화면 */
+  const chooseReason = useCallback(
+    (r: 0 | 1 | 2) => {
+      setSim((prev) => ({ ...prev, reason: r }));
+      go("cmp", { focus: true });
     },
     [go],
   );
@@ -137,30 +169,30 @@ export default function HomeStage() {
     if (to) go(to, { focus: true });
   }, [go]);
 
-  /** "이전 질문으로" — q2→q1, q3→q2. 답을 다시 누르면 chosen이 덮어써진다. */
+  /** "이전 질문으로"·"답 다시 고르기" — 1-기반 질문 번호(a1~a3)로 되돌린다 */
   const goToQuestion = useCallback(
     (n: number) => {
-      go(`q${n}` as Phase, { focus: true });
+      go(`a${n}` as Phase, { focus: true });
     },
     [go],
   );
 
   const restartQuestions = useCallback(() => {
-    setChosen([null, null, null]);
-    go("q1", { focus: true });
+    setSim(EMPTY_STATE);
+    go("a1", { focus: true });
   }, [go]);
 
   const replayIntro = useCallback(() => {
     clearTimer();
     document.documentElement.removeAttribute("data-intro-seen");
-    // 처음부터 다시 = 진행 기록도 초기화 (남겨두면 이탈 후 재방문이 옛 질문으로 감)
+    // 처음부터 다시 = 진행 기록도 초기화 (남겨두면 이탈 후 재방문이 옛 화면으로 감)
     try {
       sessionStorage.removeItem("dialog-phase");
       sessionStorage.removeItem("dialog-chosen");
     } catch {
       /* 접근 불가 시 무시 */
     }
-    setChosen([null, null, null]);
+    setSim(EMPTY_STATE);
     // 히어로 레이어가 DOM상 활성이 된 **뒤에** 애니메이션을 되감아야 한다
     flushSync(() => setPhase("intro"));
     document
@@ -172,70 +204,60 @@ export default function HomeStage() {
       });
   }, [clearTimer]);
 
-  /* (반응 화면 자동 진행은 7차에서 제거 — 진행은 "다음 질문" 버튼만.
-     자동 타이머·일시정지 장치가 다시 필요해지면 git 이력의 6.5차 구현을 볼 것.) */
-
-  /* 복귀 동기화 — ⚠️ 진실은 **sessionStorage**다, html 속성이 아니다.
-     속성은 layout.tsx의 인라인 스크립트가 **문서 로드 때만** 붙이는 첫 페인트용
-     보조 장치라, 서브페이지에서 뒤로가기(SPA 내비게이션 — 문서 재로드 없음)로
-     돌아오면 속성이 없다. 속성만 읽으면 그 경로에서 복원이 통째로 빠진다
-     (실측으로 확인된 함정). 여기서 storage를 직접 읽어 상태를 따라잡는다.
-     ⚠️ flushSync 금지 — 하이드레이션 중 이펙트에서 부르면 React가 경고한다.
-        속성 제거는 아래 별도 이펙트가 "복원 phase가 커밋된 뒤"에 한다. */
+  /* 복귀 동기화 — 진실은 sessionStorage. 첫 페인트는 CSS(html[data-dialog-phase])가
+     담당하고, 여기서 상태가 따라잡은 뒤(커밋 후) 속성을 걷어 React에 제어를 넘긴다.
+     flushSync 금지(하이드레이션 중 경고) — 속성 제거는 아래 별도 이펙트가 한다. */
   const pendingAttrCleanup = useRef(false);
   useEffect(() => {
     let saved: Phase | null = null;
+    let savedSim: SimState | null = null;
     try {
       saved = sessionStorage.getItem("dialog-phase") as Phase | null;
+      const raw = sessionStorage.getItem("dialog-chosen");
+      if (raw) {
+        const p: unknown = JSON.parse(raw);
+        if (
+          typeof p === "object" &&
+          p !== null &&
+          Array.isArray((p as SimState).answers) &&
+          (p as SimState).answers.length === 3 &&
+          (p as SimState).answers.every((v) => v === 0 || v === 1 || v === null) &&
+          [0, 1, 2, null].includes((p as SimState).reason)
+        ) {
+          savedSim = p as SimState;
+        }
+      }
     } catch {
-      /* 접근 불가 시 복원 생략 */
+      /* 접근 불가·손상(옛 포맷 포함) 시 무시 — 처음부터 시작한다 */
     }
     if (saved && RESUMABLE.includes(saved)) {
-      let savedChosen: (0 | 1 | null)[] | null = null;
-      try {
-        const raw = sessionStorage.getItem("dialog-chosen");
-        if (raw) {
-          const parsed: unknown = JSON.parse(raw);
-          if (
-            Array.isArray(parsed) &&
-            parsed.length === 3 &&
-            parsed.every((v) => v === 0 || v === 1 || v === null)
-          ) {
-            savedChosen = parsed as (0 | 1 | null)[];
-          }
-        }
-      } catch {
-        /* 접근 불가·손상 시 무시 — 반응 멘트만 기본값이 된다 */
-      }
       pendingAttrCleanup.current = true;
       // eslint-disable-next-line react-hooks/set-state-in-effect -- 외부 시스템(sessionStorage)과의 1회 동기화. 조건부라 연쇄 렌더 없음.
       setPhase(saved);
-      if (savedChosen) setChosen(savedChosen);
+      if (savedSim) setSim(savedSim);
     } else {
-      // 복원할 게 없으면 (혹시 남은) 속성만 걷는다
       document.documentElement.removeAttribute("data-dialog-phase");
     }
   }, []);
-  /* 복원 phase가 화면에 커밋·페인트된 **뒤에** 속성을 걷는다 — 먼저 걷으면
-     전체 로드 경로에서 CSS 핀이 풀린 채 React가 아직 intro라 히어로가 한 프레임 비친다. */
+  /* 복원 phase가 커밋·페인트된 **뒤에** 속성을 걷는다 — 먼저 걷으면 전체 로드
+     경로에서 CSS 핀이 풀린 채 React가 아직 intro라 히어로가 한 프레임 비친다. */
   useEffect(() => {
     if (!pendingAttrCleanup.current || phase === "intro") return;
     pendingAttrCleanup.current = false;
     document.documentElement.removeAttribute("data-dialog-phase");
   }, [phase]);
 
-  /* 진행 저장 — phase가 바뀔 때마다 기록한다. 질문 도중 카드 링크로 서브페이지에
-     다녀와도 보던 화면으로 돌아오기 위해서다. intro는 저장하지 않는다(초기값이자,
-     "처음부터 다시 보기"가 기록을 지운 상태를 유지해야 하므로). */
+  /* 진행 저장 — 서브페이지(카드 링크·뒤로가기)를 다녀와도 보던 화면으로 복귀한다.
+     intro는 저장하지 않는다(초기값이자, "처음부터"가 지운 상태를 유지해야 하므로). */
   useEffect(() => {
     if (phase === "intro") return;
     try {
       sessionStorage.setItem("dialog-phase", phase);
-      sessionStorage.setItem("dialog-chosen", JSON.stringify(chosen));
+      sessionStorage.setItem("dialog-chosen", JSON.stringify(sim));
     } catch {
       /* 프라이빗 모드 등 접근 불가 시 무시 */
     }
-  }, [phase, chosen]);
+  }, [phase, sim]);
 
   useEffect(() => clearTimer, [clearTimer]);
 
@@ -263,7 +285,7 @@ export default function HomeStage() {
         <button
           type="button"
           className={s.startBtn}
-          onClick={() => go("q1", { focus: true })}
+          onClick={() => go("a1", { focus: true })}
         >
           대화 시작하기
         </button>
@@ -271,15 +293,16 @@ export default function HomeStage() {
 
       <HomeDialog
         phase={phase}
-        chosen={chosen}
+        sim={sim}
         onAnswer={answer}
+        onReason={chooseReason}
         onNext={next}
         onPrev={goToQuestion}
         onRestart={restartQuestions}
         onReplay={replayIntro}
       />
 
-      {/* 자동 전이 전용 알림 — 클릭 전이는 포커스 이동이 낭독을 담당하므로 침묵 */}
+      {/* 자동 전이(intro→a1) 전용 알림 — 클릭 전이는 포커스 이동이 낭독을 담당 */}
       <p className="sr-only" role="status" aria-live="polite">
         {liveText}
       </p>

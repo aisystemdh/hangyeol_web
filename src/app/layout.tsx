@@ -5,6 +5,7 @@ import GrainCanvas from "@/components/GrainCanvas";
 import SiteHeader from "@/components/SiteHeader";
 import Footer from "@/components/Footer";
 import PageEffects from "@/components/PageEffects";
+import Analytics from "@/components/Analytics";
 import { SITE, SITE_URL } from "@/lib/site";
 import { EVENT } from "@/lib/event";
 
@@ -139,7 +140,7 @@ export const viewport: Viewport = {
  * ⚠️ React 컴포넌트가 이 속성들을 **렌더에서 읽으면 안 된다** — 서버 HTML과 달라
  *    하이드레이션이 어긋난다. 이벤트 핸들러/이펙트에서만 읽는다(HomeStage 참조).
  */
-const HOME_FLAGS_SCRIPT = `try{if(location.pathname==='/'){if(sessionStorage.getItem('intro-seen')){document.documentElement.setAttribute('data-intro-seen','')}else{sessionStorage.setItem('intro-seen','1')}var p=sessionStorage.getItem('dialog-phase');if(p&&/^(q[123]|r[123]|hub)$/.test(p)){document.documentElement.setAttribute('data-dialog-phase',p)}}}catch(e){}`;
+const HOME_FLAGS_SCRIPT = `try{if(location.pathname==='/'){if(sessionStorage.getItem('intro-seen')){document.documentElement.setAttribute('data-intro-seen','')}else{sessionStorage.setItem('intro-seen','1')}var p=sessionStorage.getItem('dialog-phase');if(p&&/^(a[1234]|t[12]|why|cmp|hub)$/.test(p)){document.documentElement.setAttribute('data-dialog-phase',p)}}}catch(e){}`;
 
 export default function RootLayout({
   children,
@@ -173,6 +174,7 @@ export default function RootLayout({
         <main id="main">{children}</main>
         <Footer />
         <PageEffects />
+        <Analytics />
       </body>
     </html>
   );

@@ -18,6 +18,13 @@ export const EVENT = {
   priceNote: "남녀 동일",
   ageMin: 20,
   ageMax: 32,
+  /**
+   * 1대1 대화 횟수·시간. 출처: 볼트 `_1차 오프라인_타임테이블.md`
+   * (1대1 대화 5회+5회, 1명당 이동 1분 + 대화 9분).
+   * ⚠️ 화면 카피에 "로테이션"이라는 단어는 쓰지 않는다 — 노출 금지 내부 용어다.
+   */
+  rotationPartners: 10,
+  rotationMinutes: 9,
 } as const;
 
 /**

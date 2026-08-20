@@ -1,21 +1,21 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { EVENT } from "@/lib/event";
 import { EVENT_HREF, EVENT_CTA_LABEL, NAV, SITE } from "@/lib/site";
-import type { Phase } from "./HomeStage";
+import type { Phase, SimState } from "./HomeStage";
 import d from "./HomeDialog.module.css";
 
-/** 타이핑 시작 전 여유 — 반응 멘트가 먼저 읽히게 한다 */
+/** 타이핑 시작 전 여유 — 앞 문장이 먼저 읽히게 한다 */
 const TYPE_DELAY_MS = 600;
 /** 글자당 간격 */
 const TYPE_TICK_MS = 45;
 
 /**
- * 해결 문장을 한 글자씩 써 내려가는 연출.
- * - active가 꺼지면 리셋된다 — "이전 질문으로"로 되돌아왔다 다시 오면 또 써진다.
- * - 시각 타이핑은 aria-hidden이고 전문은 부모의 sr-only가 즉시 제공한다 —
- *   글자 단위 DOM 변경을 스크린리더가 글자별로 낭독하는 것을 막는다.
+ * 한 글자씩 써 내려가는 연출.
+ * - active가 꺼지면 리셋된다 — 되돌아왔다 다시 오면 또 써진다.
+ * - 시각 타이핑은 aria-hidden이고 전문은 부모의 sr-only가 즉시 제공한다.
  * - prefers-reduced-motion: 타이핑 없이 전문 즉시 표시.
  */
 function Typewriter({ text, active }: { text: string; active: boolean }) {
@@ -59,58 +59,68 @@ function Typewriter({ text, active }: { text: string; active: boolean }) {
 }
 
 /**
- * 무대의 질문(Q)·반응(R)·허브 레이어 — 표현 전용. 상태는 HomeStage가 갖는다.
+ * 체험형 시나리오 데이터 — 세트 A "감정의 거리" (9차 소유자 확정).
  *
- * 카피 규칙(CLAUDE.md): 존댓말 · "저희" · 업종/상품명 금지(활동명 "소개팅/파티"까지만 —
- * 소유자 확정) · 반응은 답에 따라 갈린다(대화라는 감각의 핵심).
- * 답 버튼은 radio가 아니라 <button>이다 — 누르는 즉시 화면이 전이되는 "행동"이지
- * 폼 상태가 아니다.
+ * 사용자가 실제 모임처럼 가치 2지선다에 답하고, 마지막 질문에서는 **이유까지
+ * 고른다**. 원칙 1("답보다 이유를 묻는다")을 동작으로 보여주는 구조라,
+ * 질문을 바꿀 때도 **3번 질문의 이유 3택 구조는 유지**할 것.
+ *
+ * 질문의 근거는 볼트 사전질문 10주제(갈등 해결·감정 표현·자기소개).
+ * 교체용 세트 B~E(돈과 시간/관계의 속도/계획과 즉흥/말과 마음)는 9차 플랜 파일에 있다.
+ * 카피 규칙: 존댓말 · 업종/상품명 금지 · "로테이션" 등 내부 용어 금지 ·
+ * 수치를 지어내지 않는다(비교 화면은 이유 나열까지만).
  */
-export const STEPS = [
-  {
-    eyebrow: "목표",
-    href: "/mission",
-    linkLabel: "한결의 목표 보기",
-    question: ["소개팅도, 파티도 가보셨죠.", "만난 사람은 많은데, 남는 사람이 없던 적 있나요?"],
-    answers: ["있어요", "없어요"] as const,
-    reactions: [
-      "그 아쉬움에서 한결이 시작됐습니다.",
-      "좋은 만남을 이어오셨네요. 저희는 그 ‘다음’을 설계합니다.",
-    ] as const,
-    card: "저희는 더 많이 만나게 하지 않습니다. 더 깊이 만나게 합니다.",
-  },
-  {
-    eyebrow: "왜 가치관인가",
-    href: "/why",
-    linkLabel: "왜 가치관인가 보기",
-    question: ["MBTI까지 잘 맞는다던 사람과,", "정작 얘기가 안 통했던 적 있나요?"],
-    answers: ["있어요", "없어요"] as const,
-    reactions: [
-      "답이 같아도 이유가 다르면 어긋납니다.",
-      "그 대화가 통했던 데는 이유가 있습니다.",
-    ] as const,
-    card: "무엇을 골랐는지가 아니라 왜 골랐는지를 묻습니다.",
-  },
-  {
-    eyebrow: "원칙",
-    href: "/principles",
-    linkLabel: "한결의 원칙 보기",
-    question: ["나이·직업·사진으로", "나를 소개하는 게 억울했던 적 있나요?"],
-    answers: ["있어요", "없어요"] as const,
-    reactions: [
-      "사람은 세 줄로 요약되지 않습니다.",
-      "다행입니다. 그래도 사람이 세 줄에 담기지 않는다는 생각엔 변함이 없습니다.",
-    ] as const,
-    card: "사람을 전시하지 않는 것을 원칙으로 정했습니다.",
-  },
-];
+export const SIM = {
+  steps: [
+    {
+      situation: ["친구와 크게 어긋났습니다.", "며칠이 지났습니다."],
+      options: [
+        { text: "내가 먼저 연락한다", label: "내가 먼저" },
+        { text: "상대가 연락할 때까지 둔다", label: "기다린다" },
+      ],
+    },
+    {
+      situation: ["이야기하다", "생각이 갈렸습니다."],
+      options: [
+        { text: "왜 그렇게 생각하는지 더 묻는다", label: "더 묻는다" },
+        { text: "서로 다른 걸로 두고 넘어간다", label: "그냥 둔다" },
+      ],
+    },
+    {
+      situation: ["나를 소개해야 합니다.", "한 가지만 말할 수 있다면?"],
+      options: [
+        { text: "무슨 일을 하는지", label: "하는 일" },
+        { text: "요즘 무슨 생각을 하는지", label: "요즘 생각" },
+      ],
+    },
+  ],
+  /** a1·a2 뒤의 짧은 되돌림 — 판정하지 않는다. 둘째 줄이 타자기로 써진다. */
+  reflections: [
+    { plain: "그러시군요.", typed: "왜 그러시는지는 아직 안 여쭤봤습니다." },
+    { plain: "이것도 그러시군요.", typed: "한 번만 더 여쭤볼게요." },
+  ],
+  /** a3의 답별 이유 3택 — 같은 답이라도 이유가 갈린다는 것을 보여주는 핵심 */
+  reasons: [
+    [
+      "설명이 제일 빠르니까",
+      "거기에 시간을 제일 많이 썼으니까",
+      "나머지는 아직 말하기 이르니까",
+    ],
+    [
+      "직업으로 판단당하는 게 싫어서",
+      "요즘 생각이 지금의 나에 더 가까워서",
+      "그쪽이 대화가 이어지니까",
+    ],
+  ],
+} as const;
 
 type Props = {
   phase: Phase;
-  chosen: (0 | 1 | null)[];
+  sim: SimState;
   onAnswer: (stepIndex: number, choice: 0 | 1) => void;
+  onReason: (reason: 0 | 1 | 2) => void;
   onNext: () => void;
-  /** "이전 질문으로" — 1-기반 질문 번호를 받는다 (q3에서 onPrev(2) → q2) */
+  /** "이전 질문으로"·"답 다시 고르기" — 1-기반 질문 번호 */
   onPrev: (questionNumber: number) => void;
   onRestart: () => void;
   onReplay: () => void;
@@ -118,120 +128,267 @@ type Props = {
 
 export default function HomeDialog({
   phase,
-  chosen,
+  sim,
   onAnswer,
+  onReason,
   onNext,
   onPrev,
   onRestart,
   onReplay,
 }: Props) {
+  const a3choice = sim.answers[2] ?? 0;
+  const a3reasons = SIM.reasons[a3choice];
+
   return (
     <>
-      {STEPS.map((step, i) => {
+      {/* ── 질문 a1·a2·a3 ── */}
+      {SIM.steps.map((step, i) => {
         const n = i + 1;
-        const q: Phase = `q${n}` as Phase;
-        const r: Phase = `r${n}` as Phase;
+        const p: Phase = `a${n}` as Phase;
         return (
-          <Fragment key={step.href}>
-            {/* ── 질문 레이어 ── */}
-            <section
-              className={d.layer}
-              data-layer={q}
-              data-active={phase === q}
-              inert={phase !== q}
-              aria-labelledby={`dlg-q${n}`}
-            >
-              <div className={d.inner}>
-                <p className={d.counter} style={{ "--i": 0 } as React.CSSProperties}>
-                  <span aria-hidden="true">
-                    0{n} <span className={d.counterOf}>/ 03</span>
-                  </span>
-                  <span className="sr-only">{`질문 ${n}, 총 3개`}</span>
-                </p>
-                <h2
-                  className={d.q}
-                  id={`dlg-q${n}`}
-                  data-focus-target
-                  tabIndex={-1}
-                  style={{ "--i": 1 } as React.CSSProperties}
-                >
-                  {step.question[0]}
-                  <br />
-                  {step.question[1]}
-                </h2>
-                <div
-                  className={d.answers}
-                  role="group"
-                  aria-labelledby={`dlg-q${n}`}
-                  style={{ "--i": 2 } as React.CSSProperties}
-                >
-                  <button type="button" className={d.answerBtn} onClick={() => onAnswer(i, 0)}>
-                    {step.answers[0]}
-                  </button>
-                  <button type="button" className={d.answerBtn} onClick={() => onAnswer(i, 1)}>
-                    {step.answers[1]}
-                  </button>
-                </div>
-                {i > 0 && (
-                  <button
-                    type="button"
-                    className={d.prevBtn}
-                    onClick={() => onPrev(i)}
-                    style={{ "--i": 3 } as React.CSSProperties}
-                  >
-                    ← 이전 질문으로
-                  </button>
-                )}
-              </div>
-            </section>
-
-            {/* ── 반응 레이어 — 멘트는 답에 따라 갈린다 ── */}
-            <section
-              className={d.layer}
-              data-layer={r}
-              data-active={phase === r}
-              inert={phase !== r}
-              aria-label={`${step.eyebrow}에 대한 한결의 답`}
-            >
-              <div className={d.inner}>
-                <p
-                  className={d.reaction}
-                  data-focus-target
-                  tabIndex={-1}
-                  style={{ "--i": 0 } as React.CSSProperties}
-                >
-                  {step.reactions[chosen[i] ?? 0]}
-                </p>
-                {/* 박스 카드 대신 "그래서 한결은 —" + 한 글자씩 써지는 해결 문장 (7차) */}
-                <div className={d.solution} style={{ "--i": 1 } as React.CSSProperties}>
-                  <span className={d.solutionLead}>
-                    그래서 {SITE.name}은 이렇게 합니다
-                  </span>
-                  <p className={d.solutionText}>
-                    <span className="sr-only">{step.card}</span>
-                    <Typewriter text={step.card} active={phase === r} />
-                  </p>
-                  <Link className="link-arrow" href={step.href}>
-                    {step.linkLabel}
-                  </Link>
-                </div>
-                {/* 마지막 반응 다음은 질문이 아니라 허브라 라벨이 갈린다 —
-                    "다음 질문"이라 해놓고 마무리가 나오면 거짓말이 된다 */}
-                <button
-                  type="button"
-                  className={d.nextBtn}
-                  onClick={onNext}
-                  style={{ "--i": 2 } as React.CSSProperties}
-                >
-                  {i < STEPS.length - 1 ? "다음 질문 →" : "마무리 보기 →"}
+          <section
+            key={p}
+            className={d.layer}
+            data-layer={p}
+            data-active={phase === p}
+            inert={phase !== p}
+            aria-labelledby={`dlg-${p}`}
+          >
+            <div className={d.inner}>
+              <p className={d.counter} style={{ "--i": 0 } as React.CSSProperties}>
+                <span aria-hidden="true">
+                  0{n} <span className={d.counterOf}>/ 03</span>
+                </span>
+                <span className="sr-only">{`질문 ${n}, 총 3개`}</span>
+              </p>
+              <h2
+                className={d.q}
+                id={`dlg-${p}`}
+                data-focus-target
+                tabIndex={-1}
+                style={{ "--i": 1 } as React.CSSProperties}
+              >
+                {step.situation[0]}
+                <br />
+                {step.situation[1]}
+              </h2>
+              {/* 보기는 문장 전체를 보여준다 — 짧은 라벨은 리캡(a4)에서만 쓴다 */}
+              <div
+                className={d.answerCol}
+                role="group"
+                aria-labelledby={`dlg-${p}`}
+                style={{ "--i": 2 } as React.CSSProperties}
+              >
+                <button type="button" className={d.answerBtn} onClick={() => onAnswer(i, 0)}>
+                  {step.options[0].text}
+                </button>
+                <button type="button" className={d.answerBtn} onClick={() => onAnswer(i, 1)}>
+                  {step.options[1].text}
                 </button>
               </div>
-            </section>
-          </Fragment>
+              {i > 0 && (
+                <button
+                  type="button"
+                  className={d.prevBtn}
+                  onClick={() => onPrev(i)}
+                  style={{ "--i": 3 } as React.CSSProperties}
+                >
+                  ← 이전 질문으로
+                </button>
+              )}
+            </div>
+          </section>
         );
       })}
 
-      {/* ── 허브 — 시퀀스의 종착지이자 재방문의 시작점 ── */}
+      {/* ── 되돌림 t1·t2 — 판정 없이 한 박자 ── */}
+      {SIM.reflections.map((ref, i) => {
+        const p: Phase = `t${i + 1}` as Phase;
+        return (
+          <section
+            key={p}
+            className={d.layer}
+            data-layer={p}
+            data-active={phase === p}
+            inert={phase !== p}
+            aria-label="한결의 되돌림"
+          >
+            <div className={d.inner}>
+              <p
+                className={d.reaction}
+                data-focus-target
+                tabIndex={-1}
+                style={{ "--i": 0 } as React.CSSProperties}
+              >
+                {ref.plain}
+              </p>
+              <p className={d.typedLine} style={{ "--i": 1 } as React.CSSProperties}>
+                <span className="sr-only">{ref.typed}</span>
+                <Typewriter text={ref.typed} active={phase === p} />
+              </p>
+              <button
+                type="button"
+                className={d.nextBtn}
+                onClick={onNext}
+                style={{ "--i": 2 } as React.CSSProperties}
+              >
+                다음 질문 →
+              </button>
+            </div>
+          </section>
+        );
+      })}
+
+      {/* ── why — 답을 고른 뒤, 이유를 고른다 (A안의 전부) ── */}
+      <section
+        className={d.layer}
+        data-layer="why"
+        data-active={phase === "why"}
+        inert={phase !== "why"}
+        aria-labelledby="dlg-why"
+      >
+        <div className={d.inner}>
+          <p className={d.chosenChip} style={{ "--i": 0 } as React.CSSProperties}>
+            {SIM.steps[2].options[a3choice].text}
+          </p>
+          <h2
+            className={d.q}
+            id="dlg-why"
+            data-focus-target
+            tabIndex={-1}
+            style={{ "--i": 1 } as React.CSSProperties}
+          >
+            왜 그쪽을 고르셨어요?
+          </h2>
+          <div
+            className={d.reasonCol}
+            role="group"
+            aria-labelledby="dlg-why"
+            style={{ "--i": 2 } as React.CSSProperties}
+          >
+            {a3reasons.map((reason, r) => (
+              <button
+                key={reason}
+                type="button"
+                className={d.reasonBtn}
+                onClick={() => onReason(r as 0 | 1 | 2)}
+              >
+                {reason}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            className={d.prevBtn}
+            onClick={() => onPrev(3)}
+            style={{ "--i": 3 } as React.CSSProperties}
+          >
+            ← 답 다시 고르기
+          </button>
+        </div>
+      </section>
+
+      {/* ── cmp — 같은 답, 다른 이유 ── */}
+      <section
+        className={d.layer}
+        data-layer="cmp"
+        data-active={phase === "cmp"}
+        inert={phase !== "cmp"}
+        aria-labelledby="dlg-cmp"
+      >
+        <div className={d.inner}>
+          <h2
+            className={d.qSmall}
+            id="dlg-cmp"
+            data-focus-target
+            tabIndex={-1}
+            style={{ "--i": 0 } as React.CSSProperties}
+          >
+            같은 답을 고른 분들이,
+            <br />
+            이렇게 갈렸습니다.
+          </h2>
+          <ul className={d.cmpList} style={{ "--i": 1 } as React.CSSProperties}>
+            {a3reasons.map((reason, r) => {
+              const mine = sim.reason === r;
+              return (
+                <li key={reason} className={mine ? d.cmpMine : d.cmpRow}>
+                  <span>{`“${reason}”`}</span>
+                  {mine && <span className={d.youMark}>← 당신</span>}
+                </li>
+              );
+            })}
+          </ul>
+          <p className={d.typedLine} style={{ "--i": 2 } as React.CSSProperties}>
+            <span className="sr-only">답은 같은데, 이유는 다릅니다.</span>
+            <Typewriter text="답은 같은데, 이유는 다릅니다." active={phase === "cmp"} />
+          </p>
+          <button
+            type="button"
+            className={d.nextBtn}
+            onClick={onNext}
+            style={{ "--i": 3 } as React.CSSProperties}
+          >
+            다음 →
+          </button>
+        </div>
+      </section>
+
+      {/* ── a4 — 착지: 방금 한 것이 한결의 방식 ── */}
+      <section
+        className={d.layer}
+        data-layer="a4"
+        data-active={phase === "a4"}
+        inert={phase !== "a4"}
+        aria-labelledby="dlg-a4"
+      >
+        <div className={d.inner}>
+          <h2
+            className={d.q}
+            id="dlg-a4"
+            data-focus-target
+            tabIndex={-1}
+            style={{ "--i": 0 } as React.CSSProperties}
+          >
+            방금 하신 게
+            <br />
+            {SITE.name}의 방식입니다.
+          </h2>
+          <p className={d.identity} style={{ "--i": 1 } as React.CSSProperties}>
+            답을 고르고 — <strong>왜 그랬는지 말하는 것.</strong>
+          </p>
+          <div className={d.recap} style={{ "--i": 2 } as React.CSSProperties}>
+            <span className={d.recapLabel}>오늘 고르신 것</span>
+            <div className={d.recapChips} aria-hidden="true">
+              {SIM.steps.map((step, i) => (
+                <span key={step.options[0].label} className="chip">
+                  {step.options[sim.answers[i] ?? 0].label}
+                </span>
+              ))}
+            </div>
+          </div>
+          <p className={d.identity} style={{ "--i": 3 } as React.CSSProperties}>
+            현장에서는 보기가 없습니다. <strong>직접 말씀하십니다.</strong>
+            <br />
+            {EVENT.rotationPartners}명과, 한 분당 {EVENT.rotationMinutes}분씩.
+          </p>
+          <p className={d.grainNote} style={{ "--i": 4 } as React.CSSProperties}>
+            나무를 세로로 켜면 무늬가 드러납니다. 어떤 땅에서 어떤 바람을 맞고
+            자랐는지가 안쪽에 기록된 것입니다. 저희는 사람의 그것을{" "}
+            <strong>‘결’</strong>이라고 부릅니다.
+          </p>
+          <button
+            type="button"
+            className={d.nextBtn}
+            onClick={onNext}
+            style={{ "--i": 5 } as React.CSSProperties}
+          >
+            마무리 보기 →
+          </button>
+        </div>
+      </section>
+
+      {/* ── 허브 — 시퀀스의 종착지이자 재방문의 시작점 (7차 그대로) ── */}
       <section
         className={`${d.layer} ${d.layerHub}`}
         data-layer="hub"
@@ -247,11 +404,11 @@ export default function HomeDialog({
             tabIndex={-1}
             style={{ "--i": 0 } as React.CSSProperties}
           >
-            그 세 가지,
+            그 대화,
             <br />
-            {SITE.name}이 다 합니다.
+            {SITE.name}이 엽니다.
           </h2>
-          {/* "그래서 뭔데"의 답 — 정체 한 문장의 새 자리 */}
+          {/* "그래서 뭔데"의 답 — 정체 한 문장의 자리 */}
           <p className={d.identity} style={{ "--i": 1 } as React.CSSProperties}>
             {SITE.name}은 가치관이 맞는 사람을 오프라인에서 만나게 하는 대화
             모임입니다.
@@ -281,7 +438,7 @@ export default function HomeDialog({
               처음부터 다시 보기
             </button>
           </div>
-          {/* 아래에 1차 모임 정보가 이어진다는 신호 — 옛 히어로 힌트의 새 자리 */}
+          {/* 아래에 1차 모임 정보가 이어진다는 신호 */}
           <div className={d.hint} aria-hidden="true">
             <span>아래로</span>
             <span className={d.hintLine} />

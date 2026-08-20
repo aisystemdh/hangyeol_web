@@ -93,12 +93,14 @@
   visibility: hidden;
   transition: none;
 }
-:global(html[data-dialog-phase="q1"]) .layer[data-layer="q1"],
-:global(html[data-dialog-phase="r1"]) .layer[data-layer="r1"],
-:global(html[data-dialog-phase="q2"]) .layer[data-layer="q2"],
-:global(html[data-dialog-phase="r2"]) .layer[data-layer="r2"],
-:global(html[data-dialog-phase="q3"]) .layer[data-layer="q3"],
-:global(html[data-dialog-phase="r3"]) .layer[data-layer="r3"],
+:global(html[data-dialog-phase="a1"]) .layer[data-layer="a1"],
+:global(html[data-dialog-phase="t1"]) .layer[data-layer="t1"],
+:global(html[data-dialog-phase="a2"]) .layer[data-layer="a2"],
+:global(html[data-dialog-phase="t2"]) .layer[data-layer="t2"],
+:global(html[data-dialog-phase="a3"]) .layer[data-layer="a3"],
+:global(html[data-dialog-phase="why"]) .layer[data-layer="why"],
+:global(html[data-dialog-phase="cmp"]) .layer[data-layer="cmp"],
+:global(html[data-dialog-phase="a4"]) .layer[data-layer="a4"],
 :global(html[data-dialog-phase="hub"]) .layer[data-layer="hub"] {
   opacity: 1;
   visibility: visible;
