@@ -48,7 +48,7 @@ const serif = Gowun_Batang({
 
 const title = `${SITE.name} — ${SITE.slogan}`;
 // 숫자·장소는 반드시 EVENT에서 가져온다 — 광고와 실제가 어긋나는 것이 이 시장의 대표 불만이다.
-const description = `가치관이 맞는 사람을 오프라인에서 만나는 자리. ${SITE.name} 1차 모임 — ${EVENT.place}, ${EVENT.capacity}명, ${EVENT.priceLabel}.`;
+const description = `답이 아니라 이유를 묻는 오프라인 대화 모임. ${SITE.name} 1차 모임 — ${EVENT.place}, ${EVENT.capacity}명, ${EVENT.priceLabel}.`;
 
 /**
  * 카카오톡·인스타에 링크를 붙였을 때 뜨는 썸네일.
@@ -118,29 +118,27 @@ export const viewport: Viewport = {
 };
 
 /**
- * 홈 전용 세션 플래그 2종 — 반드시 **첫 페인트 전**에 <html>에 속성을 붙인다.
- * useEffect로 하면 재방문자가 오버레이/히어로를 한 프레임 이상 보게 된다.
+ * 홈 전용 세션 플래그 — 반드시 **첫 페인트 전**에 <html>에 속성을 붙인다.
+ * useEffect로 하면 복귀한 방문자가 게이트를 한 프레임 이상 보게 된다.
  * 프라이빗 모드에서 sessionStorage 접근이 throw할 수 있어 try/catch로 감쌌다.
  *
- * - `intro-seen` → html[data-intro-seen]: 인트로 오버레이는 세션당 한 번.
- *   자동 재생이라 스크립트가 첫 방문에 즉시 기록한다.
- * - `dialog-phase` → html[data-dialog-phase="q2" 등]: 대화 시퀀스의 진행 위치.
- *   **HomeStage만** 기록하고, 여기서는 읽어서 속성만 붙인다 — 질문 도중 카드
+ * - `dialog-phase` → html[data-dialog-phase="a2" 등]: 온보딩의 진행 위치.
+ *   **HomeStage만** 기록하고, 여기서는 읽어서 속성만 붙인다 — 질문 도중 허브
  *   링크로 서브페이지에 다녀와도 React 마운트 전에 CSS(HomeStage.module.css)가
  *   **보던 화면 그대로** 복원하기 위해서다. 정규식 화이트리스트 밖의 값은
  *   버린다(저장소가 오염돼도 임의 속성값이 html에 붙지 않게).
+ *   `gate`는 목록에 없다 — 초기값이라 복원할 것이 없다.
  *
- * 인트로 오버레이(.hero__intro)는 **"/"의 HomeHero에만** 있다. /events/1의 Hero에는
- * 없으므로, 거기서 플래그를 세워 버리면 그 세션에서 홈의 인트로가 한 번도
- * 재생되지 않는다. 그래서 경로가 "/"일 때만 읽고 쓴다.
+ * (옛 `intro-seen` 플래그는 삭제됐다. 전체화면 인트로 오버레이가 게이트로
+ *  바뀌면서 "세션당 한 번만 재생"할 대상 자체가 없어졌다.)
  *
- * ⚠️ 이 스크립트가 하이드레이션 전에 <html>에 속성을 붙이므로 재방문 시
+ * ⚠️ 이 스크립트가 하이드레이션 전에 <html>에 속성을 붙이므로 복귀 시
  *    서버 HTML과 속성이 어긋난다 → <html>에 suppressHydrationWarning이 반드시 필요하다.
  *    (next-themes와 같은 패턴. 한 단계에만 적용되어 자식 검사에는 영향이 없다.)
- * ⚠️ React 컴포넌트가 이 속성들을 **렌더에서 읽으면 안 된다** — 서버 HTML과 달라
+ * ⚠️ React 컴포넌트가 이 속성을 **렌더에서 읽으면 안 된다** — 서버 HTML과 달라
  *    하이드레이션이 어긋난다. 이벤트 핸들러/이펙트에서만 읽는다(HomeStage 참조).
  */
-const HOME_FLAGS_SCRIPT = `try{if(location.pathname==='/'){if(sessionStorage.getItem('intro-seen')){document.documentElement.setAttribute('data-intro-seen','')}else{sessionStorage.setItem('intro-seen','1')}var p=sessionStorage.getItem('dialog-phase');if(p&&/^(a[1234]|t[12]|why|cmp|hub)$/.test(p)){document.documentElement.setAttribute('data-dialog-phase',p)}}}catch(e){}`;
+const HOME_FLAGS_SCRIPT = `try{if(location.pathname==='/'){var p=sessionStorage.getItem('dialog-phase');if(p&&/^(hero|a[1234]|t[12]|why|cmp|hub)$/.test(p)){document.documentElement.setAttribute('data-dialog-phase',p)}}}catch(e){}`;
 
 export default function RootLayout({
   children,

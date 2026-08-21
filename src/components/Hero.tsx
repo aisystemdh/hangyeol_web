@@ -65,10 +65,15 @@ export default function Hero() {
           <span style={UNDERLINED}>같이</span>
         </div>
       </div>
-      <span className="sr-only">한결같이 — 결이 같은 사람</span>
+      <span className="sr-only">한결같이 — 결을 보는 자리</span>
 
+      {/* ⚠️ "가치관이 맞는 사람" · "답변이 비슷한 상대"로 되돌리지 말 것.
+             2부 페어링은 최대유사 5쌍 + **최소유사 5쌍**이라 절반은 결이 가장 다른
+             사람과 앉는다(Timeline.tsx의 같은 경고 참조). 참가비를 받는 페이지의
+             사실 주장은 표시광고법상 사업자가 실증해야 한다.
+             홈 히어로 · 홈 허브 · 이 줄이 같은 약속을 하므로 **함께** 고칠 것. */}
       <p className="hero__lead" style={{ animation: "none" }}>
-        가치관이 맞는 사람을 오프라인에서 만나는 자리.
+        생각이 닮은 사람과도, 전혀 다른 사람과도 마주 앉는 자리.
       </p>
 
       <div className="hero__chips" style={{ animation: "none" }}>

@@ -69,6 +69,23 @@
   text-wrap: balance;
 }
 
+/* 질문 앞뒤에 붙는 한 줄 — 장면을 세우고(.qLead) 뒤집는다(.qTail).
+   a1의 "근데 사실은 아닙니다"가 .qTail이다: 이 한 줄이 없으면 인용문이
+   그냥 남의 말이 되고, 답을 고를 이유가 생기지 않는다.
+   음수 마진은 .inner의 gap(24px)을 8px까지 좁혀 질문에 붙이는 것이다. */
+.qLead {
+  margin: 0 0 calc(var(--sp-2) - var(--sp-5));
+  font-size: var(--fs-2);
+  line-height: var(--lh-ui);
+  color: var(--faint);
+}
+.qTail {
+  margin: calc(var(--sp-2) - var(--sp-5)) 0 0;
+  font-size: var(--fs-2);
+  line-height: var(--lh-ui);
+  color: var(--mute);
+}
+
 /* 보기 버튼 — 문장 전체가 들어가므로 세로 스택. 두 보기의 무게를 똑같이 둔다
    (한쪽을 강조하면 정답처럼 읽힌다 — 판정하지 않는 것이 이 체험의 규칙이다). */
 .answerCol {
@@ -215,33 +232,56 @@
   white-space: nowrap;
 }
 
-/* a4 — 오늘 고른 것 리캡 */
-.recap {
+/* a4 — 답 ↔ 결 대조. 「무엇을 골랐나」와 「왜 골랐나」를 위아래로 붙여 보여준다.
+   ⚠️ 여기 있던 .recap(오늘 고르신 것 칩 3개)과 .grainNote(나뭇결 문단)는 지웠다.
+      칩 나열은 답만 되풀이해 이 화면의 요지(답과 결의 분리)를 흐렸고, 나뭇결
+      문단은 방금 겪은 체험을 개념 설명으로 되돌려 놨다. 되살리지 말 것. */
+.contrast {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--sp-2);
+  width: min(460px, 100%);
+  padding: var(--sp-4) 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
 }
-.recapLabel {
-  font-size: var(--fs-1);
-  letter-spacing: var(--ls-label);
-  color: var(--faint);
-}
-.recapChips {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--sp-2);
-}
-.grainNote {
+.contrastLine {
   margin: 0;
   font-size: var(--fs-2);
   line-height: var(--lh-body);
   color: var(--mute);
-  max-width: 24em;
+  text-wrap: balance;
 }
-/* 타자기 캐럿 — 장식이라 테라코타 허용 지점. 무한 blink는 SkipIntroButton의
-   finish() 필터가 전제하는 종류다(무한 애니메이션은 건너뛴다). */
+/* 인용된 선택 — 앞 화면들과 **글자 그대로 같은 문장**이어야 대조가 산다 */
+.quoted {
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: var(--fs-4);
+  color: var(--ink);
+}
+
+/* 「이유」 — 이 사이트가 파는 단어. a4에서 이 두 글자만 색이 들린다.
+   --num(테라코타 잉크 #9A5637)은 종이 위 대비를 넘기는 값이라 작은 글자에도 쓸 수
+   있다. ⚠️ --terra 원색으로 바꾸지 말 것(19px 미만 글자에서 대비 2.88:1). */
+.accent {
+  color: var(--num);
+  font-weight: 700;
+}
+
+/* 「다만 …」 — why의 네 갈래와 a4의 겹침 한 줄이 함께 쓴다.
+   ⚠️ 이 줄을 빼지 말 것. 얻는 것만 적으면 그 화면이 칭찬이 되고,
+      「열등한 선택지를 만들지 않는다」가 반대 방향으로 깨진다. */
+.caveat {
+  margin: 0;
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--faint);
+  max-width: 24em;
+  text-wrap: balance;
+}
+/* 타자기 캐럿 — 장식이라 테라코타 허용 지점. 무한 blink라 스스로 멈추지 않는다:
+   레이어가 비활성이 되면 Typewriter가 리셋되고 캐럿도 함께 사라진다. */
 .caret {
   display: inline-block;
   width: 2px;
@@ -320,6 +360,74 @@
 }
 
 /* ── 허브 ── */
+
+/* 정체 한 줄이 스스로 「답 → 이유」를 수행한다(HubIdentity 주석 참조).
+   글자는 **전부 그려 두고 opacity만 켠다** — 문단 높이가 처음부터 확정돼야
+   아래 신청 CTA가 타이핑 도중 밀리지 않는다. */
+.hubChar,
+.hubAnswer,
+.hubReason {
+  opacity: 0;
+  transition: opacity 0.12s linear;
+}
+.hubChar[data-typed="true"],
+.hubAnswer[data-typed="true"],
+.hubReason[data-typed="true"] {
+  opacity: 1;
+}
+
+/* 「답」 — X가 그어지고 사라진다. 사라져도 자리는 남는다(문자를 빼지 않는다). */
+.hubAnswer {
+  position: relative;
+  display: inline-block;
+}
+.hubAnswer[data-gone="true"] {
+  opacity: 0;
+  transition: opacity 0.35s var(--ease-out);
+}
+/* X 두 획 — 글자 상자가 아니라 **글자 자체**를 덮는다.
+   inline-block의 높이는 line-height(1.7em)라 inset:0이면 글자 위아래로 크게 넘친다.
+   위아래 22%를 깎아 글자에 맞춘다. */
+.hubX {
+  position: absolute;
+  left: -14%;
+  right: -14%;
+  top: 22%;
+  bottom: 22%;
+  overflow: visible;
+  pointer-events: none;
+}
+/* 장식이라 테라코타 **원색**을 쓸 수 있는 지점이다(글자가 아니다).
+   viewBox를 글자 비율로 늘려 쓰므로 non-scaling-stroke가 없으면 획이 찌그러진다. */
+.hubX line {
+  stroke: var(--terra);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transition: stroke-dashoffset 0.22s var(--ease-out);
+}
+.hubX[data-on="true"] line {
+  stroke-dashoffset: 0;
+}
+/* 두 번째 획은 한 박자 늦게 — 두 줄이 동시에 그어지면 X가 아니라 얼룩으로 보인다 */
+.hubX line:last-child {
+  transition-delay: 0.14s;
+}
+
+/* 「이유」 — 답이 사라진 자리에서 마지막으로 들린다 */
+.hubReason {
+  display: inline-block;
+  transition:
+    opacity 0.12s linear,
+    color 0.3s var(--ease-out);
+}
+.hubReason[data-lit="true"] {
+  color: var(--num);
+  font-weight: 700;
+}
+
 .identity {
   margin: 0;
   font-size: var(--fs-6);
@@ -369,7 +477,7 @@
 }
 
 /* 아래로 스크롤 유도 — 옛 히어로 힌트의 이주.
-   ⚠️ hintDrift는 무한 반복 — SkipIntroButton의 finish() 필터가 이걸 전제한다. */
+   ⚠️ hintDrift는 무한 반복이다 — 허브에 머무는 동안 계속 돈다. */
 .hint {
   display: flex;
   flex-direction: column;

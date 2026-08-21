@@ -1,9 +1,10 @@
-/* 회사 메인 히어로. 전역 .hero__* 는 그대로 재사용한다.
+/* 회사 메인 히어로(건너뛰기 경로 전용). 전역 .hero__* 는 그대로 재사용한다.
 
    나무결 캔버스는 layout.tsx가 사이트 전체에 한 장 깔고(globals.css `.site-grain`),
    그 위의 종이색 베일은 무대(HomeStage.module.css `.veil`)가 갖는다 — 히어로가
    크로스페이드로 사라진 뒤에도 다이얼로그 글자 뒤의 결을 계속 눌러줘야 하기 때문이다.
-   스크롤 힌트(.hint)는 무대 허브로 이사했다(HomeDialog.module.css). */
+   스크롤 힌트(.hint)는 무대 허브로 이사했다(HomeDialog.module.css).
+   로고 그리기 애니메이션은 게이트(LogoMark)로 이사했다. */
 
 .stage {
   position: relative;
@@ -13,4 +14,53 @@
 .inner {
   position: relative;
   z-index: 1;
+}
+
+/* 「한결은 그 「왜」를 묻는 자리를 만듭니다」 — 브랜드 소개가 아니라
+   **다음 화면에서 할 일의 예고**다. 그래서 CTA 바로 위에 붙어 있다. */
+.ask {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-weight: 700;
+  font-size: var(--fs-4);
+  line-height: var(--lh-title);
+  color: var(--ink);
+  max-width: 20em;
+  animation: riseIn 0.8s 4.6s var(--ease-out) both;
+}
+.ask strong {
+  font-weight: 700;
+  color: var(--num); /* 테라코타 잉크 — 19px 이상 굵은 글자라 허용되는 지점 */
+}
+
+/* 건너뛴 사람에게 주는 **두 번째 기회**라 채운 알약(pill)이 아니라 테두리다.
+   여기서 시각 무게를 올리면 "그냥 읽고 내려가기"가 막힌 것처럼 보인다. */
+.cta {
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: var(--fs-2);
+  font-weight: 700;
+  padding: 15px 32px;
+  cursor: pointer;
+  animation: riseIn 0.8s 4.75s var(--ease-out) both;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+.cta:hover {
+  border-color: var(--ink);
+  transform: translateY(-2px);
+}
+.cta:active {
+  transform: scale(0.98);
+}
+
+/* 시간 비용과 "평가받나" 불안을 누르기 전에 제거하는 줄. 버튼에 붙여 둔다. */
+.ctaMeta {
+  margin: -10px 0 0;
+  font-size: var(--fs-1);
+  color: var(--faint);
+  animation: riseIn 0.8s 4.85s var(--ease-out) both;
 }

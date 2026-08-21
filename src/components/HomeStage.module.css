@@ -62,37 +62,28 @@
   justify-items: stretch; /* 히어로 섹션은 자체 중앙 정렬을 갖는다 */
 }
 
-/* reduced-motion 전용 수동 진입 — 인트로 애니메이션이 전부 꺼져 animationend가
-   오지 않으므로 이 버튼이 유일한 진입로다. JS 분기 금지(하이드레이션). */
-.startBtn {
-  display: none;
-  justify-self: center;
-  margin-top: var(--sp-4);
-  background: var(--ink);
-  color: var(--paper);
-  border: 0;
-  border-radius: 999px;
-  padding: 14px 30px;
-  font-size: var(--fs-2);
-  font-weight: 700;
-  cursor: pointer;
-}
-@media (prefers-reduced-motion: reduce) {
-  .startBtn {
-    display: inline-block;
-  }
+/* ── 히어로 애니메이션은 **활성일 때만 돈다** ──────────────────
+   히어로는 이제 「건너뛰기」를 고른 사람에게만 보이는 화면인데, 레이어는 전부
+   상시 마운트라 이 장치가 없으면 게이트를 보는 4~5초 동안 전 구간이 재생돼
+   버린다 — 건너뛰기를 누른 사람은 이미 끝난 화면을 보게 된다.
+   JS 타이머가 아니라 CSS로 멈추는 이유는, 타임라인의 진실을 한 곳(CSS 지연값)에
+   두기 위해서다. 활성이 되는 순간 0초부터 재생된다. */
+.layerHero:not([data-active="true"]) * {
+  animation-play-state: paused;
 }
 
 /* ── 복귀 복원 — React가 마운트되기 전, 첫 페인트부터 CSS가 **보던 화면**을
    보여준다(질문 도중 서브페이지에 다녀와도 그 질문으로 돌아온다 — 소유자 요구).
    html[data-dialog-phase="…"]는 layout.tsx의 인라인 스크립트가 sessionStorage에서
    읽어 붙이고, HomeStage가 마운트 동기화를 마치면 속성을 걷어 React에 제어를 넘긴다.
-   특이성: 숨김(0,2,1) > data-active(0,2,0), 표시(0,3,1) > 숨김 — 순서 무관하게 이긴다. */
+   특이성: 숨김(0,2,1) > data-active(0,2,0), 표시(0,3,1) > 숨김 — 순서 무관하게 이긴다.
+   ⚠️ gate는 목록에 없다 — 초기값이라 복원할 것이 없고, 저장도 하지 않는다. */
 :global(html[data-dialog-phase]) .layer {
   opacity: 0;
   visibility: hidden;
   transition: none;
 }
+:global(html[data-dialog-phase="hero"]) .layer[data-layer="hero"],
 :global(html[data-dialog-phase="a1"]) .layer[data-layer="a1"],
 :global(html[data-dialog-phase="t1"]) .layer[data-layer="t1"],
 :global(html[data-dialog-phase="a2"]) .layer[data-layer="a2"],
@@ -104,9 +95,4 @@
 :global(html[data-dialog-phase="hub"]) .layer[data-layer="hub"] {
   opacity: 1;
   visibility: visible;
-}
-/* 숨은 히어로 밑에서 인트로 애니메이션이 헛돌지 않게 멈춘다
-   (마운트 동기화가 속성을 제거하므로 다시 보기와 충돌하지 않는다) */
-:global(html[data-dialog-phase]) .layerHero * {
-  animation-play-state: paused;
 }

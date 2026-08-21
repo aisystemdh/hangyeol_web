@@ -2,36 +2,45 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import HomeGate from "./HomeGate";
 import HomeHero from "./HomeHero";
-import HomeDialog, { SIM } from "./HomeDialog";
+import HomeDialog, { A1_LABEL, A2_TEXT, A3_LABEL } from "./HomeDialog";
 import { track } from "@/lib/track";
 import s from "./HomeStage.module.css";
 
 /**
- * 홈 무대 — 히어로 인트로와 **체험형 시퀀스**(9차, A안)를 한 화면에서 잇는 상태 머신.
+ * 홈 무대 — **게이트에서 갈리는 두 경로**를 한 화면에서 잇는 상태 머신 (10차, A안).
  *
- *   intro → a1 → t1 → a2 → t2 → a3 → why → cmp → a4 → hub
- *          질문1 되돌림 질문2 되돌림 질문3 이유3택 같은답 착지   (기존 허브)
+ *          ┌─ 시작 ─▶ a1 ─▶ t1 ─▶ a2 ─▶ t2 ─▶ a3 ─▶ why ─▶ cmp ─▶ a4 ─▶ hub
+ *   gate ──┤          행동   빚    이유   갈림   자리   겹침   분포   착지   허브
+ *          │         01/03        02/03         03/03
+ *          └─ 건너뛰기 ─▶ hero ─▶ (스크롤) 페이지 본문
+ *                       결국에는 / 결이더라 / 한결같이
  *
- * 사용자가 가치 2지선다에 답하고, 마지막 질문에서는 **이유까지 고른다** —
- * 원칙 1("답보다 이유를 묻는다")을 설명이 아니라 동작으로 보여주는 구조다.
- * 질문·이유의 근거는 볼트 사전질문 10주제, 숫자(10명·9분)는 event.ts에서 온다.
+ * ⭐ **게이트가 첫 화면이다.** 로고만 재생하고 멈춘 뒤 「시작 / 건너뛰기」를 준다.
+ *    예전에는 히어로가 첫 화면이었고 건너뛰기는 좌상단에 뜬 fixed 버튼이었다 —
+ *    지금은 둘이 같은 줄의 선택지이고, 건너뛴 사람도 **빈손으로 지나가지 않는다**
+ *    (히어로 애니메이션을 보고 내려간다).
+ *
+ * ⭐ 사용자가 답을 세 번 고르고 그중 **두 번째가 「그 이유」**다. 이유가 별도
+ *    화면이 아니라 질문이라 01/03 표기가 정직해진다. 문안·분기는 HomeDialog 참조.
  *
  * 전이 주체:
- *  - intro→a1: 인트로 마지막 애니메이션(ulIn, 4.5s)의 animationend + 700ms 여유.
- *    setTimeout(고정 시각) 금지 — 건너뛰기(finish())도 animationend를 발화시키므로
- *    스킵과 자동 동기화되고, 타임라인의 진실이 CSS 한 곳에 남는다.
- *  - a→t/why: 답 버튼 클릭. why→cmp: 이유 버튼 클릭.
- *  - t·cmp·a4의 진행은 **버튼만** — 자동 진행은 7차 소유자 결정으로 없다.
+ *  - gate→a1 / gate→hero: 게이트 버튼. **자동 전이는 한 곳도 없다.**
+ *    (9차까지 있던 intro→a1 자동 전이는 게이트가 생기며 사라졌다 — 그래서
+ *     animationend 배선도, reduced-motion 전용 수동 진입 버튼도 필요 없어졌다.)
+ *  - hero→a1: 히어로 하단 CTA. 건너뛴 사람에게 주는 **두 번째 기회**라 약하게 둔다.
+ *  - a→t·why: 답 버튼. t·cmp·a4의 진행은 버튼만 — 자동 진행은 7차 소유자 결정으로 없다.
  *
  * ⚠️ 레이어는 전부 상시 마운트 + opacity/visibility + inert. 언마운트 금지
- *    (인트로 재생·스냅 높이 요동·SSR 콘텐츠 소실).
- * ⚠️ React는 html의 data-intro-seen / data-dialog-phase를 렌더에서 읽지 않는다
- *    (하이드레이션). 복귀의 진실은 sessionStorage다 — html 속성은 전체 로드의
- *    첫 페인트용 보조일 뿐이다(SPA 뒤로가기는 인라인 스크립트가 안 돈다).
+ *    (애니메이션 재생·스냅 높이 요동·SSR 콘텐츠 소실).
+ * ⚠️ React는 html의 data-dialog-phase를 렌더에서 읽지 않는다(하이드레이션).
+ *    복귀의 진실은 sessionStorage다 — html 속성은 전체 로드의 첫 페인트용
+ *    보조일 뿐이다(SPA 뒤로가기는 인라인 스크립트가 안 돈다).
  */
 export type Phase =
-  | "intro"
+  | "gate"
+  | "hero"
   | "a1"
   | "t1"
   | "a2"
@@ -42,8 +51,10 @@ export type Phase =
   | "a4"
   | "hub";
 
-/** 세션 복원 시 신뢰할 수 있는 값만 통과시킨다 (layout.tsx의 정규식과 짝) */
+/** 세션 복원 시 신뢰할 수 있는 값만 통과시킨다 (layout.tsx의 정규식과 짝).
+    gate는 넣지 않는다 — 초기값이자 "처음부터 다시 보기"가 지운 상태다. */
 const RESUMABLE: readonly Phase[] = [
+  "hero",
   "a1",
   "t1",
   "a2",
@@ -55,8 +66,10 @@ const RESUMABLE: readonly Phase[] = [
   "hub",
 ];
 
+/** 「다음 →」이 데려가는 곳. 게이트·히어로는 버튼이 직접 목적지를 정한다. */
 const NEXT: Record<Phase, Phase | null> = {
-  intro: "a1",
+  gate: null,
+  hero: null,
   a1: "t1",
   t1: "a2",
   a2: "t2",
@@ -68,37 +81,56 @@ const NEXT: Record<Phase, Phase | null> = {
   hub: null,
 };
 
-/** 답·이유 선택 상태. answers는 a1·a2·a3, reason은 a3의 이유(0~2). */
-export type SimState = {
-  answers: (0 | 1 | null)[];
-  reason: 0 | 1 | 2 | null;
-};
-const EMPTY_STATE: SimState = { answers: [null, null, null], reason: null };
+/** 세 번의 선택. 코드값은 계측·문안 인덱스로 그대로 쓰이므로 바꾸지 말 것. */
+export type A1 = "pass" | "say";
+export type A2 = "minor" | "futile" | "accurate" | "future";
+export type A3 = "tell" | "leave";
+export type SimState = { a1: A1 | null; a2: A2 | null; a3: A3 | null };
+
+const EMPTY_STATE: SimState = { a1: null, a2: null, a3: null };
+
+/**
+ * 저장된 답을 **화면에 그대로 되돌려주는** 레이어들.
+ *
+ * ⚠️ 여기 있는 phase는 답이 없으면 복원하면 안 된다. 레이어가 상시 마운트라
+ *    답이 null이면 기본값(pass/minor/tell)으로 그려지는데, 그러면 a4가
+ *    **남의 답을 자기 답처럼** 보여준다. 옛 포맷({answers, reason})이 남아 있는
+ *    세션에서 실제로 그렇게 됐다 — 저장값을 버리고 게이트부터 다시 시작한다.
+ */
+const NEEDS_A1: readonly Phase[] = ["t1", "a2", "t2", "a3", "why", "cmp", "a4"];
+const NEEDS_A2: readonly Phase[] = ["t2", "a3", "why", "cmp", "a4"];
+const NEEDS_A3: readonly Phase[] = ["why", "a4"];
+
+function restorable(phase: Phase, sim: SimState | null): boolean {
+  if (NEEDS_A1.includes(phase) && !sim?.a1) return false;
+  if (NEEDS_A2.includes(phase) && !sim?.a2) return false;
+  if (NEEDS_A3.includes(phase) && !sim?.a3) return false;
+  return true;
+}
+
+const A1_VALUES: readonly (A1 | null)[] = ["pass", "say", null];
+const A2_VALUES: readonly (A2 | null)[] = [
+  "minor",
+  "futile",
+  "accurate",
+  "future",
+  null,
+];
+const A3_VALUES: readonly (A3 | null)[] = ["tell", "leave", null];
 
 /** 크로스페이드 길이 — 인라인 --xfade로 CSS에 주입해 진실을 한 곳에 둔다 */
 const XFADE_MS = 500;
-/** 인트로 종료(ulIn) 후 첫 질문까지의 숨 고르기 */
-const INTRO_TO_Q1_MS = 700;
 
 export default function HomeStage() {
-  const [phase, setPhase] = useState<Phase>("intro");
+  const [phase, setPhase] = useState<Phase>("gate");
   const [sim, setSim] = useState<SimState>(EMPTY_STATE);
-  const [liveText, setLiveText] = useState("");
   const stageRef = useRef<HTMLDivElement>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /* 이벤트 핸들러가 최신 phase를 클로저 없이 읽기 위한 미러.
      렌더 중 대입은 금지라 이펙트에서 동기화한다 — 이벤트는 커밋 후에만 온다. */
-  const phaseRef = useRef<Phase>("intro");
+  const phaseRef = useRef<Phase>("gate");
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
-
-  const clearTimer = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
 
   const layerEl = useCallback(
     (p: Phase) =>
@@ -107,104 +139,104 @@ export default function HomeStage() {
   );
 
   /**
-   * phase 전이. 사용자가 시킨 전이(focus)만 새 레이어의 [data-focus-target]으로
-   * 포커스를 옮긴다 — 자동 전이가 포커스를 훔치면 맥락 변화(WCAG 3.2.1)가 된다.
-   * 자동 전이(intro→a1뿐)는 live region으로 알린다. 예외: 포커스가 사라지는
-   * 레이어 안에 있었으면 유실 방지를 위해 옮긴다.
+   * phase 전이. 새 레이어의 [data-focus-target]으로 포커스를 옮긴다 —
+   * 전이는 **전부 사용자가 시킨 것**이라 포커스 이동이 곧 낭독이 된다
+   * (자동 전이가 없으므로 WCAG 3.2.1 맥락 변화 문제도 없다).
    */
   const go = useCallback(
-    (next: Phase, opts: { focus?: boolean; auto?: boolean } = {}) => {
-      clearTimer();
-      const outgoing = layerEl(phaseRef.current);
-      const wasInside = !!outgoing?.contains(document.activeElement);
+    (next: Phase) => {
       setPhase(next);
-      if (opts.focus || wasInside) {
-        requestAnimationFrame(() => {
-          layerEl(next)
-            ?.querySelector<HTMLElement>("[data-focus-target]")
-            ?.focus({ preventScroll: true });
-        });
-      } else if (opts.auto && next === "a1") {
-        setLiveText(`질문 1. ${SIM.steps[0].situation.join(" ")}`);
-      }
+      requestAnimationFrame(() => {
+        layerEl(next)
+          ?.querySelector<HTMLElement>("[data-focus-target]")
+          ?.focus({ preventScroll: true });
+      });
     },
-    [clearTimer, layerEl],
+    [layerEl],
   );
 
-  /** 인트로 끝 감지 — 스킵의 일괄 finish()가 이벤트를 폭주시키므로 이름·phase 가드 필수 */
-  const handleAnimationEnd = useCallback(
-    (e: React.AnimationEvent) => {
-      if (phaseRef.current !== "intro" || e.animationName !== "ulIn") return;
-      // ulIn은 '결'·'같이' 두 요소에서 발화 — 두 번째가 타이머를 리셋해도 결과 동일
-      clearTimer();
-      timerRef.current = setTimeout(() => go("a1", { auto: true }), INTRO_TO_Q1_MS);
-    },
-    [clearTimer, go],
-  );
+  /* ── 게이트의 두 갈래 ─────────────────────────────────────
+     여기서 갈린 비율이 곧 "온보딩을 할 의향"이다. 건너뛰기가 압도적이면
+     게이트 한 줄(「한결의 대화 느껴보기」)이 약한 것이지 온보딩이 나쁜 게 아니다. */
+  const startFromGate = useCallback(() => {
+    track("gate_start");
+    go("a1");
+  }, [go]);
 
-  /** 답 선택: a1·a2는 되돌림으로, a3는 이유 선택(why)으로 */
-  const answer = useCallback(
-    (stepIndex: number, choice: 0 | 1) => {
-      /* 어느 질문에서 이탈하는지 = 어느 훅이 안 먹히는지. 답의 **짧은 라벨**을 함께 싣는다
-         (전문은 길어서 집계 화면에서 잘린다). 한쪽으로 심하게 쏠리는 질문은 공감대가
-         좁다는 뜻이라 인스타 훅으로도 약하다 — 질문 교체 판단을 여기서 한다. */
-      track(`q${stepIndex + 1}_answer` as "q1_answer" | "q2_answer" | "q3_answer", {
-        choice: SIM.steps[stepIndex].options[choice].label,
-      });
-      setSim((prev) => {
-        const answers = [...prev.answers];
-        answers[stepIndex] = choice;
-        // a3의 답을 바꾸면 이전에 고른 이유는 무효다
-        return { answers, reason: stepIndex === 2 ? null : prev.reason };
-      });
-      go(stepIndex < 2 ? (`t${stepIndex + 1}` as Phase) : "why", { focus: true });
+  const skipFromGate = useCallback(() => {
+    track("gate_skip");
+    go("hero");
+  }, [go]);
+
+  /** 히어로 하단 CTA — 건너뛴 사람에게 주는 두 번째 기회 */
+  const startFromHero = useCallback(() => {
+    track("hero_start");
+    go("a1");
+  }, [go]);
+
+  /* ── 세 번의 답 ───────────────────────────────────────────
+     어느 질문에서 이탈하는지 = 어느 훅이 안 먹히는지. 값은 **코드가 아니라 라벨**로
+     싣는다 — 집계 화면에서 pass/say를 다시 해독하지 않아도 되게. */
+
+  const onA1 = useCallback(
+    (v: A1) => {
+      track("q1_answer", { choice: A1_LABEL[v] });
+      /* a1이 바뀌면 a2의 **보기 자체가 달라진다** — 이전 이유는 무효다.
+         (되돌아가 답을 바꿨을 때 t2·cmp가 없는 보기를 가리키는 사고 방지) */
+      setSim((prev) => ({ a1: v, a2: null, a3: prev.a3 }));
+      go("t1");
     },
     [go],
   );
 
-  /** 이유 선택(a3 전용) → 같은 답·다른 이유 비교 화면 */
-  const chooseReason = useCallback(
-    (r: 0 | 1 | 2) => {
-      /* 이 사이트에서 가장 값나가는 한 줄이다 — **같은 답을 고른 사람들의 이유 분포**를
-         실측한다. 분포가 흩어져 있으면 "답이 같아도 이유가 다르다"가 주장이 아니라
-         우리 데이터가 되고, 그대로 통계 콘텐츠의 원본 집계가 된다.
-         이유 전문은 길어서 인덱스로 싣고, 어느 답을 고른 뒤의 이유인지를 함께 남긴다. */
-      /* ⚠️ setSim 업데이터 안에서 부르면 안 된다 — StrictMode가 업데이터를 두 번
-         호출해 이벤트가 중복 집계된다. 상태는 밖에서 읽는다. */
-      const a3 = sim.answers[2];
-      if (a3 !== null && a3 !== undefined) {
-        track("q3_reason", {
-          answer: SIM.steps[2].options[a3].label,
-          reason: r,
-        });
-      }
-      setSim((prev) => ({ ...prev, reason: r }));
-      go("cmp", { focus: true });
+  /** ⭐ 이 사이트에서 가장 값나가는 한 줄. **같은 답을 고른 사람들의 이유 분포**가
+      여기 쌓인다. 분포가 흩어져 있다는 것이 곧 "답이 같아도 이유는 다르다"가
+      주장이 아니라 우리 데이터라는 뜻이고, 그대로 통계 콘텐츠의 원본 집계가 된다.
+      쏠려 있으면 a2의 두 보기가 「즉각 ↔ 구조」로 안 갈린 것이다 — 문안을 고친다. */
+  const onA2 = useCallback(
+    (v: A2) => {
+      track("q2_answer", { choice: A2_TEXT[v], after: A1_LABEL[sim.a1 ?? "pass"] });
+      setSim((prev) => ({ ...prev, a2: v }));
+      go("t2");
     },
-    [go, sim],
+    [go, sim.a1],
+  );
+
+  const onA3 = useCallback(
+    (v: A3) => {
+      track("q3_answer", { choice: A3_LABEL[v] });
+      setSim((prev) => ({ ...prev, a3: v }));
+      go("why");
+    },
+    [go],
   );
 
   const next = useCallback(() => {
     const to = NEXT[phaseRef.current];
-    if (to) go(to, { focus: true });
+    if (to) go(to);
   }, [go]);
 
-  /** "이전 질문으로"·"답 다시 고르기" — 1-기반 질문 번호(a1~a3)로 되돌린다 */
+  /**
+   * "← 이전 질문으로". **뒤 상태를 반드시 지운다** — a1을 바꾸면 a2의 보기가
+   * 통째로 갈리고, a3를 그대로 두면 why의 겹침이 옛 조합으로 남는다.
+   */
   const goToQuestion = useCallback(
     (n: number) => {
-      go(`a${n}` as Phase, { focus: true });
+      setSim((prev) =>
+        n <= 1 ? EMPTY_STATE : { a1: prev.a1, a2: null, a3: null },
+      );
+      go(`a${n}` as Phase);
     },
     [go],
   );
 
   const restartQuestions = useCallback(() => {
     setSim(EMPTY_STATE);
-    go("a1", { focus: true });
+    go("a1");
   }, [go]);
 
-  const replayIntro = useCallback(() => {
-    clearTimer();
-    document.documentElement.removeAttribute("data-intro-seen");
+  /** "처음부터 다시 보기" — 게이트로 되돌리고 로고를 다시 그린다 */
+  const replayFromGate = useCallback(() => {
     // 처음부터 다시 = 진행 기록도 초기화 (남겨두면 이탈 후 재방문이 옛 화면으로 감)
     try {
       sessionStorage.removeItem("dialog-phase");
@@ -213,16 +245,15 @@ export default function HomeStage() {
       /* 접근 불가 시 무시 */
     }
     setSim(EMPTY_STATE);
-    // 히어로 레이어가 DOM상 활성이 된 **뒤에** 애니메이션을 되감아야 한다
-    flushSync(() => setPhase("intro"));
-    document
-      .getElementById("hero")
+    // 게이트 레이어가 DOM상 활성이 된 **뒤에** 애니메이션을 되감아야 한다
+    flushSync(() => setPhase("gate"));
+    layerEl("gate")
       ?.getAnimations({ subtree: true })
       .forEach((a) => {
         a.cancel();
         a.play();
       });
-  }, [clearTimer]);
+  }, [layerEl]);
 
   /* 복귀 동기화 — 진실은 sessionStorage. 첫 페인트는 CSS(html[data-dialog-phase])가
      담당하고, 여기서 상태가 따라잡은 뒤(커밋 후) 속성을 걷어 React에 제어를 넘긴다.
@@ -236,41 +267,51 @@ export default function HomeStage() {
       const raw = sessionStorage.getItem("dialog-chosen");
       if (raw) {
         const p: unknown = JSON.parse(raw);
+        /* 옛 포맷({answers, reason} — 9차)은 여기서 통째로 걸러진다.
+           키가 하나라도 안 맞으면 버리고 처음부터 시작한다. */
         if (
           typeof p === "object" &&
           p !== null &&
-          Array.isArray((p as SimState).answers) &&
-          (p as SimState).answers.length === 3 &&
-          (p as SimState).answers.every((v) => v === 0 || v === 1 || v === null) &&
-          [0, 1, 2, null].includes((p as SimState).reason)
+          A1_VALUES.includes((p as SimState).a1) &&
+          A2_VALUES.includes((p as SimState).a2) &&
+          A3_VALUES.includes((p as SimState).a3)
         ) {
           savedSim = p as SimState;
         }
       }
     } catch {
-      /* 접근 불가·손상(옛 포맷 포함) 시 무시 — 처음부터 시작한다 */
+      /* 접근 불가·손상 시 무시 — 처음부터 시작한다 */
     }
-    if (saved && RESUMABLE.includes(saved)) {
+    if (saved && RESUMABLE.includes(saved) && restorable(saved, savedSim)) {
       pendingAttrCleanup.current = true;
       // eslint-disable-next-line react-hooks/set-state-in-effect -- 외부 시스템(sessionStorage)과의 1회 동기화. 조건부라 연쇄 렌더 없음.
       setPhase(saved);
       if (savedSim) setSim(savedSim);
     } else {
+      /* 복원을 포기했다 = 저장값이 못 믿을 것이다. CSS 핀을 풀고 저장값도 버린다 —
+         남겨 두면 다음 이동 때 같은 판정을 되풀이하고, 그동안 CSS 핀이 첫 페인트에
+         엉뚱한 레이어를 한 번 보여준다. */
       document.documentElement.removeAttribute("data-dialog-phase");
+      try {
+        sessionStorage.removeItem("dialog-phase");
+        sessionStorage.removeItem("dialog-chosen");
+      } catch {
+        /* 접근 불가 시 무시 */
+      }
     }
   }, []);
   /* 복원 phase가 커밋·페인트된 **뒤에** 속성을 걷는다 — 먼저 걷으면 전체 로드
-     경로에서 CSS 핀이 풀린 채 React가 아직 intro라 히어로가 한 프레임 비친다. */
+     경로에서 CSS 핀이 풀린 채 React가 아직 gate라 게이트가 한 프레임 비친다. */
   useEffect(() => {
-    if (!pendingAttrCleanup.current || phase === "intro") return;
+    if (!pendingAttrCleanup.current || phase === "gate") return;
     pendingAttrCleanup.current = false;
     document.documentElement.removeAttribute("data-dialog-phase");
   }, [phase]);
 
-  /* 진행 저장 — 서브페이지(카드 링크·뒤로가기)를 다녀와도 보던 화면으로 복귀한다.
-     intro는 저장하지 않는다(초기값이자, "처음부터"가 지운 상태를 유지해야 하므로). */
+  /* 진행 저장 — 서브페이지(허브 링크·신청 페이지)를 다녀와도 보던 화면으로 복귀한다.
+     gate는 저장하지 않는다(초기값이자, "처음부터"가 지운 상태를 유지해야 하므로). */
   useEffect(() => {
-    if (phase === "intro") return;
+    if (phase === "gate") return;
     try {
       sessionStorage.setItem("dialog-phase", phase);
       sessionStorage.setItem("dialog-chosen", JSON.stringify(sim));
@@ -293,53 +334,48 @@ export default function HomeStage() {
     track("hub_reached");
   }, [phase]);
 
-  useEffect(() => clearTimer, [clearTimer]);
-
   return (
     <div
       ref={stageRef}
       className={s.stage}
       data-stage
-      onAnimationEnd={handleAnimationEnd}
       style={{ "--xfade": `${XFADE_MS}ms` } as React.CSSProperties}
     >
-      {/* 나무결 베일 — 히어로·다이얼로그가 함께 쓰므로 무대가 한 장 깐다 */}
+      {/* 나무결 베일 — 게이트·히어로·다이얼로그가 함께 쓰므로 무대가 한 장 깐다 */}
       <div className={s.veil} aria-hidden="true" />
 
+      {/* ── 게이트 — 첫 화면. 로고 한 벌과 두 버튼뿐이다 ────────── */}
+      <section
+        className={s.layer}
+        data-layer="gate"
+        data-active={phase === "gate"}
+        inert={phase !== "gate"}
+        aria-label="한결 시작"
+      >
+        <HomeGate onStart={startFromGate} onSkip={skipFromGate} />
+      </section>
+
+      {/* ── 히어로 — **건너뛰기 경로 전용**. 브랜드 애니메이션이 여기 있다 ── */}
       <div
         className={`${s.layer} ${s.layerHero}`}
-        data-layer="intro"
-        data-active={phase === "intro"}
-        inert={phase !== "intro"}
+        data-layer="hero"
+        data-active={phase === "hero"}
+        inert={phase !== "hero"}
       >
-        <HomeHero />
-        {/* reduced-motion에서는 인트로 애니메이션이 전부 꺼져 animationend가 오지
-            않는다 → CSS로만 보이는 수동 진입 버튼. JS matchMedia 조건부 렌더는
-            하이드레이션이 어긋나므로 금지. */}
-        <button
-          type="button"
-          className={s.startBtn}
-          onClick={() => go("a1", { focus: true })}
-        >
-          대화 시작하기
-        </button>
+        <HomeHero onStart={startFromHero} />
       </div>
 
       <HomeDialog
         phase={phase}
         sim={sim}
-        onAnswer={answer}
-        onReason={chooseReason}
+        onA1={onA1}
+        onA2={onA2}
+        onA3={onA3}
         onNext={next}
         onPrev={goToQuestion}
         onRestart={restartQuestions}
-        onReplay={replayIntro}
+        onReplay={replayFromGate}
       />
-
-      {/* 자동 전이(intro→a1) 전용 알림 — 클릭 전이는 포커스 이동이 낭독을 담당 */}
-      <p className="sr-only" role="status" aria-live="polite">
-        {liveText}
-      </p>
     </div>
   );
 }
