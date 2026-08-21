@@ -10,6 +10,11 @@ import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
  * 광고 차단기를 거의 타지 않는다. Vercel 대시보드에서 프로젝트의 Web Analytics를
  * **켜야** 값이 쌓인다(코드만 넣으면 아무 일도 일어나지 않는다).
  *
+ * **GA4** — 퍼널 이벤트가 실제로 쌓이는 곳이다. Vercel의 커스텀 이벤트는
+ * Pro 요금제부터라 현재(Hobby) 402로 막힌다 — 실측으로 확인했다.
+ * GA4는 커스텀 이벤트가 무료·무제한이라 q1~q3_answer·q3_reason 같은
+ * 퍼널 지표는 여기서 본다. `NEXT_PUBLIC_GA4_ID`가 비면 로드하지 않는다.
+ *
  * **Meta 픽셀** — `NEXT_PUBLIC_META_PIXEL_ID`가 비어 있으면 아예 로드하지 않는다.
  * 신청 폼과 같은 원칙이다: 보낼 곳이 없는데 보내는 척하지 않는다.
  * 지금 심는 이유는 리타겟팅 모수가 **소급되지 않기** 때문이다 — 광고를 나중에
@@ -20,11 +25,26 @@ import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
  * 그만한 우선순위가 아니다.
  */
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID;
 
 export default function Analytics() {
   return (
     <>
       <VercelAnalytics />
+      {GA4_ID && (
+        <>
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`}
+            strategy="afterInteractive"
+          />
+          <Script id="ga4" strategy="afterInteractive">
+            {`window.dataLayer=window.dataLayer||[];
+function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());
+gtag('config','${GA4_ID}');`}
+          </Script>
+        </>
+      )}
       {PIXEL_ID && (
         <>
           <Script id="meta-pixel" strategy="afterInteractive">

@@ -7,7 +7,9 @@
  *
  * 두 수집처를 쓰는 이유:
  *  - **Vercel Analytics** — 방문·유입경로(referrer)·페이지별 조회. 광고 차단기에
- *    거의 안 걸린다(자사 도메인에서 서빙). 단, 커스텀 이벤트는 Pro 요금제부터다.
+ *    거의 안 걸린다(자사 도메인에서 서빙). **커스텀 이벤트는 Pro 요금제부터라
+ *    현재 Hobby에서는 402로 막힌다**(2026-08-21 실측). 그래서 이벤트는 아래 둘로 간다.
+ *  - **GA4** — 퍼널 지표의 정본. 커스텀 이벤트가 무료·무제한이다.
  *  - **Meta 픽셀** — 커스텀 이벤트가 무료 요금제에서도 기록되고, 무엇보다
  *    **리타겟팅 모수**가 여기 쌓인다. 지금 안 심으면 나중에 소급이 안 된다.
  *    단, 광고 차단기에 막히는 비율이 있어 절대값이 아니라 **비율**로만 읽어야 한다.
@@ -37,6 +39,7 @@ type Props = Record<string, string | number | boolean | null>;
 declare global {
   interface Window {
     fbq?: (...args: unknown[]) => void;
+    gtag?: (...args: unknown[]) => void;
   }
 }
 
@@ -52,6 +55,13 @@ export function track(event: TrackEvent, props?: Props) {
     void import("@vercel/analytics").then(({ track: vercelTrack }) => {
       vercelTrack(event, props);
     });
+  } catch {
+    /* 수집 실패는 무시 */
+  }
+
+  // GA4. 퍼널 지표의 **정본**이다 — Vercel 커스텀 이벤트가 Hobby에서 막혀 있어서다.
+  try {
+    window.gtag?.("event", event, props ?? {});
   } catch {
     /* 수집 실패는 무시 */
   }
