@@ -160,7 +160,11 @@ export default function WhyPage() {
                 <div className={s.solution}>
                   <span className={s.solutionLabel}>한결의 해결책</span>
                   <p className={s.solutionText}>
-                    성향 리포트를 드리고, 관계를 잇는 것까지 설계에 포함합니다.
+                    {/* ⚠️ "성향 리포트"로 되돌리지 말 것 — 리포트 본문이
+                        "성향을 나누는 게 아니라 왜 그렇게 골랐는지"라고 말한다.
+                        상품명이 실물을 부정하면 표시광고 문제가 된다. */}
+                    닷새 뒤 그날의 기록을 보내드리고, 관계를 잇는 것까지 설계에
+                    포함합니다.
                   </p>
                 </div>
               </div>

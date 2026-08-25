@@ -1,36 +1,53 @@
 /* 게이트(첫 화면) — 로고 · 한 줄 · 두 버튼. 그 이상은 넣지 않는다. */
 
 .inner {
+  /* ⭐ 게이트 전체 크기의 손잡이. 로고 폭 하나만 바꾸면 아래 글·버튼은
+     자기 clamp 안에서 따라 움직인다 — "더 크게/작게"는 이 한 줄만 고친다.
+     ⚠️ vh 항이 상한을 쥔다. .screen이 (100svh − 헤더 64 − 패딩 96)이므로
+        로고 높이(폭÷1.1165) + 글 + 버튼 + 간격 2개가 그 안에 들어와야 한다.
+        1024×640 노트북이 가장 빠듯하다(실측 기준으로 55vh가 상한). */
+  --gate-mark: min(62vw, 43vh);
+
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--sp-5);
+  /* 고정 24px이면 로고가 커진 만큼 위아래 공백만 늘어 보인다 — 화면 높이에 묶는다 */
+  gap: clamp(18px, 3vh, 34px);
   text-align: center;
   padding: 0 22px;
 }
 
+/* 가로로 돌린 폰. .screen이 min-height:auto로 풀리므로 로고가 화면을 넘기지 않게
+   따로 조인다 — 여기서 --gate-mark를 안 낮추면 게이트만 세로로 길어진다. */
+@media (max-height: 520px) {
+  .inner {
+    --gate-mark: min(34vw, 52vh);
+    gap: var(--sp-4);
+  }
+}
+
 /* 예전 전체화면 오버레이(.hero__intro)와 같은 크기감을 유지하되, 화면을 덮지
-   않고 흐름 안에 선다 — 아래 버튼 두 개가 같은 화면에 함께 보여야 하므로
-   오버레이 시절(min(54vw,40vh))보다 한 단계 작다.
-   LogoMark의 루트가 SVG 한 장이 아니라 (SVG + 실제 이미지)를 겹치는 래퍼 div라
-   height:auto로는 정사각형을 못 잡는다 — aspect-ratio로 강제한다(원본
-   viewBox가 100×100 정사각형이라 이 비율이 맞다). */
+   않고 흐름 안에 선다 — 아래 버튼 두 개가 같은 화면에 함께 보여야 한다.
+   LogoMark의 루트는 <svg> 한 장이다(예전의 SVG+이미지 겹침 래퍼는 폐지). */
 .mark {
-  position: relative;
-  width: min(38vw, 26vh);
-  aspect-ratio: 1 / 1;
-  overflow: visible; /* SVG 획이 speak 변형으로 자기 상자 밖까지 흔들린다 */
+  width: var(--gate-mark);
+  /* 🔴 1 / 1 로 되돌리지 말 것. 이 값은 실물 로고 파일(hangyeol-mark-v2.png,
+     297×266)의 비율이고 LogoMark의 viewBox도 같은 `0 0 297 266`이다. 셋이 함께
+     맞아야 헤더 로고와 모양이 같다. 정사각형으로 두면 가로로 11% 눌린다.
+     로고 파일을 갈면 이 비율과 LogoMark의 좌표를 함께 다시 뽑는다. */
+  aspect-ratio: 297 / 266;
+  overflow: visible; /* 획이 speak 변형으로 자기 상자 밖까지 흔들린다 */
 }
 
 .line {
   margin: 0;
   font-family: var(--font-serif), serif;
   font-weight: 700;
-  font-size: var(--fs-6);
+  font-size: clamp(24px, 3.6vw, 36px);
   line-height: var(--lh-title);
   color: var(--ink);
-  /* 로고가 다 그려진 뒤(1.2s) 뜬다 */
-  animation: riseIn 0.7s 1.3s var(--ease-out) both;
+  /* 획이 다 다물린 뒤(1.35s) 뜬다. LogoMark의 speak 길이를 바꾸면 여기도 함께. */
+  animation: riseIn 0.7s 1.45s var(--ease-out) both;
 }
 
 /* 두 버튼은 반드시 한 줄이다 — 세로로 쌓으면 위쪽이 기본값처럼 보여
@@ -41,7 +58,7 @@
   justify-content: center;
   gap: var(--sp-3);
   flex-wrap: wrap;
-  animation: riseIn 0.7s 1.55s var(--ease-out) both;
+  animation: riseIn 0.7s 1.7s var(--ease-out) both;
 }
 
 .start {
@@ -49,8 +66,10 @@
   color: var(--paper);
   border: 1px solid var(--ink);
   border-radius: 999px;
-  padding: 15px 40px;
-  font-size: var(--fs-2);
+  /* ⚠️ 가로 패딩은 clamp다. 320px 폰에서 고정 56px을 쓰면 두 버튼 합이 가용 폭을
+     넘어 줄바꿈되고, 그러면 위 주석의 "반드시 한 줄" 규칙이 깨진다. */
+  padding: clamp(15px, 2.2vh, 20px) clamp(30px, 7vw, 56px);
+  font-size: var(--fs-4);
   font-weight: 700;
   cursor: pointer;
   transition:
@@ -70,8 +89,8 @@
   color: var(--mute);
   border: 1px solid var(--rule);
   border-radius: 999px;
-  padding: 15px 28px;
-  font-size: var(--fs-2);
+  padding: clamp(15px, 2.2vh, 20px) clamp(22px, 5vw, 40px);
+  font-size: var(--fs-4);
   cursor: pointer;
   transition:
     border-color 0.2s ease,

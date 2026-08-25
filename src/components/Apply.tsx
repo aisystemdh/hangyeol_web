@@ -1,6 +1,6 @@
 import ApplyForm from "./ApplyForm";
 import sh from "./sectionHead.module.css";
-import { AGE_RANGE, EVENT } from "@/lib/event";
+import { AGE_RANGE, CONDITION_LABEL, EVENT } from "@/lib/event";
 
 /**
  * 신청. 밴드 교차상 검정 차례지만 **반드시 흰 밴드**다 —
@@ -51,7 +51,9 @@ export default function Apply() {
             </div>
             <div className="facts__row">
               <dt>참가 조건</dt>
-              <dd>{AGE_RANGE}</dd>
+              {/* ⚠️ 「미혼」을 다시 접이식 안쪽으로만 돌려보내지 말 것.
+                  허위 기재를 이유로 퇴장·환불 불가를 주장하려면 조건이 표에 보여야 한다. */}
+              <dd>{CONDITION_LABEL}</dd>
             </div>
           </dl>
         </div>
