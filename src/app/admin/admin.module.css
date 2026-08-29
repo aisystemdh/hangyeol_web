@@ -49,6 +49,10 @@
 .btnSm { padding: 4px 9px; font-size: 12px; border: 1px solid #ced4da; border-radius: 6px; background: #fff; cursor: pointer; }
 .btnSm:hover { background: #f1f3f5; }
 /* 입금 확인은 되돌리기 어려운 동작이라(참가자 생성 + 토큰 발급) 눈에 띄게 둔다. */
+/* 링크 발급 — 눌러도 되돌릴 게 없는 안전한 동작이라 옅게 둔다.
+   입금 확인(.btnPay)만 진하게 해서 실수로 누르지 않게 한다. */
+.btnLink { padding: 4px 9px; font-size: 12px; border: 1px solid #1e3a2f; border-radius: 6px; background: #f4fbf6; color: #1e3a2f; cursor: pointer; }
+.btnLink:hover { background: #e6f4ea; }
 .btnPay { padding: 4px 10px; font-size: 12px; border: 1px solid #1e3a2f; background: #1e3a2f; color: #fff; border-radius: 6px; cursor: pointer; font-weight: 600; }
 
 /* ── 로그인 ─────────────────────────────────────────── */

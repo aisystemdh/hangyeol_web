@@ -18,6 +18,8 @@ export type AdminRow = {
   marital: string | null; job: string | null; status: string; nick: string | null;
   depositor_name: string | null; due_at: string | null; hours_left: number | null;
   submitted: boolean; paid: boolean; memo: string | null;
+  /** 링크를 만들어 보낼 준비가 된 시각. 「보냈나 안 보냈나」를 화면이 보여준다. */
+  preLinked: boolean; qLinked: boolean;
 };
 
 export type Counts = Record<string, { M: number; F: number }>;
@@ -27,6 +29,8 @@ export async function loadBoard(): Promise<{ counts: Counts; items: AdminRow[] }
     `select a.id, a.seq, a.name, a.phone, a.gender, a.birth::text as birth,
             a.marital, a.job, a.status, a.depositor_name, a.memo,
             a.due_at::text as due_at,
+            (a.pre_link_at is not null) as pre_linked,
+            (a.q_link_at is not null) as q_linked,
             (a.submitted_at is not null) as submitted,
             p.nick,
             (pay.id is not null) as paid
@@ -55,6 +59,7 @@ export async function loadBoard(): Promise<{ counts: Counts; items: AdminRow[] }
       hours_left: due ? Math.round(((due.getTime() - now) / 3_600_000) * 10) / 10 : null,
       submitted: Boolean(r.submitted), paid: Boolean(r.paid),
       memo: (r.memo as string) ?? null,
+      preLinked: Boolean(r.pre_linked), qLinked: Boolean(r.q_linked),
     };
   });
 

@@ -69,6 +69,31 @@ export default function Board({ initial }: { initial: { counts: Counts; items: A
     load();
   };
 
+  /**
+   * 참가자 링크 발급 + 클립보드 복사.
+   *
+   * 🟡 알림톡 플랫폼이 아직 미정이라 **보내지는 않는다.** 링크만 만들어 복사해주고,
+   *    사장님이 직접 보낸다. 플랫폼이 정해지면 notify.ts의 두 함수만 채우면 된다.
+   * ⚠️ 이미 발급된 토큰이 있으면 서버가 그대로 돌려준다 — 새로 만들면
+   *    이미 보낸 알림톡의 링크가 죽는다.
+   */
+  const link = async (row: AdminRow, stage: "pre" | "q") => {
+    const r = await fetch(`/api/admin/applicants/${row.id}/token`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stage }),
+    });
+    const j = await r.json();
+    if (!r.ok) return setMsg(`실패: ${j.error ?? r.status}`);
+    try {
+      await navigator.clipboard.writeText(j.url);
+      setMsg(`${row.name} · ${stage === "pre" ? "1단계" : "2단계"} 링크 복사됨 — ${j.url}`);
+    } catch {
+      // 클립보드는 https가 아니거나 권한이 없으면 막힌다. 링크 자체는 보여준다.
+      setMsg(`${row.name} · ${stage === "pre" ? "1단계" : "2단계"} 링크 — ${j.url}`);
+    }
+    load();
+  };
+
   const pay = async (row: AdminRow) => {
     const actor = getActor();
     if (!actor) return setMsg("먼저 「조작하는 사람」에 이름을 적어주세요.");
@@ -167,8 +192,19 @@ export default function Board({ initial }: { initial: { counts: Counts; items: A
                       : `${r.hours_left}h`}
                 </td>
                 <td className={st.actions}>
+                  {["pre_registered", "approved"].includes(r.status) && (
+                    <button className={st.btnLink} onClick={() => link(r, "pre")}>
+                      {r.preLinked ? "1단계 링크 다시" : "1단계 링크"}
+                    </button>
+                  )}
                   {r.status === "awaiting_payment" && (
                     <button className={st.btnPay} onClick={() => pay(r)}>입금 확인</button>
+                  )}
+                  {/* 🔴 2단계(문항) 링크는 입금이 확인된 사람에게만 뜬다. */}
+                  {r.status === "confirmed" && (
+                    <button className={st.btnLink} onClick={() => link(r, "q")}>
+                      {r.qLinked ? "2단계 링크 다시" : "2단계 링크"}
+                    </button>
                   )}
                   {(NEXT[r.status] ?? []).filter((t) => t !== "confirmed").map((t) => (
                     <button key={t} className={st.btnSm} onClick={() => transition(r, t)}>

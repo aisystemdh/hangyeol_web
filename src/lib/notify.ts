@@ -51,3 +51,39 @@ export async function notifyNewApplicant(a: NewApplicant): Promise<void> {
     // 의도적으로 삼킨다. 위 주석 참조.
   }
 }
+
+/**
+ * 참가자에게 링크를 보낸다.
+ *
+ * 🟡 **아직 아무것도 보내지 않는다.** 알림톡 발송 플랫폼이 정해지지 않았다
+ *    (2026-08-30 기준 미결 · 템플릿 13건 심사 리드타임이 9/28을 문다).
+ *    지금은 운영자가 화면에서 링크를 복사해 직접 보낸다.
+ *
+ * ⭐ 플랫폼이 정해지면 **이 두 함수의 몸통만** 채운다. 부르는 쪽(`/api/admin/.../token`)은
+ *    그대로 둔다. 그래서 미리 자리를 만들어 뒀다.
+ *
+ * 알림톡 템플릿 대응 — 1단계 링크 = T1, 2단계 링크 = T4(확정 안내)에 얹는다.
+ */
+
+export type LinkDelivery = { channel: "manual" | "alimtalk"; ok: boolean };
+
+/* eslint-disable @typescript-eslint/no-unused-vars --
+   플랫폼이 정해지면 이 인자들을 쓴다. 지금 지웠다가 그때 다시 만드는 것보다
+   자리를 남겨두는 편이 「무엇을 넘겨야 하는지」를 문서처럼 보여준다. */
+export async function sendPreLink(_p: {
+  name: string;
+  phone: string;
+  url: string;
+  dueAt: string | null;
+}): Promise<LinkDelivery> {
+  return { channel: "manual", ok: false };
+}
+
+export async function sendQuestionLink(_p: {
+  name: string;
+  phone: string;
+  url: string;
+}): Promise<LinkDelivery> {
+  return { channel: "manual", ok: false };
+}
+/* eslint-enable @typescript-eslint/no-unused-vars */

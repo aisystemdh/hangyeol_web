@@ -2,16 +2,19 @@ import { NextResponse } from "next/server";
 import { q, tx } from "@/lib/db";
 import { isRealDate } from "@/lib/age";
 import { dueAtFrom, isClosed } from "@/lib/deadline";
-import { COPY, QUESTIONS, PAIRED_INDEXES } from "@/lib/form9-copy";
+import { COPY } from "@/lib/form9-copy";
 import { biz } from "@/lib/biz";
 
 /**
- * 폼 9 — 사전 10문항 + 결제 정보
+ * 폼 9 · **1단계** — 참가 신청 확인 + 결제 정보 (자리 확보)
  *
- * 근거: `7_폼/한결_폼9_개발명세.md` §2·§3 · `8_참가자모집/한결_폼9_최종본_문항결제.md`
+ * 근거: `7_폼/한결_폼9_개발명세.md` §2·§3 · 2026-08-30 소유자 결정(2단계 분리)
  *
- * 🔴 **로그인이 없다. 링크에 박힌 토큰이 곧 신원이다.**
- * 🔴 문항은 영업비밀이다. 토큰이 확인된 뒤에만 내려간다 — form9-copy.ts 주석 참조.
+ * 🔴 **여기서는 문항을 한 글자도 내려보내지 않는다.** 문항은 영업비밀이고,
+ *    입금이 확인된 사람만 2단계(`/api/q/:token`)에서 받는다.
+ * 🔴 **자리는 이 단계의 제출 시점에 잡는다.** 입금 시점으로 옮기지 말 것 —
+ *    25명이 동시에 입금하면 5명을 환불해야 하고 그게 그대로 분쟁이 된다.
+ * 🔴 로그인이 없다. 링크에 박힌 토큰이 곧 신원이다.
  */
 
 export const runtime = "nodejs";
@@ -28,6 +31,22 @@ type Applicant = {
   status: string;
   submitted_at: string | null;
   due_at: string | null;
+};
+
+/**
+ * 1단계 화면이 쓰는 문구만 골라 보낸다.
+ * 🔴 `COPY`를 통째로 보내지 않는다 — 2단계 문안까지 같이 나가면 경계가 흐려지고,
+ *    나중에 문항을 COPY에 얹는 사람이 생기면 그대로 샌다.
+ */
+const STAGE1_COPY = {
+  start: COPY.start,
+  identity: COPY.identity,
+  payment: COPY.payment,
+  done: COPY.done,
+  already: COPY.already,
+  full: COPY.full,
+  closed: COPY.closed,
+  unknown: COPY.unknown,
 };
 
 const err = (error: string, status: number, extra: Record<string, unknown> = {}) =>
@@ -50,13 +69,16 @@ export async function GET(_req: Request, ctx: Ctx) {
     const a = await findByToken(token);
     if (!a) return err("unknown_token", 404);
 
-    // 이미 낸 사람이 우선이다 — 마감됐어도 "이미 제출하셨습니다"를 보여준다.
+    // 이미 낸 사람이 우선이다 — 마감됐어도 완료 화면(계좌·기한)을 다시 보여준다.
+    // 링크를 다시 열어보는 가장 흔한 이유가 「계좌번호가 뭐였지」이기 때문이다.
     if (a.submitted_at) {
       return NextResponse.json({
         ok: true,
         submitted: true,
         due_at: a.due_at,
+        name: a.name,
         copy: { already: COPY.already, done: COPY.done },
+        biz: biz(),
       });
     }
 
@@ -75,9 +97,7 @@ export async function GET(_req: Request, ctx: Ctx) {
       closed: false,
       // 화면이 미리 채워 보여줄 값. 참가자가 자기 이름을 다시 타이핑하게 하지 않는다.
       prefill: { name: a.name, gender: a.gender, phone: a.phone, birth: a.birth },
-      questions: QUESTIONS,
-      pairedIndexes: PAIRED_INDEXES,
-      copy: COPY,
+      copy: STAGE1_COPY,
       biz: biz(),
     });
   } catch (e) {
@@ -88,8 +108,6 @@ export async function GET(_req: Request, ctx: Ctx) {
 
 type Body = {
   profile?: Record<string, unknown>;
-  answers?: unknown;
-  consent?: unknown;
   payment?: Record<string, unknown>;
 };
 
@@ -149,25 +167,6 @@ export async function POST(req: Request, ctx: Ctx) {
     // 🔴 개인정보 동의와 **별개로** 저장한다(개인정보보호법 §22).
     if (p.truth_agreed !== true) return err("need_truth", 400);
 
-    // ── 응답 ────────────────────────────────────────────────────
-    const answers = body.answers;
-    if (!Array.isArray(answers) || answers.length !== QUESTIONS.length) {
-      return err("bad_answers", 400);
-    }
-    for (let i = 0; i < answers.length; i++) {
-      const max = QUESTIONS[i].choices?.length ?? 2;
-      const ok = PAIRED_INDEXES.includes(i)
-        ? Array.isArray(answers[i]) &&
-          (answers[i] as unknown[]).length === 2 &&
-          (answers[i] as unknown[]).every((v) => v === 1 || v === 2)
-        : typeof answers[i] === "number" &&
-          Number.isInteger(answers[i]) &&
-          (answers[i] as number) >= 1 &&
-          (answers[i] as number) <= max;
-      if (!ok) return err("bad_answers", 400, { at: i + 1 });
-    }
-    if (typeof body.consent !== "boolean") return err("bad_consent", 400);
-
     // ── 결제 정보 ───────────────────────────────────────────────
     const pay = body.payment ?? {};
     // 🔴 전자상거래법상 표시·동의의 근거다. false면 저장하지 않는다.
@@ -208,13 +207,8 @@ export async function POST(req: Request, ctx: Ctx) {
         );
 
         await c.query(
-          `insert into answer_pre (applicant_id, a, consent) values ($1, $2, $3)`,
-          [a.id, JSON.stringify(answers), body.consent],
-        );
-
-        await c.query(
           `insert into applicant_event (applicant_id, from_status, to_status, reason, actor)
-           values ($1, $2, 'awaiting_payment', '폼9 제출 — 자리 확보', 'system')`,
+           values ($1, $2, 'awaiting_payment', '1단계 제출 — 자리 확보', 'system')`,
           [a.id, a.status],
         );
       });
@@ -228,15 +222,18 @@ export async function POST(req: Request, ctx: Ctx) {
         );
         await q(
           `insert into applicant_event (applicant_id, from_status, to_status, reason, actor)
-           values ($1, $2, 'waitlist', '폼9 제출 시점에 해당 성별 자리 마감', 'system')`,
+           values ($1, $2, 'waitlist', '1단계 제출 시점에 해당 성별 자리 마감', 'system')`,
           [a.id, a.status],
         );
-        return err("full", 409, { gender });
+        return err("full", 409, { gender, copy: { full: COPY.full } });
       }
       throw e;
     }
 
-    return NextResponse.json({ ok: true, due_at: dueAt.toISOString() }, { status: 201 });
+    return NextResponse.json(
+      { ok: true, due_at: dueAt.toISOString(), depositor: depositor ?? name },
+      { status: 201 },
+    );
   } catch (e) {
     console.error("[api/pre POST] 실패", e);
     return err("server", 500);
