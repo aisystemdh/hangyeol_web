@@ -1,4 +1,5 @@
 import ApplyForm from "./ApplyForm";
+import RecruitStatus from "./RecruitStatus";
 import sh from "./sectionHead.module.css";
 import { AGE_RANGE, CONDITION_LABEL, EVENT } from "@/lib/event";
 
@@ -6,9 +7,9 @@ import { AGE_RANGE, CONDITION_LABEL, EVENT } from "@/lib/event";
  * 신청. 밴드 교차상 검정 차례지만 **반드시 흰 밴드**다 —
  * 입력 필드(.input/.gender__btn)가 흰 배경 고정이라 검정 위에서는 대비가 무너진다.
  *
- * ⚠️ "남은 자리" 막대는 없앴다. 폼 백엔드에 잔여석 API가 없어 손으로 고쳐야 했는데,
+ * ⚠️ "남은 자리" 막대는 손으로 고쳐야 해서 없앴었다. 이제 서버에서 실제 확정 인원을
+ *    읽으므로 <RecruitStatus />로 되살렸다 — 다만 **손으로 고치는 자리로 되돌리지 말 것.**
  *    갱신을 놓치면 신청이 들어와도 계속 만석으로 보여 거짓 정보가 된다.
- *    되살리려면 서버에서 실제 신청 수를 읽어 올 수단부터 만들 것.
  */
 export default function Apply() {
   return (
@@ -42,6 +43,10 @@ export default function Apply() {
                 {EVENT.capacityPerGender}
               </dd>
             </div>
+            {/* 확정 인원이 절반을 넘기 전에는 숫자가 아니라 문장만 나온다.
+                "18자리 남음"은 희소성이 아니라 「아무도 안 왔다」는 신호다. */}
+            <RecruitStatus />
+
             <div className="facts__row">
               <dt>참가비</dt>
               <dd>
