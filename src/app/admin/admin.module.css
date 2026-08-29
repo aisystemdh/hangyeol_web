@@ -1,0 +1,62 @@
+/* 운영자 화면. 브랜드 화면이 아니라 «업무 도구»다 —
+   예쁜 것보다 한눈에 세어지는 것이 우선이다. 여백을 줄이고 밀도를 올렸다. */
+
+/* ⚠️ globals.css의 전역 색·서체가 여기까지 흘러든다(같은 <body> 아래다).
+   운영 화면은 브랜드 화면이 아니라 표를 읽는 도구라, 색을 명시해 되돌린다.
+   안 그러면 숫자와 이름이 푸르스름하게 나와 읽기가 나빠진다. */
+.wrap { max-width: 1400px; margin: 0 auto; padding: 24px 20px 80px; color: #212529; }
+.wrap :is(h1, th, td, button, input, label, p, div) { color: inherit; }
+.table td, .table th { color: #212529; }
+.cardNum, .h1 { color: #1e3a2f; }
+
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.h1 { font-size: 22px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+
+.actor { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #5c5f66; }
+.inputSm { padding: 6px 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; width: 110px; }
+
+/* 성비 카운터 — 이 화면에서 가장 자주 보는 숫자다. 위에 크게 둔다. */
+.counters { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 18px 0; }
+.card, .cardHi { border: 1px solid #dee2e6; border-radius: 10px; padding: 12px 14px; background: #fff; }
+.cardHi { border-color: #1e3a2f; border-width: 2px; background: #f4fbf6; }
+.cardLabel { font-size: 12px; color: #868e96; margin-bottom: 4px; }
+.cardNum { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sep { color: #ced4da; margin: 0 6px; }
+
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.tab, .tabOn { padding: 6px 12px; border-radius: 999px; border: 1px solid #dee2e6; background: #fff; font-size: 13px; cursor: pointer; }
+.tabOn { background: #1e3a2f; border-color: #1e3a2f; color: #fff; }
+
+.msg { margin: 0 0 12px; padding: 8px 12px; background: #f1f3f5; border-radius: 8px; font-size: 13px; }
+
+/* 표가 넓다. 화면 밖으로 나가지 않고 이 안에서만 가로로 굴러야 한다. */
+.tableWrap { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 10px; background: #fff; }
+.table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+.table th { text-align: left; padding: 10px 12px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: 600; color: #495057; position: sticky; top: 0; }
+.table td { padding: 9px 12px; border-bottom: 1px solid #f1f3f5; }
+.table tbody tr:hover { background: #f8f9fa; }
+
+/* ⚠️ 표시가 필요한 줄 — 나이 범위 밖이거나 기혼이라고 적은 사람.
+   🔴 막지 않고 «사람이 판단하도록» 띄우기만 한다. */
+.flag { background: #fff9db; }
+.flag:hover { background: #fff3bf; }
+.warn { color: #c92a2a; font-weight: 600; }
+
+.mono { font-variant-numeric: tabular-nums; }
+.empty { text-align: center; color: #adb5bd; padding: 32px; }
+
+.actions { display: flex; gap: 4px; }
+.btnSm { padding: 4px 9px; font-size: 12px; border: 1px solid #ced4da; border-radius: 6px; background: #fff; cursor: pointer; }
+.btnSm:hover { background: #f1f3f5; }
+/* 입금 확인은 되돌리기 어려운 동작이라(참가자 생성 + 토큰 발급) 눈에 띄게 둔다. */
+.btnPay { padding: 4px 10px; font-size: 12px; border: 1px solid #1e3a2f; background: #1e3a2f; color: #fff; border-radius: 6px; cursor: pointer; font-weight: 600; }
+
+/* ── 로그인 ─────────────────────────────────────────── */
+.loginWrap { min-height: 70vh; display: grid; place-items: center; padding: 24px; }
+.loginBox { display: flex; flex-direction: column; gap: 12px; width: min(320px, 100%); }
+.loginTitle { font-size: 20px; margin: 0; font-weight: 700; }
+.loginNote { margin: 0; font-size: 13px; color: #868e96; }
+.input { padding: 10px 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 15px; }
+.btnPrimary { padding: 10px; border: none; border-radius: 8px; background: #1e3a2f; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+.btnPrimary:disabled { background: #adb5bd; cursor: default; }
+.err { margin: 0; font-size: 13px; color: #c92a2a; }

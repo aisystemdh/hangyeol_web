@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Noto_Sans_KR, Gowun_Batang } from "next/font/google";
 import "./globals.css";
 import GrainCanvas from "@/components/GrainCanvas";
+import SiteChrome from "@/components/SiteChrome";
 import SiteHeader from "@/components/SiteHeader";
 import Footer from "@/components/Footer";
 import PageEffects from "@/components/PageEffects";
@@ -157,7 +158,9 @@ export default function RootLayout({
       <body>
         {/* 사이트 전체 배경. 화면 고정 한 장이라 페이지가 길어져도 비용이 일정하다.
             흰 구간에서만 보이고 검정 밴드에는 가려진다 — globals.css의 .site-grain 참조. */}
-        <GrainCanvas className="site-grain" />
+        <SiteChrome>
+          <GrainCanvas className="site-grain" />
+        </SiteChrome>
         {/* 탭 순서상 가장 먼저 와야 의미가 있다 — 헤더보다 위에 둘 것 */}
         <a className="skip-link" href="#main">
           본문 바로가기
@@ -168,11 +171,15 @@ export default function RootLayout({
             __html: JSON.stringify(ORGANIZATION_JSONLD),
           }}
         />
-        <SiteHeader />
+        <SiteChrome>
+          <SiteHeader />
+        </SiteChrome>
         <main id="main">{children}</main>
-        <Footer />
-        <PageEffects />
-        <Analytics />
+        <SiteChrome>
+          <Footer />
+          <PageEffects />
+          <Analytics />
+        </SiteChrome>
       </body>
     </html>
   );
