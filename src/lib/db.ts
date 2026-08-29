@@ -7,8 +7,11 @@ import { Pool, type QueryResultRow } from "pg";
  *    붙은 쪽이다. 서버리스는 요청마다 인스턴스가 살았다 죽었다 하므로 직결
  *    주소를 쓰면 연결 수가 금방 한도에 닿는다.
  *
- * ⚠️ 인스턴스당 `max: 1`인 이유 — 커넥션 풀링은 이미 Neon 풀러가 하고 있다.
- *    여기서 또 여러 개를 열면 풀러 앞에 풀이 두 겹으로 쌓여 한도만 갉아먹는다.
+ * ⚠️ **`max: 1`로 두지 말 것.** 처음에 「풀링은 Neon 풀러가 하니까」라고 생각해 1로
+ *    뒀는데, 그건 **서버 쪽** 풀링이다. 클라이언트 풀이 1이면 한 인스턴스 안의 모든
+ *    질의가 한 줄로 서고, 동시 제출이 몰리면 뒤에 선 요청이 그대로 연결 타임아웃(500)이
+ *    난다. 폼9 27건 동시 제출 실험에서 8건이 이렇게 죽었다(2026-08-29 실측).
+ *    선착순 폼은 「다 같이 한 번에 몰리는」 것이 정상 동작이라 이 값이 곧 사고다.
  */
 declare global {
   var __hangyeolPool: Pool | undefined;
@@ -25,9 +28,9 @@ function makePool(): Pool {
   }
   return new Pool({
     connectionString,
-    max: 1,
+    max: 10,
     idleTimeoutMillis: 10_000,
-    connectionTimeoutMillis: 8_000,
+    connectionTimeoutMillis: 10_000,
   });
 }
 
