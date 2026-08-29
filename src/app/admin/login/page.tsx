@@ -1,52 +1,17 @@
-"use client";
+import LoginForm from "./LoginForm";
 
-import { useState } from "react";
-import st from "../admin.module.css";
+/**
+ * 🔴 이 페이지가 검색에 잡히면 운영 화면의 주소가 그대로 알려진다.
+ *
+ * ⚠️ robots.txt에 `Disallow: /admin` 을 적지 **않는다.** robots.txt는 누구나 열어보는
+ *    공개 파일이라, 막으려던 주소를 오히려 광고하는 꼴이 된다.
+ *    아무 데서도 링크하지 않고 + 여기서 noindex를 거는 편이 조용하고 강하다.
+ */
+export const metadata = {
+  title: "한결 운영",
+  robots: { index: false, follow: false, nocache: true },
+};
 
-export default function AdminLogin() {
-  const [pw, setPw] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    setErr("");
-    const r = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: pw }),
-    });
-    if (r.ok) {
-      window.location.href = "/admin";
-    } else {
-      setErr("비밀번호가 맞지 않습니다.");
-      setBusy(false);
-    }
-  };
-
-  return (
-    <main className={st.loginWrap}>
-      <form className={st.loginBox} onSubmit={submit}>
-        <h1 className={st.loginTitle}>한결 운영</h1>
-        <p className={st.loginNote}>참가자 개인정보가 있는 화면입니다.</p>
-        <input
-          type="password"
-          className={st.input}
-          placeholder="비밀번호"
-          value={pw}
-          autoFocus
-          onChange={(e) => setPw(e.target.value)}
-        />
-        <button type="submit" className={st.btnPrimary} disabled={busy || !pw}>
-          {busy ? "확인 중…" : "들어가기"}
-        </button>
-        {err && (
-          <p className={st.err} role="alert">
-            {err}
-          </p>
-        )}
-      </form>
-    </main>
-  );
+export default function AdminLoginPage() {
+  return <LoginForm />;
 }
