@@ -4,30 +4,37 @@ import { useEffect, useRef, useState } from "react";
 import { AGE_RANGE, EVENT } from "@/lib/event";
 import { track } from "@/lib/track";
 
-type Gender = "m" | "f" | null;
-type Status = "idle" | "submitting" | "done" | "error";
+type Gender = "M" | "F" | null;
+type Status = "idle" | "submitting" | "done" | "error" | "duplicate";
 
 /**
- * 폼 백엔드 서비스(Formspree / Web3Forms 등)가 발급해 준 주소.
- * `.env.local`에 `NEXT_PUBLIC_FORM_ENDPOINT=...` 로 넣는다.
+ * 사전 등록은 이제 **우리 서버로 간다**(`/api/apply` → Neon Postgres).
  *
- * ⚠️ 비어 있으면 **제출 버튼을 잠근다.** 예전에는 아무 데도 보내지 않으면서
- *    "신청이 접수되었습니다"를 띄웠다. 다시 만들지 말 것:
- *    **보내지 못하면 접수됐다고 말하지 않는다.**
+ * ⚠️ 예전에는 `NEXT_PUBLIC_FORM_ENDPOINT`(Formspree)로 브라우저가 직접 쐈다.
+ *    그래서 ① 신청이 메일로만 남고 어디에도 쌓이지 않았고 ② 주소가 브라우저
+ *    번들에 박혀 누구나 직접 쏠 수 있었다. 둘 다 이 변경으로 닫힌다.
+ *    Formspree는 서버 쪽 `APPLY_NOTIFY_ENDPOINT`로 자리를 옮겨 **알림 전용**이 됐다.
  *
- * Next는 이 값을 빌드 시점에 문자열로 박아 넣으므로 반드시 리터럴로 참조해야 한다
- * (`process.env[변수]` 같은 동적 접근은 undefined가 된다).
+ * ⚠️ 엔드포인트가 없으면 버튼을 잠그던 장치는 사라졌다(주소가 항상 같은 출처다).
+ *    **원칙은 그대로다 — 보내지 못하면 접수됐다고 말하지 않는다.**
+ *    완료 화면은 오직 서버가 201을 돌려줬을 때만 뜬다.
  */
-const ENDPOINT = process.env.NEXT_PUBLIC_FORM_ENDPOINT;
+const ENDPOINT = "/api/apply";
 
-/** 연락처: 숫자와 하이픈만, 숫자 9~11자리(02-123-4567 ~ 010-1234-5678) */
+/**
+ * 연락처: 휴대전화만 받는다.
+ *
+ * ⚠️ 예전에는 02 지역번호까지 받았다(숫자 9~11자리). 안내가 전부 **카카오 알림톡**
+ *    으로 나가고 못 받으면 문자로 대체되는 구조라, 휴대전화가 아니면 아무 안내도
+ *    닿지 않는다. 받아놓고 못 보내는 것이 안 받는 것보다 나쁘다.
+ */
 function validateTel(raw: string): string | null {
   const v = raw.trim();
   if (!v) return "연락처를 입력해주세요.";
   if (!/^[0-9-]+$/.test(v)) return "연락처는 숫자와 하이픈(-)만 입력해주세요.";
   const digits = v.replace(/\D/g, "");
-  if (digits.length < 9 || digits.length > 11) {
-    return "연락처 자릿수를 확인해주세요.";
+  if (!/^010\d{8}$/.test(digits)) {
+    return "안내가 문자로 나가서 휴대전화 번호가 필요합니다. 010으로 시작하는 11자리로 입력해주세요.";
   }
   return null;
 }
@@ -37,27 +44,55 @@ function validateName(raw: string): string | null {
   return null;
 }
 
-function validateAge(raw: string): string | null {
-  if (!raw.trim()) return "나이를 입력해주세요.";
-  const n = Number(raw);
-  if (!Number.isInteger(n)) return "나이를 숫자로 입력해주세요.";
-  if (n < EVENT.ageMin || n > EVENT.ageMax) {
-    return `${AGE_RANGE}만 신청하실 수 있습니다.`;
+/** 만 나이. 기준일은 오늘 — 서버가 저장할 때 birth로 다시 계산한다. */
+function ageOf(birth: string): number {
+  const b = new Date(birth + "T00:00:00Z");
+  const now = new Date();
+  let age = now.getUTCFullYear() - b.getUTCFullYear();
+  const m = now.getUTCMonth() - b.getUTCMonth();
+  if (m < 0 || (m === 0 && now.getUTCDate() < b.getUTCDate())) age -= 1;
+  return age;
+}
+
+/**
+ * 나이 대신 **생년월일**을 받는다.
+ *
+ * ⚠️ 예전에는 나이를 숫자로 받았다. 그러면 ① 서버가 값을 검증할 방법이 없고
+ *    (스스로 적은 숫자뿐이다) ② 생일이 지났는지에 따라 갈리는 경계(만 20세·32세)를
+ *    판정할 수 없다. 사전 질문 폼에서 어차피 생년월일을 받으므로, 여기서 받아
+ *    한 번만 묻는 편이 최소 수집에도 맞는다.
+ */
+function validateBirth(raw: string): string | null {
+  if (!raw.trim()) return "생년월일을 입력해주세요.";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return "생년월일을 확인해주세요.";
+  const age = ageOf(raw);
+  if (Number.isNaN(age) || age < 10 || age > 100) return "생년월일을 확인해주세요.";
+  if (age < EVENT.ageMin || age > EVENT.ageMax) {
+    return AGE_RANGE + "만 신청하실 수 있습니다.";
   }
   return null;
 }
 
 export default function ApplyForm() {
-  // 제어 컴포넌트로 두는 이유: 제출 뒤 "다시 신청하기"로 돌아왔을 때 입력값이
+  // 제어 컴포넌트로 두는 이유: 제출 뒤 "다시 등록하기"로 돌아왔을 때 입력값이
   // 남아 있어야 한다. 비제어 입력이면 폼이 다시 마운트되며 전부 날아간다.
   const [name, setName] = useState("");
   const [tel, setTel] = useState("");
-  const [age, setAge] = useState("");
+  const [birth, setBirth] = useState("");
   const [gender, setGender] = useState<Gender>(null);
   const [consent, setConsent] = useState(false);
   /**
+   * 다음 회차 안내 — **선택**이다.
+   *
+   * 🔴 이 칸은 참가 조건이 아니다. 체크하지 않아도 제출이 되고, 제출을 막는 코드를
+   *    붙이지 않는다. 그런데도 두는 이유는, 이번에 자리를 못 잡은 분이나 조건이
+   *    안 맞는 분의 연락처를 **계속 보관하려면 별도 동의가 있어야 하기 때문**이다
+   *    (개인정보보호법 §22 — 필수와 선택을 구분해 받는다).
+   *    동의가 없으면 그 연락처는 목적을 다한 시점에 지운다.
+   */
+  const [marketing, setMarketing] = useState(false);
+  /**
    * 스팸 봇용 미끼. 사람은 볼 수도 탭으로 닿을 수도 없는 칸이라 **항상 빈 문자열**이어야 한다.
-   * 값이 차 있으면 Formspree가 서버에서 조용히 버린다(`_gotcha`는 Formspree 규약 이름).
    *
    * ⚠️ 여기서 미리 걸러내지 않고 그대로 보내는 이유: 브라우저 자동완성이 실수로 이 칸을
    *    채우는 드문 경우에, 클라이언트에서 잘라내면 진짜 신청자가 소리 없이 사라진다.
@@ -108,15 +143,15 @@ export default function ApplyForm() {
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!ENDPOINT || submitting) return;
+    if (submitting) return;
 
     const found: Record<string, string> = {};
     const nameErr = validateName(name);
     const telErr = validateTel(tel);
-    const ageErr = validateAge(age);
+    const birthErr = validateBirth(birth);
     if (nameErr) found.name = nameErr;
     if (telErr) found.tel = telErr;
-    if (ageErr) found.age = ageErr;
+    if (birthErr) found.birth = birthErr;
     if (!gender) found.gender = "성별을 선택해주세요.";
     if (!consent) found.consent = "개인정보 수집·이용에 동의해주세요.";
 
@@ -132,22 +167,26 @@ export default function ApplyForm() {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
-          이름: name.trim(),
-          연락처: tel.trim(),
-          성별: gender === "m" ? "남" : "여",
-          나이: age.trim(),
-          개인정보동의: "동의함",
-          행사: "1차 모임",
-          // 밑줄로 시작하는 둘은 Formspree 예약어다. 화면에 보이는 값이 아니다.
-          _subject: `한결 1차 모임 신청 — ${name.trim()}`,
+          name: name.trim(),
+          phone: tel.replace(/\D/g, ""),
+          gender,
+          birth,
+          privacy_agreed: true,
+          marketing_agreed: marketing,
           _gotcha: gotcha,
         }),
       });
+      // 같은 번호로 두 번 — 실패가 아니라 "이미 접수돼 있다"는 사실이다.
+      // 일반 오류와 같은 문구를 띄우면 될 때까지 다시 누르게 된다.
+      if (res.status === 409) {
+        setStatus("duplicate");
+        return;
+      }
       if (!res.ok) throw new Error(String(res.status));
       /* 성공했을 때만 센다 — 전송 실패는 신청이 아니다.
-         성별만 싣는 이유: 게이트 1의 판정 기준이 "여성 25명"이라 성비를 매일 봐야 한다.
-         이름·연락처·나이는 절대 싣지 않는다. */
-      track("apply_submit", { gender: gender === "m" ? "남" : "여" });
+         성별만 싣는 이유: 남10·여10이라 성비를 매일 봐야 한다.
+         이름·연락처·생년월일은 절대 싣지 않는다. */
+      track("apply_submit", { gender: gender === "M" ? "남" : "여" });
       setStatus("done");
     } catch {
       setStatus("error");
@@ -157,10 +196,10 @@ export default function ApplyForm() {
   if (status === "done") {
     return (
       <div className="confirm">
-        <div className="confirm__title">신청이 접수되었습니다</div>
+        <div className="confirm__title">사전 등록이 접수되었습니다</div>
         <p>
-          확인 후 남겨주신 연락처로 개별 연락드립니다. 참가비 입금 안내와 진행
-          과정을 함께 보내드립니다.
+          지금은 <b>사전 등록</b>입니다. 참가비를 받지 않습니다. 9월 28일에
+          등록해주신 분들께 질문지와 참가 안내를 한 번에 보내드립니다.
         </p>
         {/* 연락처를 잘못 적었을 때 돌아갈 길. 입력값은 그대로 남아 있다. */}
         <button
@@ -168,7 +207,7 @@ export default function ApplyForm() {
           className="confirm__back"
           onClick={() => setStatus("idle")}
         >
-          잘못 입력하셨나요? 다시 신청하기
+          잘못 입력하셨나요? 다시 등록하기
         </button>
       </div>
     );
@@ -202,7 +241,7 @@ export default function ApplyForm() {
 
       <div className="field">
         <label className="sr-only" htmlFor="tel">
-          연락처
+          휴대전화 번호
         </label>
         <input
           id="tel"
@@ -211,7 +250,7 @@ export default function ApplyForm() {
           inputMode="tel"
           autoComplete="tel"
           className="input"
-          placeholder="연락처"
+          placeholder="휴대전화 번호"
           maxLength={20}
           value={tel}
           onChange={(e) => setTel(e.target.value)}
@@ -236,9 +275,9 @@ export default function ApplyForm() {
             id="gender-m"
             name="gender"
             className="gender__input"
-            checked={gender === "m"}
+            checked={gender === "M"}
             onChange={() => {
-              setGender("m");
+              setGender("M");
               checkField("gender", null);
             }}
           />
@@ -250,9 +289,9 @@ export default function ApplyForm() {
             id="gender-f"
             name="gender"
             className="gender__input"
-            checked={gender === "f"}
+            checked={gender === "F"}
             onChange={() => {
-              setGender("f");
+              setGender("F");
               checkField("gender", null);
             }}
           />
@@ -267,35 +306,33 @@ export default function ApplyForm() {
         )}
       </div>
 
+      {/* 날짜 입력은 placeholder가 보이지 않는다 — 라벨을 눈에 보이게 둔다.
+          sr-only로 감추면 무슨 칸인지 알 수 없는 빈 상자가 된다. */}
       <div className="field">
-        <label className="sr-only" htmlFor="age">
-          나이
+        <label className="field__label" htmlFor="birth">
+          생년월일
         </label>
         <input
-          id="age"
-          name="age"
-          type="number"
-          inputMode="numeric"
+          id="birth"
+          name="birth"
+          type="date"
           className="input"
-          placeholder="나이"
-          min={EVENT.ageMin}
-          max={EVENT.ageMax}
-          value={age}
-          onChange={(e) => setAge(e.target.value)}
-          onBlur={() => checkField("age", validateAge(age))}
-          aria-invalid={Boolean(errors.age)}
-          aria-describedby={errors.age ? "age-error" : undefined}
+          value={birth}
+          onChange={(e) => setBirth(e.target.value)}
+          onBlur={() => checkField("birth", validateBirth(birth))}
+          aria-invalid={Boolean(errors.birth)}
+          aria-describedby={errors.birth ? "birth-error" : undefined}
         />
-        {errors.age && (
-          <p id="age-error" className="field__error" role="alert">
-            {errors.age}
+        {errors.birth && (
+          <p id="birth-error" className="field__error" role="alert">
+            {errors.birth}
           </p>
         )}
       </div>
 
-      {/* 이름·연락처·나이를 실제로 수집하므로 동의를 받는다.
-          받는 것은 **필수 최소 수집에 대한 동의 하나뿐**이다 — 마케팅 수신 같은
-          선택 동의 항목을 만들어 참가 조건처럼 끼워 넣지 않는다. */}
+      {/* 이름·연락처·생년월일을 실제로 수집하므로 동의를 받는다.
+          🔴 **참가 조건으로 걸리는 동의는 이 하나뿐이다.** 아래 선택 동의는
+             체크하지 않아도 제출된다 — 그 성질을 바꾸지 말 것. */}
       <div className="field">
         <div className="consent">
           <input
@@ -321,13 +358,29 @@ export default function ApplyForm() {
         )}
       </div>
 
+      <div className="field">
+        <div className="consent">
+          <input
+            type="checkbox"
+            id="marketing"
+            className="consent__input"
+            checked={marketing}
+            onChange={(e) => setMarketing(e.target.checked)}
+          />
+          <label className="consent__label" htmlFor="marketing">
+            이번 회차에 함께하지 못하더라도 다음 회차 안내를 받겠습니다{" "}
+            <span className="consent__opt">(선택)</span>
+          </label>
+        </div>
+      </div>
+
       {/* 🔴 「보유 기간 — 행사 종료 후 30일 이내 파기」 한 줄로 되돌리지 말 것. 셋이 걸린다 —
              ① 참가 자격(연령·미혼) 확인이 **이용 목적에 없으면** 미혼 조건을 거는 근거가 없다
              ② 참가 자격 분쟁은 30일 뒤에 온다. 그때 아무 기록이 없다
              ③ 참가비를 받으므로 계약·결제 기록은 5년 보존 의무다(전자상거래법 제6조).
                 30일에 지우겠다고 고지하면 **고지 자체가 위반**이 된다.
              ⚠️ 여기 적은 기간은 실제로 파기 배치가 돌아야 성립한다 — 고지만 하고
-                안 지우면 그 고지가 새 문제가 된다. 폼 9와 DB를 공유하면 배치도 하나로 묶는다.
+                안 지우면 그 고지가 새 문제가 된다. 폼 9와 DB를 공유하므로 배치도 하나로 묶는다.
              ⚠️ 변호사 검증 전 초안이다(2026-08-24 법적 점검 §4-1). */}
       <details className="rules">
         <summary>
@@ -335,16 +388,16 @@ export default function ApplyForm() {
         </summary>
         <div data-answer>
           <p>
-            <b>수집 항목</b> — 이름, 연락처, 성별, 나이
+            <b>수집 항목</b> — 이름, 휴대전화 번호, 성별, 생년월일
             <br />
-            <b>이용 목적</b> — 참가 신청 확인, 참가 자격(연령·미혼) 확인, 참가비
+            <b>이용 목적</b> — 사전 등록 접수, 참가 자격(연령·미혼) 확인, 참가비
             입금 안내, 행사 진행 안내
             <br />
             <b>보유 기간</b> — 항목마다 다릅니다.
           </p>
           <ul>
             <li>
-              참가 신청 기록(이름, 연락처, 성별, 나이)과 동의 이력 —{" "}
+              사전 등록 기록(이름, 휴대전화 번호, 성별, 생년월일)과 동의 이력 —{" "}
               <b>3년</b>. 참가 자격을 둘러싼 분쟁에 대비하기 위한 기간입니다.
             </li>
             <li>그 밖의 정보 — 행사 종료 후 30일 이내 파기</li>
@@ -358,11 +411,15 @@ export default function ApplyForm() {
             기간이 지나거나 목적을 다한 정보는 지체 없이 파기하며, 전자 파일은
             복구할 수 없는 방법으로 삭제합니다.
           </p>
-          <p>동의를 거부하실 수 있으며, 이 경우 신청 접수가 어렵습니다.</p>
+          <p>동의를 거부하실 수 있으며, 이 경우 사전 등록 접수가 어렵습니다.</p>
           <p>
-            행사 2주 전에 사전 질문 폼을 보내드리며, 그때 생년월일·혼인
-            여부·직업을 추가로 여쭙습니다. 그 화면에서 다시 안내드리고 동의를
-            받습니다.
+            <b>다음 회차 안내(선택)</b>에 동의하시면 이름과 휴대전화 번호를 동의를
+            철회하실 때까지 보관하고, 다음 회차가 열릴 때 안내드립니다. 동의하지
+            않으셔도 이번 회차 신청에는 아무 영향이 없습니다.
+          </p>
+          <p>
+            사전 질문 폼을 보내드릴 때 혼인 여부·직업을 추가로 여쭙습니다. 그
+            화면에서 다시 안내드리고 동의를 받습니다.
           </p>
           <p>
             행사 당일에는 실명·나이·직업을 서로 묻지 않으며, 신분증으로 나이를
@@ -385,17 +442,18 @@ export default function ApplyForm() {
         onChange={(e) => setGotcha(e.target.value)}
       />
 
-      <button
-        type="submit"
-        className="pill form__submit"
-        disabled={!ENDPOINT || submitting}
-      >
-        {submitting ? "보내는 중…" : "신청하기"}
+      <button type="submit" className="pill form__submit" disabled={submitting}>
+        {submitting ? "보내는 중…" : "사전 등록하기"}
       </button>
 
-      {!ENDPOINT && (
-        <p className="form__notice" role="status">
-          신청 접수를 준비하고 있습니다. 곧 열립니다.
+      {/* 🔴 이 단계에서 돈 얘기를 하지 않는다. 「사전 등록」이지 「신청 확정」이 아니다. */}
+      <p className="form__notice" role="status">
+        지금은 사전 등록입니다. 참가비를 받지 않습니다.
+      </p>
+
+      {status === "duplicate" && (
+        <p className="form__error" role="alert">
+          이미 등록된 번호입니다. 접수돼 있으니 따로 다시 하지 않으셔도 됩니다.
         </p>
       )}
 
