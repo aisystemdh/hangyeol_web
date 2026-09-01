@@ -93,9 +93,9 @@ export const metadata: Metadata = {
  * 구조화 데이터. 상위 1,000만 사이트 중 스키마를 넣은 곳이 17%뿐이라
  * 검색·AI 답변에서 인용될 확률을 올리는 값싼 수단이다.
  *
- * ⚠️ `Event` 스키마는 아직 넣지 않는다 — 필수 속성 `startDate`가 ISO 8601 날짜여야 하는데
- *    현재 `EVENT.date`는 "10월 중"이라 채울 수 없다. 일자가 확정되면 `/events/1`에
- *    Event를 추가할 것. 없는 날짜를 지어내지 않는다.
+ * ⚠️ 여기에는 `Organization`만 둔다. `Event`는 행사 페이지에만 붙는 것이 맞아
+ *    `/events/1`에 따로 넣었다(2026-09-01, 행사일 확정과 함께). 루트 레이아웃에 두면
+ *    모든 페이지가 같은 Event를 주장하게 된다.
  */
 const ORGANIZATION_JSONLD = {
   "@context": "https://schema.org",
