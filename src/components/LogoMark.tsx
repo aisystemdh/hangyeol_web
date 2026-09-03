@@ -1,6 +1,16 @@
 /**
  * 로고 마크 — 게이트(§1-3)의 첫 화면이 재생하고 멈춘다.
  *
+ * ── 인트로 타임라인 (소유자 모션그래픽 이식, 2026-09-03 · #8) ────────
+ *  0.00–0.33  점 두 개가 한가운데에서 부풀며 제자리로            dotsIn
+ *  0.00–0.50  획 두 짝이 작게 머물다 터지듯 제 크기로             hooksIn
+ *  0.50–1.50  획이 숨 쉬듯 두 번 커졌다 작아지고 멈춤            hookPulse
+ * 배율·시각은 `design/hangyeol-intro-motion.mp4`의 37프레임을 한 장씩 재서
+ * 옮긴 값이다(키프레임과 근거는 globals.css의 같은 이름 절).
+ * 재실측이 필요하면: 프레임을 PNG로 전부 뽑고(ffmpeg -vsync 0) 프레임마다
+ * 잉크 화소의 경계 상자를 잰 뒤, 마지막 프레임의 폭을 1.0으로 놓고 나눈다.
+ * 🔴 영상 파일 자체를 <video>로 붙이지 말 것 — 이유 셋은 globals.css에 적혀 있다.
+ *
  * ── 이 파일의 좌표는 **실물 로고에서 기계적으로 뽑은 것**이다 ──────
  * 🔴 손으로 잰 근사치가 아니다. `public/hangyeol-mark-v2.png`(297×266,
  *    헤더가 쓰는 바로 그 파일)의 잉크 화소를 연결요소 4개로 나눈 뒤,
@@ -107,20 +117,28 @@ const DOTS = [
   { cx: 227.0, cy: 26.5, r: 26.2 },
 ];
 
-/** 획 한 짝을 "말하듯" 여닫는다. dir이 회전 방향을 정한다. */
-function Hook({ dir, d }: { dir: "L" | "R"; d: string }) {
+/**
+ * 획 한 짝. 들어온 뒤 제자리에서 숨 쉬듯 커졌다 작아진다(globals의 hookPulse).
+ *
+ * 🔴 기준점이 **획 자기 상자**(fill-box)이고, 그 가로 위치가 이 동작의 전부다.
+ *    영상에서 프레임마다 두 획을 따로 재 보면, 획이 커질 때 바깥 끝은 나가고
+ *    안쪽 끝은 **들어온다** — 즉 마크 중심이 아니라 획 안쪽에 기준점이 있다.
+ *    그 지점을 역산하면 바깥 끝에서 폭의 61.2%다(왼쪽 획 4개 프레임에서
+ *    x=242.4 · 236.6 · 241.7 · 239.0으로 일치, 720px 좌표계). 오른쪽은 거울상이라
+ *    자기 상자 기준 38.8%가 같은 자리다.
+ * ⚠️ 이 값을 50%로 "가운데니까"라고 바꾸지 말 것. 안쪽 끝이 두 배로 움직여
+ *    두 획이 겹치고, 겹치는 순간 하트가 된다.
+ */
+function Hook({ d, originX }: { d: string; originX: string }) {
   return (
-    <g
+    <path
+      d={d}
       style={{
-        transformBox: "view-box",
-        /* 두 획이 아래쪽에서 맞물리는 지점이 경첩이다. 획 무게중심의 y가 167,
-           viewBox 높이가 266이라 62%가 그 자리다. */
-        transformOrigin: "50% 62%",
-        animation: `speak${dir} 1.35s cubic-bezier(.4,0,.3,1) both`,
+        transformBox: "fill-box",
+        transformOrigin: `${originX} 50%`,
+        animation: "hookPulse 1s 0.5s ease-in-out both",
       }}
-    >
-      <path d={d} />
-    </g>
+    />
   );
 }
 
@@ -132,24 +150,39 @@ export default function LogoMark({ className }: { className?: string }) {
       aria-hidden="true"
       focusable="false"
       style={{
-        /* 획이 speak 변형으로 viewBox 밖까지 흔들린다 */
+        /* 획이 커지는 순간 viewBox 아래로 약 10단위(높이의 4%) 넘어간다 */
         overflow: "visible",
         color: "var(--ink)",
       }}
     >
       <g fill="currentColor">
-        {/* 점은 움직이지도 사라지지도 않는다 — 로고의 일부이지 효과가 아니다. */}
-        {DOTS.map((p) => (
-          <circle key={p.cx} cx={p.cx} cy={p.cy} r={p.r} />
-        ))}
-        {/* 위에서 아래로 닦아내며 나타난다. 예전 stroke-dashoffset 그리기를
-            대신하는 장치다 — 채운 윤곽에는 dashoffset을 쓸 수 없다.
-            ⚠️ clip-path를 여기 style에 기본값으로 두지 말 것. 동작 줄이기에서
-               globals가 `animation: none`을 걸면 키프레임만 사라지므로,
-               기본값이 없어야 로고가 통째로 보인다. 기본값을 두면 **잘린 채 남는다.** */}
-        <g style={{ animation: "markReveal 0.75s cubic-bezier(.4,0,.3,1) both" }}>
-          <Hook dir="L" d={HOOK_L} />
-          <Hook dir="R" d={HOOK_R} />
+        {/* 점 두 개는 마크 한가운데에서 부풀며 제자리로 올라간다 — 간격과 크기가
+            함께 커지므로 묶음 하나를 마크 중심(viewBox 중심) 기준으로 키운다.
+            ⚠️ 2026-08까지 점은 "움직이지도 사라지지도 않는" 요소였다. 소유자의
+               모션그래픽이 점부터 띄우고 시작해서 그 결정이 바뀌었다(#8). */}
+        <g
+          style={{
+            transformBox: "view-box",
+            transformOrigin: "50% 50%",
+            animation: "dotsIn 0.33s linear both",
+          }}
+        >
+          {DOTS.map((p) => (
+            <circle key={p.cx} cx={p.cx} cy={p.cy} r={p.r} />
+          ))}
+        </g>
+        {/* 획 두 짝은 같은 중심에서 작게 머물다 터지듯 제 크기가 된다.
+            ⚠️ 이 바깥 <g>(등장)와 안쪽 <path>(숨쉬기)는 기준점이 서로 다르다.
+               한 요소에 합치면 둘 중 하나는 반드시 틀린 기준점을 쓰게 된다. */}
+        <g
+          style={{
+            transformBox: "view-box",
+            transformOrigin: "50% 50%",
+            animation: "hooksIn 0.5s linear both",
+          }}
+        >
+          <Hook d={HOOK_L} originX="61.2%" />
+          <Hook d={HOOK_R} originX="38.8%" />
         </g>
       </g>
     </svg>
