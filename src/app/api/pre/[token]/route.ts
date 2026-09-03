@@ -52,6 +52,12 @@ const STAGE1_COPY = {
 const err = (error: string, status: number, extra: Record<string, unknown> = {}) =>
   NextResponse.json({ ok: false, error, ...extra }, { status });
 
+// 🔴 #9 핫픽스 — 운영자 전이표(transition/route.ts)의 HOLDS_SLOT/ALLOWED와 뜻을 맞춘다.
+//    이미 자리를 쥔 상태(awaiting_payment/confirmed)에서 제출하면 +1을 또 하지 않고,
+//    더는 후보가 아닌 상태(rejected/expired/refunded)면 pre_token이 살아 있어도 거절한다.
+const HOLDS_SLOT_STATUS = new Set(["awaiting_payment", "confirmed"]);
+const NOT_ELIGIBLE_STATUS = new Set(["rejected", "expired", "refunded"]);
+
 async function findByToken(token: string): Promise<Applicant | null> {
   if (!/^[A-Za-z0-9_-]{12,64}$/.test(token)) return null;
   const rows = await q<Applicant>(
@@ -119,6 +125,7 @@ export async function POST(req: Request, ctx: Ctx) {
   try {
     const a = await findByToken(token);
     if (!a) return err("unknown_token", 404);
+    if (NOT_ELIGIBLE_STATUS.has(a.status)) return err("not_eligible", 403);
 
     // 🔴 두 번째 제출은 **거절**한다. upsert로 바꾸지 말 것 —
     //    덮어쓰면 어느 게 진짜인지 영원히 알 수 없고 되돌릴 방법이 없다.
@@ -180,18 +187,25 @@ export async function POST(req: Request, ctx: Ctx) {
     const now = new Date();
     const dueAt = dueAtFrom(now);
 
+    // 🔴 #9 — 운영자가 이미 approved→awaiting_payment로 자리를 잡아준 사람이면
+    //    (또는 admin이 손으로 confirmed까지 만들어준 사람이면) 여기서 또 세지 않는다.
+    //    안 그러면 한 사람이 두 칸을 쥐어 정원이 실질 18명으로 준다.
+    const alreadyHoldsSlot = HOLDS_SLOT_STATUS.has(a.status);
+
     try {
       await tx(async (c) => {
-        // 🔴 이 한 줄이 선착순의 전부다. `taken < capacity` 조건이 붙은 UPDATE는
-        //    행 잠금을 스스로 잡으므로, 세었다가 나중에 넣는 방식과 달리
-        //    **21번째 참가자가 생길 수 없다.** 남·여를 따로 센다.
-        const slot = await c.query(
-          `update gender_slot set taken = taken + 1
-            where gender = $1 and taken < capacity
-            returning taken`,
-          [gender],
-        );
-        if (slot.rowCount === 0) throw new SlotFull();
+        if (!alreadyHoldsSlot) {
+          // 🔴 이 한 줄이 선착순의 전부다. `taken < capacity` 조건이 붙은 UPDATE는
+          //    행 잠금을 스스로 잡으므로, 세었다가 나중에 넣는 방식과 달리
+          //    **21번째 참가자가 생길 수 없다.** 남·여를 따로 센다.
+          const slot = await c.query(
+            `update gender_slot set taken = taken + 1
+              where gender = $1 and taken < capacity
+              returning taken`,
+            [gender],
+          );
+          if (slot.rowCount === 0) throw new SlotFull();
+        }
 
         await c.query(
           `update applicant
