@@ -178,13 +178,13 @@ refunded         → (없음)
 | 전이 | 어디서 | 조건 |
 |---|---|---|
 | (없음) → `pre_registered` | `/api/apply` INSERT 기본값 (`001:27`, `apply:87-99`) | phone UNIQUE 통과 |
-| (현재값 무관) → `awaiting_payment` | `/api/pre/[token]` POST (`pre:196-207`) | `pre_token` 일치 · `submitted_at` null · 마감 전 · `gender_slot` 확보 성공. **현재 status를 검사하지 않는다** |
+| (현재값 무관, `rejected`·`expired`·`refunded` 제외) → `awaiting_payment` | `/api/pre/[token]` POST (`pre:196-207`) | `pre_token` 일치 · `submitted_at` null · 마감 전 · 이미 슬롯을 쥔 상태(`awaiting_payment`·`confirmed`)가 아니면 `gender_slot` 확보 성공까지 필요(#9 핫픽스, 2026-09-03) |
 | (현재값, `confirmed` 제외) → `waitlist` | `/api/pre/[token]` POST 슬롯 실패 (`pre:219-222`) | 트랜잭션 밖에서 별도 UPDATE |
 | `awaiting_payment` → `confirmed` | `/api/admin/payments` (`payments:49-59`) | `from === 'awaiting_payment'`만 허용 |
 
 자동 만료(`due_at` 경과 → `expired`)는 **없다**. 현황판이 `지남`으로 표시할 뿐(`Board.tsx:190-191`)이고 운영자가 `기한초과` 버튼을 눌러야 슬롯이 풀린다. 개인정보 파기 배치도 없다(`CLAUDE.md:178-180`이 인정).
 
-⚠️ 슬롯 이중 확보 경로: 운영자가 `approved→awaiting_payment`를 누르면 슬롯 +1(`transition:68-75`). 그 뒤 같은 사람이 1단계 링크를 제출하면 `/api/pre` POST가 다시 +1(`pre:188-194`)한다 — 한 사람이 두 칸을 쥔다. 반대로 슬롯 실패 시 `waitlist`로 내릴 때(`pre:219-222`) 기존 보유 슬롯을 반납하지 않는다. `rejected`·`expired` 상태인 사람도 `pre_token`만 있으면 1단계를 제출해 `awaiting_payment`가 된다.
+✅ (2026-09-03, #9 핫픽스로 해결) 슬롯 이중 확보 경로: 운영자가 `approved→awaiting_payment`를 누르면 슬롯 +1(`transition:68-75`). 그 뒤 같은 사람이 1단계 링크를 제출해도 `/api/pre` POST는 이제 `HOLDS_SLOT_STATUS`(`awaiting_payment`·`confirmed`)에 있으면 +1을 생략한다(`pre:190-208`) — 한 사람이 두 칸을 쥐는 경로도, 그 상태에서 슬롯 실패로 오인해 기존 보유분을 놓치는 경로도 함께 없어졌다. `rejected`·`expired`·`refunded` 상태는 `NOT_ELIGIBLE_STATUS`로 토큰이 살아 있어도 403 `not_eligible`로 거절한다(`pre:127-128`).
 
 ---
 
