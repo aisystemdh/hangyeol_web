@@ -37,54 +37,18 @@ Postgres(Neon, `pg`). shadcn은 쓰지 않는다. 경로 alias `@/*` → `src/*`
 
 ## 라우팅
 
-### 공개 (NAV 노출)
-
-| 경로 | 파일 | 성격 |
-|---|---|---|
-| `/` | `page.tsx` + `HomeGate` → `HomeStage`(`HomeHero`·`HomeDialog`) + `FunnelNav` | 게이트(첫 화면) → 온보딩 질문 3개 → 허브 → 스크롤로 1차 모임 정보·CTA |
-| `/mission` | `src/app/mission/page.tsx` | 목표·비전 |
-| `/why` | `src/app/why/page.tsx` | 왜 가치관인가 |
-| `/principles` | `src/app/principles/page.tsx` | 원칙 · 그라운드룰 |
+경로·파일·인증·robots·API 목록 표는 `docs/architecture.md` §2(API 목록)·§3(화면 목록) 참고.
 
 NAV 라벨과 순서는 `src/lib/site.ts`의 `NAV` 한 곳에서 온다.
 경로는 `/mission`·`/principles` 그대로 두고 라벨만 다르다 — 이미 공유된 링크를 깨지 않기 위해서다.
 
-### 신청 흐름 (NAV에 없음)
-
-| 경로 | 성격 |
-|---|---|
-| `/events/1` | 1차 모임 랜딩. CTA로만 진입. `Apply`/`ApplyForm`이 `/api/apply`로 사전등록 |
-| `/pre/[token]` | 폼9 **1단계 — 자리 확보**. 링크의 토큰이 곧 신원이라 로그인이 없다 |
-| `/q/[token]` | 폼9 **2단계 — 사전 10문항**. 입금이 확인된 사람에게만 열린다 |
-
-🔴 토큰 경로 둘 다 `robots: { index: false }`다. 1단계는 남의 토큰이 색인될 수 있어서,
-2단계는 **문항 자체가 영업비밀**이라서다. 지우지 말 것.
-
-### 운영 (인증 필요)
-
-| 경로 | 성격 |
-|---|---|
-| `/admin/login` | 공유 비밀번호 로그인. noindex |
-| `/admin` | 스태프 현황판 — 성비 카운터 · 상태 전이 · 입금 기록. 첫 데이터는 서버에서 그려 넘긴다 |
+🔴 토큰 경로(`/pre/[token]`, `/q/[token]`) 둘 다 `robots: { index: false }`다. 1단계는 남의 토큰이
+색인될 수 있어서, 2단계는 **문항 자체가 영업비밀**이라서다. 지우지 말 것.
 
 🔴 `/admin`은 참가자 20명의 이름·연락처·생년월일이 전부 보이는 화면이다.
 **화면에서 한 번, API 하나하나에서 또 한 번** 막는다 — 둘 중 하나만 있으면 새기 쉽다.
 운영자가 셋뿐이라 계정을 따로 두지 않고 공유 비밀번호 + HMAC 서명 쿠키(12시간)로 간다.
 누가 눌렀는지는 남지 않으므로 상태를 바꿀 때 `actor`를 화면에서 고르게 해 기록에 이름을 남긴다.
-
-### API
-
-```
-POST     /api/apply                            사전 등록 (공개)
-GET      /api/recruit                          모집 현황 (공개)
-GET/POST /api/pre/[token]                      폼9 1단계 — 문항은 토큰 확인 후 서버가 내려준다
-GET/POST /api/q/[token]                        폼9 2단계
-POST     /api/admin/login                      운영자 로그인
-GET      /api/admin/applicants                 신청자 목록
-POST     /api/admin/applicants/[id]/transition 상태 전이
-POST     /api/admin/applicants/[id]/token      토큰 발급
-POST     /api/admin/payments                   입금 기록
-```
 
 🔴 **화면 검증을 믿지 않는다.** 주소만 알면 API를 직접 때릴 수 있다.
 서버는 클라이언트가 보낸 나이를 믿지 않고 항상 `birth`로 다시 계산한다(`src/lib/age.ts`).
@@ -183,6 +147,8 @@ POST     /api/admin/payments                   입금 기록
 
 ## DB
 
+테이블·컬럼·상태 머신 표는 `docs/architecture.md` §1(데이터 모델) 참고.
+
 🔴 **개인정보 보유기간 3단을 화면에 고지했으므로 파기가 실제로 돌아야 한다.**
 고지만 하고 안 지우면 그 고지 자체가 새 위반이 된다. 파기 배치는 아직 없다 — 만들 때 폼9와 한 번에 묶는다.
 
@@ -196,14 +162,11 @@ npx vercel env pull .env.local   # DATABASE_URL 등을 로컬로 받아온다
 
 ## 환경변수
 
-| 변수 | 없으면 |
-|---|---|
-| `DATABASE_URL` | 즉시 throw — 저장되지 않는데 접수됐다고 말하는 것이 이 코드베이스가 가장 경계하는 사고다 |
-| `ADMIN_PASSWORD` | `/admin` throw |
-| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000`으로 대체 (OG·canonical·sitemap이 전부 여기서 나온다) |
-| `APPLY_NOTIFY_ENDPOINT` | 운영자 메일 알림만 조용히 안 감 (신청은 정상 저장) |
-| `HANGYEOL_BIZ_*` | 화면에 빨간 경고 (전자상거래법 표시 의무) |
-| `NEXT_PUBLIC_GA4_ID` · `NEXT_PUBLIC_META_PIXEL_ID` | 해당 수집처만 꺼짐 |
+없을 때 무엇이 대체되는지 전 목록은 `docs/architecture.md` §5.8(환경변수 대조) 참고 —
+코드가 읽는 이름·기본값·`.env.local`과의 어긋남까지 대조돼 있다. 가장 경계할 것 셋만 여기 남긴다:
+`DATABASE_URL` 없으면 즉시 throw(저장되지 않는데 접수됐다고 말하는 사고가 가장 나쁘다),
+`ADMIN_PASSWORD` 없으면 `/admin` throw, `NEXT_PUBLIC_SITE_URL` 없으면 `localhost:3000`으로
+대체돼 토큰 링크·OG·sitemap이 전부 로컬 주소가 된다.
 
 계측은 `src/lib/track.ts` 한 곳에서 정의하고 GA4 · Meta 픽셀 · Vercel Analytics로 보낸다.
 ⚠️ Vercel 커스텀 이벤트는 Pro 요금제부터라 Hobby에서 402로 막힌다(2026-08-21 실측).
