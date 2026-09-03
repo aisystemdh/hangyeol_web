@@ -43,7 +43,6 @@ next-env.d.ts
 # 🔒 대외비 — 절대 커밋 금지 (협업자에게도 노출되면 안 됨)
 # 한 번 푸시되면 히스토리에서 지우기 매우 어렵다. 여기 등록된 상태를 유지할 것.
 01_brand_philosophy.md
-/.claude/
 
-.vercel
-.env*
+# Claude Code — 개인 설정만 제외. settings.json·skills·hooks는 팀과 공유한다
+.claude/settings.local.json
