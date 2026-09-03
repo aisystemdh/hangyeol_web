@@ -207,3 +207,20 @@ dev 서버가 떠 있는 동안 `npm run build`를 돌리면 `.next`가 충돌�
 
 `01_brand_philosophy.md`는 `.gitignore`에 등록돼 있고 추적되지 않는다. `.claude/`는 `settings.local.json`만 제외하고 팀과 공유한다.
 한 번 푸시되면 히스토리에서 지우기 매우 어렵다 — **`.gitignore`의 대외비 항목을 절대 건드리지 말 것.**
+
+## Agent skills
+
+Matt Pocock 엔지니어링 스킬(`/triage` · `/to-tickets` · `/to-spec` · `/wayfinder` 등)이
+저장소별 설정을 여기서 읽는다. 값은 `docs/agents/`에 있고 이 절은 요약일 뿐이다.
+
+### Issue tracker
+
+이슈는 GitHub Issues(`aisystemdh/hangyeol_web`)에 있고 `gh` CLI로 다룬다. `docs/agents/issue-tracker.md` 참고.
+
+### Triage labels
+
+triage 5역할에 한국어 라벨을 쓴다 — `wontfix`만 저장소에 이미 있는 영어 라벨을 재사용한다. `docs/agents/triage-labels.md` 참고.
+
+### Domain docs
+
+단일 컨텍스트. 결정 문서는 템플릿 기본값 `docs/adr/`가 아니라 기존 `docs/decisions/`다. `docs/agents/domain.md` 참고.
