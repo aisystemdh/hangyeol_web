@@ -518,58 +518,75 @@ a:focus-visible {
   from { opacity: 0; transform: translateY(24px); }
   to { opacity: 1; transform: none; }
 }
-/* 로고의 두 획이 "말하듯" 여닫다가 **로고 그대로 다물린다**.
-   ⚠️ 100%가 `transform: none`인 것이 핵심이다. 예전에는 끝도 벌어진 상태였는데,
-      그때는 로고가 곧바로 줌으로 사라져서(logoZoom) 정지 프레임을 볼 일이 없었다.
-      게이트에서는 **로고가 화면에 남는다** — 벌어진 채로 멈추면 헤더·푸터의
-      실제 로고와 간격이 눈에 띄게 다르다(폭/높이 비 1.28 vs 실물 1.12).
-      무변형 상태가 곧 로고 원형이다(획 형태는 LogoMark.tsx의 STROKE가 정한다).
-   ⚠️ 이 진폭은 하트 방지 장치가 아니다 — 진폭을 0으로 줄여도 하트가 되지 않아야 정상이다. */
-/* 말하듯 여닫는 두 획.
-   🔴 100%는 **반드시 transform: none**이다. 게이트에서는 로고가 화면에 남으므로
-      벌어진 채 멈추면 헤더 로고와 간격이 달라진다.
-   ⚠️ translate 값은 **viewBox 사용자 단위**다. LogoMark의 viewBox가 실물 로고와
-      같은 `0 0 297 266`이 되면서, 폭 84.4 시절 값에 297/84.4 = 3.519를 곱했다.
-      화면에서 보이는 흔들림 폭(상자 너비의 약 13%)은 그대로다.
-      **viewBox를 또 바꾸면 여기도 같은 비율로 다시 곱할 것.**
-   ⚠️ 80% 뒤의 세 칸이 **잦아들며 다무는 구간**이다(2026-08-25 신설). 예전에는
-      78%에서 곧장 0으로 갔고, 그래서 "갑자기 멈춘다"로 읽혔다. 지우지 말 것. */
-@keyframes speakL {
-  0% { transform: translateX(-38.7px) rotate(-15deg); }
-  16% { transform: translateX(-14.1px) rotate(-5deg); }
-  30% { transform: translateX(-38.7px) rotate(-15deg); }
-  44% { transform: translateX(-19.4px) rotate(-7deg); }
-  58% { transform: translateX(-36.9px) rotate(-14deg); }
-  70% { transform: translateX(-22.9px) rotate(-8.5deg); }
-  80% { transform: translateX(-14.1px) rotate(-5deg); }
-  88% { transform: translateX(-7px) rotate(-2.4deg); }
-  94% { transform: translateX(-2.5px) rotate(-0.9deg); }
+/* ── 게이트 로고 인트로 (2026-09-03) ──────────────────────────────
+   소유자가 만든 모션그래픽 `design/hangyeol-intro-motion.mp4`(720×720 · 24fps ·
+   37프레임 · 1.54초)를 **벡터로 옮긴 것**이다. 영상을 그대로 넣지 않은 이유:
+     ① 영상 배경이 순수 검정이라 종이색(#F5F1E8) 위에 검은 사각형이 된다.
+        투명 배경(webm 알파)은 사파리가 지원하지 않아 아이폰에서 그대로 검게 남는다.
+     ② 영상 속 로고는 실물보다 11% 넓고(폭/높이 1.24 vs 실물 1.12) 마지막
+        프레임도 여전히 흔들리는 중이다. 게이트는 로고가 화면에 남는 자리라
+        헤더 로고와 나란히 놓이면 모양 차이가 그대로 보인다.
+     ③ 720px 고정이라 큰 화면에서 뿌옇다. 벡터는 어떤 크기에서도 선명하다.
+   아래 값은 눈대중이 아니라 **37프레임을 한 장씩 실측한 것**이다(획의 바깥
+   경계 상자를 프레임마다 재서 배율로 환산). 재실측 절차는 LogoMark.tsx 참조.
+
+   🔴 세 애니메이션 모두 끝이 **무변형(scale 1)**이다. 게이트에서는 로고가
+      사라지지 않고 남으므로, 조금이라도 커지거나 벌어진 채 멈추면 헤더·푸터의
+      실제 로고와 크기·간격이 다르다.
+   ⚠️ 시작값(작게 오므린 상태)은 **키프레임 안에만** 둔다. 요소의 기본 style에
+      적으면 동작 줄이기(animation:none)에서 로고가 쪼그라든 채 남는다. */
+
+/* 점 두 개가 한가운데에서 부풀며 제자리로 올라간다(영상 0–0.33초).
+   두 점의 간격과 크기가 함께 커지므로 **묶음 하나를 마크 중심 기준으로** 키운다.
+   76%의 1.09는 실측된 오버슛이다 — 제 크기를 살짝 지나쳤다가 돌아온다. */
+@keyframes dotsIn {
+  0% { transform: scale(0.07); }
+  25% { transform: scale(0.4); }
+  50% { transform: scale(0.63); }
+  76% { transform: scale(1.09); }
   100% { transform: none; }
 }
-/* speakL의 거울상. 두 키프레임의 값은 **부호만 다르고 항상 같아야** 한다. */
-@keyframes speakR {
-  0% { transform: translateX(38.7px) rotate(15deg); }
-  16% { transform: translateX(14.1px) rotate(5deg); }
-  30% { transform: translateX(38.7px) rotate(15deg); }
-  44% { transform: translateX(19.4px) rotate(7deg); }
-  58% { transform: translateX(36.9px) rotate(14deg); }
-  70% { transform: translateX(22.9px) rotate(8.5deg); }
-  80% { transform: translateX(14.1px) rotate(5deg); }
-  88% { transform: translateX(7px) rotate(2.4deg); }
-  94% { transform: translateX(2.5px) rotate(0.9deg); }
+
+/* 획 두 짝이 같은 자리에서 씨앗처럼 머물다 **터지듯** 제 크기가 된다(0–0.5초).
+   ⚠️ 앞 절반이 거의 정지인 것이 이 동작의 성격이다(0.29초까지 배율 0.11).
+      균등하게 펴면 "그냥 커지는" 평범한 등장이 되고 영상의 인상이 사라진다.
+      그래서 타이밍 함수도 linear다 — 가속은 이 정지→폭발 배치가 만든다. */
+@keyframes hooksIn {
+  0% { transform: scale(0.06); }
+  58% { transform: scale(0.11); }
+  66% { transform: scale(0.18); }
+  83% { transform: scale(0.3); }
+  92% { transform: scale(0.68); }
   100% { transform: none; }
 }
-/* 손으로 딴 SVG 획(근사치) → 진짜 로고 PNG로 넘기는 크로스페이드.
-   LogoMark.tsx 참조 — 근사치가 실물과 달라 보이는 문제(하트처럼 읽힘)를
-   좌표를 더 다듬는 대신 "동작이 끝나면 진짜 이미지로 바꿔치기"로 해결했다. */
-/* 게이트 로고가 위에서 아래로 닦이며 나타난다.
-   예전 stroke-dashoffset "그려지는" 연출을 대신한다 — 채운 윤곽에는 dashoffset을
-   쓸 수 없기 때문이다(LogoMark.tsx 참조).
-   ⚠️ 시작값(잘린 상태)은 **여기 키프레임에만** 둔다. 요소의 기본 style에 넣으면
-      동작 줄이기에서 animation이 꺼졌을 때 로고가 잘린 채 남는다. */
-@keyframes markReveal {
-  from { clip-path: inset(0 0 100% 0); }
-  to { clip-path: inset(0 0 0 0); }
+
+/* 제자리에 선 획이 숨 쉬듯 커졌다 작아지기를 두 번 반복하고 멈춘다(0.5–1.5초).
+   🔴 기준점이 **획 자기 상자**(fill-box)다. 마크 중심을 기준으로 키우면 두 획이
+      함께 바깥으로 벌어져 가운데가 열리는데, 영상은 반대로 **커질수록 안쪽 끝이
+      서로 다가온다**. 기준점 위치(바깥 끝에서 61.2%)는 LogoMark.tsx가 정한다.
+   🔴 **최대 배율 1.06을 넘기지 말 것.** 두 획 안쪽 끝의 간격은
+      `123.5 − 110.8 × 배율`(297 단위)이다 — 평상시 12.7, 1.06에서 6.1,
+      1.108에서 0.7로 사실상 맞닿는다. 맞닿는 순간 가운데 여백이 위가 파이고
+      아래가 뾰족한 **하트 모양으로 읽힌다**(CLAUDE.md '게이트 로고' 절).
+      실제로 영상의 원래 최대값 1.108을 그대로 넣었다가 화면에서 확인하고
+      1.06으로 낮췄다(2026-09-03). 영상에서는 두 획이 닿아도 괜찮았는데,
+      실물 로고는 획 끝이 가늘어져서 닿는 순간 그 여백이 하트가 된다.
+      🔴 문자열 검색으로는 절대 안 잡힌다 — 값을 바꿨으면 **가장 커지는 순간을
+         반드시 눈으로 확인**할 것.
+   ⚠️ 작아지는 쪽(0.868)은 실측 그대로다. 줄어들면 간격이 벌어져 안전하고,
+      숨쉬기의 진폭도 대부분 이쪽에서 나온다.
+   각 칸은 영상의 극값 프레임이다: f14 1.046 · f18 0.868 · f23 1.108→1.06 ·
+   f28 0.897 · f32 1.105→1.058 · f36 정지. */
+@keyframes hookPulse {
+  0% { transform: none; }
+  4% { transform: scale(1.046); }
+  21% { transform: scale(0.868); }
+  42% { transform: scale(1.06); }
+  46% { transform: scale(1.058); }
+  63% { transform: scale(0.897); }
+  79% { transform: scale(1.058); }
+  96% { transform: none; }
+  100% { transform: none; }
 }
 @keyframes charIn {
   from { opacity: 0; transform: translateY(10px); filter: blur(5px); }
@@ -1573,8 +1590,9 @@ html[data-scrolled] .sticky-bar {
      그때는 SVG 위에 실제 이미지가 겹쳐 있어 SVG를 숨겨야 했지만, 이제 게이트
      로고는 벡터 한 장뿐이다(LogoMark.tsx — 크로스페이드 폐지). 그 규칙을
      되살리면 **로고가 통째로 사라진다.**
-     위의 `animation: none`만으로 충분하다 — speak는 무변형, markReveal은
-     클립 없음이 되어 완성된 로고가 정지 상태로 남는다. */
+     위의 `animation: none`만으로 충분하다 — dotsIn·hooksIn·hookPulse의 작은
+     시작 배율은 전부 키프레임 안에만 있어서, 애니메이션이 꺼지면 세 요소가
+     모두 무변형(=완성된 로고)으로 남는다. */
 }
 
 /* ── 핵심 요약(TL;DR) 박스 ────────────────────────────────────
