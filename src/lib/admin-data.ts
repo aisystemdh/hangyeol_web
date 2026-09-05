@@ -2,7 +2,7 @@ import "server-only";
 import { q, tx } from "./db";
 import { EVENT } from "./event";
 import { ageOn } from "./age";
-import { isWaitlisted, paidSeats } from "./seats";
+import { isWaitlisted, paidSeats, remainingSeats, type SeatCount } from "./seats";
 import {
   filterApplications,
   isDueSoon,
@@ -11,6 +11,7 @@ import {
   type AdminStatus,
 } from "./admin-list";
 import { isMeScreenName, type MeScreenName } from "./me-screen";
+import { EXPECTED_DEPOSIT_KRW, isAmountMismatch, netPaid } from "./payment";
 
 /**
  * 운영자 신청 목록·상세가 읽는 데이터 한 벌 (이슈 #34).
@@ -41,6 +42,7 @@ type Row = {
   last_notified_at: Date | null;
   last_notified_label: string | null;
   last_notified_status: string | null;
+  amount_mismatch: boolean;
 };
 
 /** 신청 목록. `filter`는 검색어·상태·성별 — 실제로 거르는 규칙은 `admin-list.ts`에 있다. */
@@ -55,7 +57,11 @@ export async function loadApplications(
             a.created_at, a.due_at,
             ln.created_at as last_notified_at,
             coalesce(nt.label, ln.template_id) as last_notified_label,
-            ln.status as last_notified_status
+            ln.status as last_notified_status,
+            exists (
+              select 1 from money m
+               where m.application_id = a.id and m.kind = '입금' and m.amount <> $2
+            ) as amount_mismatch
        from application a
        join applicant p on p.id = a.applicant_id
        left join lateral (
@@ -68,7 +74,7 @@ export async function loadApplications(
        left join notification_template nt on nt.id = ln.template_id
       where a.event_id = $1
       order by a.seq`,
-    [eventId],
+    [eventId, EXPECTED_DEPOSIT_KRW],
   );
 
   // 🔴 대기자 판정과 공개 모집 현황이 같은 함수를 쓴다(`seats.ts`) — 목록 하나를
@@ -101,10 +107,22 @@ export async function loadApplications(
       lastNotifiedStatus: r.last_notified_status,
       screenLocked: viewOverride !== null,
       viewOverride,
+      amountMismatch: r.amount_mismatch,
     };
   });
 
   return filterApplications(items, filter);
+}
+
+/**
+ * 자리 현황 — 성별로 남은 자리(이슈 #35 AC). 목록 화면 상단과 GET 응답에 함께 실린다.
+ * `seats.ts`를 그대로 이어 쓴다 — 세는 자리가 둘로 갈리면 공개 모집 현황과 어긋난다.
+ */
+export type SeatsSummary = { taken: SeatCount; remaining: SeatCount; capacityPerGender: number };
+
+export async function loadSeats(eventId: number = EVENT.id): Promise<SeatsSummary> {
+  const taken = await paidSeats(eventId);
+  return { taken, remaining: remainingSeats(taken), capacityPerGender: EVENT.capacityPerGender };
 }
 
 export type AdminApplicationDetail = {
@@ -145,7 +163,11 @@ export type AdminApplicationDetail = {
     note: string | null;
     recordedBy: string;
     createdAt: string;
+    /** 🔴 기대 금액(39,000원)과 다르면 true — 상세에도 표시만 남긴다(이슈 #35). */
+    amountMismatch: boolean;
   }[];
+  /** 그 사람이 실제로 낸 돈 — 「입금 합 − 환불 합」(`CONTEXT.md` "돈 줄", `payment.ts`). */
+  netPaid: number;
   notifications: {
     id: string;
     templateId: string | null;
@@ -288,7 +310,9 @@ export async function loadApplicationDetail(
       note: r.note,
       recordedBy: r.recorded_by,
       createdAt: r.created_at.toISOString(),
+      amountMismatch: r.kind === "입금" && isAmountMismatch(r.amount),
     })),
+    netPaid: netPaid(money.map((r) => ({ kind: r.kind, amount: r.amount }))),
     notifications: notifications.map((r) => ({
       id: r.id,
       templateId: r.template_id,
@@ -334,6 +358,158 @@ export async function setViewOverride(
       `insert into event_log (application_id, kind, actor, meta)
        values ($1, $2, $3, $4)`,
       [id, screen ? "화면고정" : "화면고정해제", actor, JSON.stringify({ screen })],
+    );
+    return true;
+  });
+}
+
+export type MoneyInput = {
+  amount: number;
+  occurredAt: Date;
+  depositorName: string | null;
+  note: string | null;
+  actor: string;
+};
+
+export type RecordPaymentResult =
+  | { ok: true; gender: "M" | "F"; amountMismatch: boolean }
+  | { ok: false; reason: "not_found" | "cancelled" };
+
+/**
+ * 입금 확인 — **이 시스템에서 자리가 차는 유일한 순간**(이슈 #35).
+ *
+ * 🔴 「상태를 입금완료로 바꾸기」와 「돈 줄에 입금 한 줄 쌓기」가 **한 트랜잭션**으로
+ *    함께 일어난다(`docs/decisions/003…` §7) — 따로 두면 운영자가 버튼을 한 번만
+ *    누르고 둘 중 하나만 반영된 채 잊는다. 둘 중 하나라도 실패하면(예: `money.amount`
+ *    체크 제약 위반) 트랜잭션 전체가 롤백돼 상태도 그대로 남는다.
+ *
+ * 🔴 **금액을 검증해 막지 않는다** — 39,000원이 아니어도 그대로 저장한다. 다르면
+ *    호출한 쪽에 `amountMismatch`만 알려준다(목록·상세 표시용).
+ *
+ * 🔴 **재입금을 덧붙일 수 있다.** 이미 `입금완료`인 신청에 또 입금 확인을 눌러도
+ *    막지 않는다 — `paid_at`(자리가 찬 시각)만 최초 확인 시각을 유지하고
+ *    (`coalesce`), 돈 줄에는 매번 새 줄이 쌓인다(insert-only, 결정 15).
+ *
+ * `취소됨` 신청에는 입금을 확인할 수 없다 — 이미 빠지기로 한 사람의 자리를
+ * 다시 채우면 「누가 자리에 있는가」가 상태만 봐서는 알 수 없게 된다.
+ */
+export async function recordPayment(
+  id: string,
+  input: MoneyInput,
+  eventId: number = EVENT.id,
+): Promise<RecordPaymentResult> {
+  return tx(async (client) => {
+    const found = await client.query<{ status: AdminStatus; gender: "M" | "F" }>(
+      `select a.status, p.gender
+         from application a
+         join applicant p on p.id = a.applicant_id
+        where a.id = $1`,
+      [id],
+    );
+    const row = found.rows[0];
+    if (!row) return { ok: false, reason: "not_found" };
+    if (row.status === "취소됨") return { ok: false, reason: "cancelled" };
+
+    // 🔴 최초 확인일 때만 `paid_at`을 채운다 — 재입금(이미 입금완료)에서 자리가
+    //    찬 시각을 뒤로 미루면 안 된다.
+    await client.query(
+      `update application set status = '입금완료', paid_at = coalesce(paid_at, now())
+        where id = $1`,
+      [id],
+    );
+
+    const amountMismatch = isAmountMismatch(input.amount);
+    await client.query(
+      `insert into money (application_id, event_id, kind, amount, occurred_at, depositor_name, note, recorded_by)
+       values ($1, $2, '입금', $3, $4, $5, $6, $7)`,
+      [id, eventId, input.amount, input.occurredAt, input.depositorName, input.note, input.actor],
+    );
+
+    await client.query(
+      `insert into event_log (application_id, kind, actor, meta)
+       values ($1, '입금확인', $2, $3)`,
+      [
+        id,
+        input.actor,
+        JSON.stringify({
+          amount: input.amount,
+          occurredAt: input.occurredAt.toISOString(),
+          depositorName: input.depositorName,
+          note: input.note,
+          amountMismatch,
+        }),
+      ],
+    );
+
+    return { ok: true, gender: row.gender, amountMismatch };
+  });
+}
+
+/**
+ * 환불 — 돈 줄에 「−금액 환불」 한 줄을 쌓는다(결정 15).
+ *
+ * 🔴 상태를 바꾸지 않는다 — 취소와 환불은 각자 다른 버튼이다(이슈 #35 AC). 자리를
+ *    비우려면(=취소로 바꾸려면) `cancelApplication`을 **따로** 부른다. 부분 환불처럼
+ *    자리를 유지한 채 돈만 돌려주는 경우가 있어 둘을 묶으면 그 경우를 못 다룬다.
+ */
+export async function recordRefund(
+  id: string,
+  input: MoneyInput,
+  eventId: number = EVENT.id,
+): Promise<{ ok: true } | { ok: false; reason: "not_found" }> {
+  return tx(async (client) => {
+    const found = await client.query(`select 1 from application where id = $1`, [id]);
+    if (found.rowCount === 0) return { ok: false, reason: "not_found" };
+
+    await client.query(
+      `insert into money (application_id, event_id, kind, amount, occurred_at, depositor_name, note, recorded_by)
+       values ($1, $2, '환불', $3, $4, $5, $6, $7)`,
+      [id, eventId, input.amount, input.occurredAt, input.depositorName, input.note, input.actor],
+    );
+    await client.query(
+      `insert into event_log (application_id, kind, actor, meta)
+       values ($1, '환불', $2, $3)`,
+      [
+        id,
+        input.actor,
+        JSON.stringify({
+          amount: input.amount,
+          occurredAt: input.occurredAt.toISOString(),
+          depositorName: input.depositorName,
+          note: input.note,
+        }),
+      ],
+    );
+    return { ok: true };
+  });
+}
+
+/**
+ * 신청을 취소됨으로 바꾼다(이슈 #35 AC). 🔴 `actor` 필수 — 화면(라우트)이 명단에서
+ * 고른 이름을 검증해 넘긴다. 이미 취소된 신청도 다시 부를 수 있다(멱등) — 실수로
+ * 두 번 눌러도 조작 로그만 한 줄 더 쌓일 뿐 상태는 그대로다.
+ *
+ * ⚠️ 돈 줄은 건드리지 않는다 — 이미 쌓인 입금 기록은 취소돼도 사실로 남는다.
+ *    환불은 `recordRefund`로 따로 쌓는다.
+ */
+export async function cancelApplication(
+  id: string,
+  actor: string,
+  note: string | null = null,
+): Promise<boolean> {
+  return tx(async (client) => {
+    const found = await client.query<{ status: AdminStatus }>(
+      `select status from application where id = $1`,
+      [id],
+    );
+    const row = found.rows[0];
+    if (!row) return false;
+
+    await client.query(`update application set status = '취소됨' where id = $1`, [id]);
+    await client.query(
+      `insert into event_log (application_id, kind, actor, meta)
+       values ($1, '취소', $2, $3)`,
+      [id, actor, JSON.stringify({ note, previousStatus: row.status })],
     );
     return true;
   });

@@ -36,6 +36,11 @@ export type AdminApplicationRow = {
   /** `application.view_override`가 있으면 true — 목록에 「화면 고정됨」으로 뜬다. */
   screenLocked: boolean;
   viewOverride: MeScreenName | null;
+  /**
+   * 🔴 이 사람의 입금 줄 중 하나라도 기대 금액과 다르면 true(이슈 #35).
+   *    막지 않고 목록에 표시만 남긴다 — `docs/decisions/003…` §7.
+   */
+  amountMismatch: boolean;
 };
 
 /**

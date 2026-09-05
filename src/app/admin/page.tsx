@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/admin";
-import { loadApplications } from "@/lib/admin-data";
+import { loadApplications, loadSeats } from "@/lib/admin-data";
 import AdminNav from "./AdminNav";
 import Dashboard from "./Dashboard";
 import st from "./admin.module.css";
@@ -27,12 +27,12 @@ export const metadata = {
 export default async function AdminPage() {
   if (!(await isAdmin())) redirect("/admin/login");
 
-  const initial = await loadApplications();
+  const [initial, initialSeats] = await Promise.all([loadApplications(), loadSeats()]);
 
   return (
     <main className={st.wrap}>
       <AdminNav current="/admin" />
-      <Dashboard initial={initial} />
+      <Dashboard initial={initial} initialSeats={initialSeats} />
     </main>
   );
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/admin";
-import { loadApplications } from "@/lib/admin-data";
+import { loadApplications, loadSeats } from "@/lib/admin-data";
 import type { AdminStatus } from "@/lib/admin-list";
 
 /**
@@ -37,6 +37,9 @@ export async function GET(req: Request) {
       : undefined;
   const gender = genderParam === "M" || genderParam === "F" ? genderParam : undefined;
 
-  const items = await loadApplications({ q, status, gender });
-  return NextResponse.json({ ok: true, data: { items } });
+  // 🔴 목록과 자리 현황이 **같은 응답 한 번**에 온다(이슈 #35 AC "남은 자리가 성별로
+  //    보인다") — 두 개의 GET으로 나누면 폴링 타이밍이 어긋나 "화면엔 자리가
+  //    있는데 방금 입금 확인은 정원초과 경고가 뜨는" 것 같은 혼란이 생긴다.
+  const [items, seats] = await Promise.all([loadApplications({ q, status, gender }), loadSeats()]);
+  return NextResponse.json({ ok: true, data: { items, seats } });
 }

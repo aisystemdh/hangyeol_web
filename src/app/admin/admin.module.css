@@ -21,6 +21,7 @@
 .cardHi { border-color: #1e3a2f; border-width: 2px; background: #f4fbf6; }
 .cardLabel { font-size: 12px; color: #868e96; margin-bottom: 4px; }
 .cardNum { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cardSub { font-size: 13px; font-weight: 400; }
 .sep { color: #ced4da; margin: 0 6px; }
 
 .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
@@ -65,6 +66,9 @@ a.tab, a.tabOn { text-decoration: none; display: inline-block; }
 .badgeWait { font-size: 11px; color: #5c5f66; background: #f1f3f5; border-radius: 999px; padding: 1px 7px; margin-left: 4px; }
 /* 화면 고정 배지 — 자동 판정을 무시하고 있다는, 반드시 눈에 띄어야 하는 예외 상태다. */
 .badgeLock { font-size: 11px; color: #7a4a17; background: #ffedd5; border: 1px solid #f0b866; border-radius: 999px; padding: 1px 7px; margin-left: 4px; font-weight: 600; }
+/* 금액 불일치 배지(이슈 #35) — 막지 않고 표시만 한다. 화면고정보다 한 단계 더
+   눈에 띄어야 해서(운영자가 돈 액수를 직접 확인해야 하는 문제라) 경고색을 쓴다. */
+.badgeMismatch { font-size: 11px; color: #862e2e; background: #ffe3e3; border: 1px solid #ffa8a8; border-radius: 999px; padding: 1px 7px; margin-left: 4px; font-weight: 600; }
 
 /* ── 상세 서랍 ─────────────────────────────────────────
    🔴 모달이 아니라 오른쪽에서 밀려나오는 패널이다 — 목록을 완전히 가리지 않아야
@@ -79,6 +83,11 @@ a.tab, a.tabOn { text-decoration: none; display: inline-block; }
 .dl { display: grid; grid-template-columns: 96px 1fr; gap: 6px 10px; font-size: 13px; margin: 0; }
 .dl dt { color: #868e96; }
 .dl dd { margin: 0; }
+
+/* 입금 확인 · 환불 폼(#35) — 라벨과 입력을 세로로 쌓고 줄바꿈하는 좁은 서랍 폭에 맞춘다. */
+.moneyForm { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.moneyForm label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #868e96; }
+.moneyForm input { width: auto; }
 
 .plainList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .pre { margin: 4px 0 0; padding: 8px 10px; background: #f8f9fa; border-radius: 6px; font-size: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
