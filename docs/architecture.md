@@ -375,7 +375,9 @@ localStorage 키: `hg-actor`(현황판 조작자 이름, `Board.tsx:50,133`), `h
 
 | 이름 | 위치 | 없을 때 |
 |---|---|---|
-| `DATABASE_URL` | `db.ts:21`, `migrate.mjs:18` | throw |
+| `DATABASE_URL` | `db.ts:21`, `migrate.mjs:29` | throw |
+| `TEST_DATABASE_URL` | `tests/setup/env.ts` (vitest만) | 테스트가 시작하지 않고 throw. `DATABASE_URL`과 같은 데이터베이스여도 throw |
+| `ALIMTALK_PROVIDER` | `alimtalk.ts` | throw (기본값 없음 — 값을 깜빡했을 때 조용히 진짜 발송이 나가지 않게) |
 | `ADMIN_PASSWORD` | `admin.ts:20` | `/admin`·admin API throw(500) |
 | `APPLY_NOTIFY_ENDPOINT` | `notify.ts:17` | 알림 생략 |
 | `NEXT_PUBLIC_SITE_URL` | `site.ts:17` | `http://localhost:3000` (토큰 링크·OG·sitemap이 전부 localhost가 됨) |
