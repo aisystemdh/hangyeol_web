@@ -5,7 +5,7 @@
    운영 화면은 브랜드 화면이 아니라 표를 읽는 도구라, 색을 명시해 되돌린다.
    안 그러면 숫자와 이름이 푸르스름하게 나와 읽기가 나빠진다. */
 .wrap { max-width: 1400px; margin: 0 auto; padding: 24px 20px 80px; color: #212529; }
-.wrap :is(h1, th, td, button, input, label, p, div) { color: inherit; }
+.wrap :is(h1, h2, h3, th, td, button, input, select, option, label, p, div, span, dt, dd, li, a) { color: inherit; }
 .table td, .table th { color: #212529; }
 .cardNum, .h1 { color: #1e3a2f; }
 
@@ -54,6 +54,34 @@
 .btnLink { padding: 4px 9px; font-size: 12px; border: 1px solid #1e3a2f; border-radius: 6px; background: #f4fbf6; color: #1e3a2f; cursor: pointer; }
 .btnLink:hover { background: #e6f4ea; }
 .btnPay { padding: 4px 10px; font-size: 12px; border: 1px solid #1e3a2f; background: #1e3a2f; color: #fff; border-radius: 6px; cursor: pointer; font-weight: 600; }
+
+/* ── 신청 목록 (#34) ────────────────────────────────── */
+/* `AdminNav`는 `<Link>`(앵커)에 이 버튼 클래스를 그대로 쓴다 — 앵커 기본 밑줄만 지운다. */
+a.tab, a.tabOn { text-decoration: none; display: inline-block; }
+.filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.filters input[type="search"] { min-width: 200px; }
+
+/* 대기자 배지 — 경고가 아니라 정보다. 진하게 두지 않는다. */
+.badgeWait { font-size: 11px; color: #5c5f66; background: #f1f3f5; border-radius: 999px; padding: 1px 7px; margin-left: 4px; }
+/* 화면 고정 배지 — 자동 판정을 무시하고 있다는, 반드시 눈에 띄어야 하는 예외 상태다. */
+.badgeLock { font-size: 11px; color: #7a4a17; background: #ffedd5; border: 1px solid #f0b866; border-radius: 999px; padding: 1px 7px; margin-left: 4px; font-weight: 600; }
+
+/* ── 상세 서랍 ─────────────────────────────────────────
+   🔴 모달이 아니라 오른쪽에서 밀려나오는 패널이다 — 목록을 완전히 가리지 않아야
+   "선택 → 확인 → 목록으로 돌아가 다음 사람" 흐름이 자연스럽다(운영 중 반복 동작). */
+.drawerBackdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 50; display: flex; justify-content: flex-end; }
+.drawer { width: min(560px, 100vw); height: 100%; overflow-y: auto; background: #fff; color: #212529; padding: 20px 22px 60px; box-shadow: -4px 0 24px rgba(0,0,0,0.15); }
+.drawer :is(h2, h3, dt, dd, p, td, th, li) { color: inherit; }
+.drawer section { margin-top: 20px; padding-top: 16px; border-top: 1px solid #f1f3f5; }
+.drawer h3 { font-size: 14px; margin: 0 0 8px; color: #495057; }
+.drawerHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+.dl { display: grid; grid-template-columns: 96px 1fr; gap: 6px 10px; font-size: 13px; margin: 0; }
+.dl dt { color: #868e96; }
+.dl dd { margin: 0; }
+
+.plainList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.pre { margin: 4px 0 0; padding: 8px 10px; background: #f8f9fa; border-radius: 6px; font-size: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
 
 /* ── 로그인 ─────────────────────────────────────────── */
 .loginWrap { min-height: 70vh; display: grid; place-items: center; padding: 24px; }

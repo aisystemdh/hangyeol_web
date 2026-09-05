@@ -39,7 +39,16 @@ export function makeSession(input: string): { value: string; maxAge: number } | 
   return { value: `${exp}.${sign(exp)}`, maxAge: Math.floor(TTL_MS / 1000) };
 }
 
-function valid(raw: string | undefined): boolean {
+/**
+ * 쿠키 값 하나가 유효한 세션인가. 순수 함수 — `next/headers`를 거치지 않는다.
+ *
+ * 🔴 **`isAdmin()`과 `src/proxy.ts`가 이 함수 하나를 같이 쓴다.** 프록시(미들웨어)는
+ *    `NextRequest.cookies`로 쿠키를 읽고, 라우트·서버 컴포넌트는 `next/headers`의
+ *    `cookies()`로 읽어 문맥이 다르지만, "그 값이 유효한가"의 판정은 한 곳이어야
+ *    한다 — 두 곳에서 따로 검증 로직을 베끼면 한쪽만 규칙이 바뀌었을 때
+ *    이중 방어의 두 문이 서로 다른 기준으로 열리고 닫히게 된다.
+ */
+export function isValidSession(raw: string | undefined): boolean {
   if (!raw) return false;
   const [expStr, mac] = raw.split(".");
   const exp = Number(expStr);
@@ -53,7 +62,7 @@ function valid(raw: string | undefined): boolean {
 export async function isAdmin(): Promise<boolean> {
   try {
     const jar = await cookies();
-    return valid(jar.get(COOKIE)?.value);
+    return isValidSession(jar.get(COOKIE)?.value);
   } catch {
     return false;
   }
