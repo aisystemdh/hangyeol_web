@@ -53,9 +53,7 @@ export default function MarketingBoard({
       </header>
 
       <section>
-        <h2 className={st.cardLabel} style={{ fontSize: 14, margin: "8px 0" }}>
-          퍼널 — 신청 → 정식등록 → 입금 → 사전질문
-        </h2>
+        <h2 className={st.sectionTitle}>퍼널 — 신청 → 정식등록 → 입금 → 사전질문</h2>
         {/* 🔴 각 칸의 비율은 항상 1단계(신청) 대비다 — 단계마다 분모가 바뀌면
             "정식등록 대비 입금 몇 %"인지 사람마다 다르게 계산하게 된다. */}
         <div className={st.counters}>
@@ -76,10 +74,8 @@ export default function MarketingBoard({
         </div>
       </section>
 
-      <section style={{ marginTop: 24 }}>
-        <h2 className={st.cardLabel} style={{ fontSize: 14, margin: "8px 0" }}>
-          유입 경로별 신청 수
-        </h2>
+      <section>
+        <h2 className={st.sectionTitle}>유입 경로별 신청 수</h2>
         <div className={st.tableWrap}>
           <table className={st.table}>
             <thead>

@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import Script from "next/script";
 import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
+import { readAttribution } from "@/lib/attribution";
 
 /**
  * 계측 스크립트 묶음. layout.tsx에 한 줄로 붙이기 위해 하나로 모았다.
@@ -28,6 +30,20 @@ const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID;
 
 export default function Analytics() {
+  /**
+   * 유입 값을 이 문서가 처음 열린 순간 굳힌다(`@/lib/attribution`, 이슈 #41).
+   *
+   * 🔴 **여기서 부르는 것이 핵심이다.** `layout.tsx`에 있어 클라이언트 내비게이션에는
+   *    다시 마운트되지 않는다(`PageEffects.tsx`와 같은 성질) — 그래서 이 이펙트는
+   *    "이 세션이 어느 페이지로 처음 들어왔는가"에 정확히 한 번만 걸린다.
+   *    반대로 신청 폼(`ApplyForm`)이 제출 시점에야 처음 읽으면 늦다 — 광고 링크의
+   *    `?utm_source=...`는 **랜딩 페이지의 주소**에만 있고, 홈 게이트 → 질문 3개 →
+   *    허브를 거쳐 `/events/1`에 닿을 즈음엔 주소창에서 이미 사라진 뒤다.
+   */
+  useEffect(() => {
+    readAttribution();
+  }, []);
+
   return (
     <>
       <VercelAnalytics />
