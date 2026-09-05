@@ -16,6 +16,29 @@
 
 이 저장소는 "주석이 정본"이라는 원칙으로 쓰여 있다(`CLAUDE.md:16-17`). 아래 지도는 그 주석과 실제 코드가 어긋나는 지점까지 함께 적는다.
 
+> ## 🔴 이 지도는 2026-09-06 부로 **절반이 옛것이다**
+>
+> 이슈 #30·#31이 데이터 모델과 신청 경로를 통째로 다시 세웠다. 아래 **§1(데이터 모델)
+> · §2(API 목록) · §3(화면 목록)**은 그 이전 모습이라 **그대로 믿으면 안 된다.**
+> 지금 무엇이 있는지는 이쪽을 본다:
+>
+> | 무엇 | 어디 |
+> |---|---|
+> | 말의 뜻 | `CONTEXT.md` |
+> | 설계 근거 | `docs/decisions/003-scenario-redesign-2026-09-05.md` |
+> | 실제 스키마 | `db/migrations/005_rebuild.sql` · `006_templates.sql` |
+> | 남은 화면·API | `npm run build`의 라우트 목록 |
+>
+> **없어진 것**: `gender_slot` · `recruit_display` · `participant` · `payment` ·
+> `answer_pre` · `applicant_event` 표, `/pre/[token]` · `/q/[token]` 화면과 API,
+> 옛 운영자 현황판과 `src/lib/admin-data.ts`, 전체 마감(행사 7일 전) 계산.
+> **새로 생긴 것**: `event` · `application` · `answer` · `money` ·
+> `notification_template` · `notification` · `event_log` · `report` · `purge_log` 표,
+> `/api/alimtalk/result`, `src/lib/{seats,notification}.ts`.
+>
+> 나머지 절(§4 이후 — 스타일·환경변수·위험 목록)은 대체로 그대로 쓸 수 있다.
+> 재설계가 #42까지 끝나면 이 문서를 다시 전수로 쓴다.
+
 ---
 
 ## 1. 데이터 모델

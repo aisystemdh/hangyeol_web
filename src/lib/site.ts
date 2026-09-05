@@ -72,3 +72,16 @@ export const CONTACT = {
    */
   phone: "010-5938-7074",
 } as const;
+
+/**
+ * 손님이 받는 링크. 🔴 **주소는 이것 하나다**(ADR 003 결정 6) — 단계마다 토큰을 따로
+ * 주면 발급·재발송·추적이 세 배가 된다. 같은 주소가 그 사람의 상태에 따라 다른 화면을 보여준다.
+ *
+ * ⚠️ **짧게 유지한다.** 알림톡이 문자로 대체되면 이 주소가 글자 그대로 찍히는데,
+ *    길면 문자 한 통이 길어지고 보기에도 지저분하다.
+ */
+export const MY_PAGE_PATH = "/me";
+
+export function myPageUrl(token: string): string {
+  return new URL(`${MY_PAGE_PATH}/${token}`, SITE_URL).toString();
+}

@@ -1,18 +1,25 @@
 import { NextResponse } from "next/server";
-import { q } from "@/lib/db";
 import { EVENT } from "@/lib/event";
+import { paidSeats, remainingSeats } from "@/lib/seats";
 
 /**
- * GET /api/recruit — 모집 현황 (공개)
+ * GET /api/recruit — 공개 모집 현황
  *
- * 근거: 지식베이스 `8_참가자모집/한결_모집일정_3단계게이트.md` §2
+ * 🔴 **워터마크를 폐기했다**(`docs/decisions/003-scenario-redesign-2026-09-05.md` §5).
+ *    옛 구조는 `recruit_display.high_water`(한 번 올라가면 안 내려가는 값)로
+ *    「남은 자리 = 정원 − 그 값」을 계산했다. 입금완료가 3명인데 값이 8이면 화면에
+ *    **「여성 2자리」**가 떴다 — 실제로는 일곱 자리가 남았는데.
+ *    그 장치가 막던 것은 **선착순 시절 기한이 지나 자리가 되살아나며 숫자가 뒤로 가던
+ *    일**이고, 자리가 입금 확인으로만 차게 되면서 그 원인이 사라졌다. 이제 남은 것은
+ *    잔여석을 실제보다 적어 보이게 하는 효과뿐이라 표시광고법 §3①이 금지하는 쪽이다.
+ *    **입금완료 인원을 그대로 센다.**
  *
- * 🔴 **폼 9가 아니라 랜딩페이지가 모집 현황을 보여줄 자리다.** 폼 9는 이미 링크를
- *    받은 사람이 자기 자리를 잡으러 들어오는 화면이라, 거기서 「남은 자리」를 세게
- *    보여주면 조급해져 문항을 대충 찍는다. 답변의 질이 떨어지면 2부 페어링이 망가진다.
+ * 🔴 세는 것은 **입금완료뿐이다.** 신청은 자리가 아니다(`CONTEXT.md`) — 아직 돈이
+ *    확인되지 않은 사람을 세면 「신청만 하고 사라진 사람」이 자리를 붙들고 있게 된다.
  *
- * 🔴 세는 것은 **확정 인원(입금 완료)**뿐이다. 입금 대기는 세지 않는다 —
- *    안 낸 사람이 자리를 차지한 것처럼 보이면 나중에 숫자가 뒤로 간다.
+ * 🔴 **이 응답만 `{ok, data}` 봉투를 씌우지 않는다.** `RecruitStatus.tsx`가 최상위에서
+ *    값을 읽고, 없으면 **에러 없이 아무것도 안 그린다** — 봉투를 씌우면 홈의 「모집 현황」
+ *    줄이 조용히 사라지고 아무도 눈치채지 못한다(스펙 #28 결정 43).
  */
 
 export const runtime = "nodejs";
@@ -22,38 +29,12 @@ export const dynamic = "force-dynamic";
 const CAP: number = EVENT.capacityPerGender;
 const LABEL = { M: "남성", F: "여성" } as const;
 
-type Row = { gender: "M" | "F"; confirmed: number; high_water: number };
-
 export async function GET() {
   try {
-    // 워터마크를 먼저 올린다. 조건이 붙어 있어 값이 그대로면 아무것도 쓰지 않는다.
-    // 🔴 이게 「숫자가 뒤로 가지 않는다」의 전부다 — 입금 기한이 지나 자리가
-    //    되살아나도 공개 숫자는 내려간 채로 둔다. 늘었다 줄었다 하는 숫자는
-    //    신뢰를 깬다. 내부 현황판은 실제 값을 그대로 본다.
-    await q(
-      `update recruit_display d
-          set high_water = c.n
-         from (select gender, count(*)::int as n
-                 from applicant where status = 'confirmed'
-                group by gender) c
-        where d.gender = c.gender and d.high_water < c.n`,
-    );
-
-    const rows = await q<Row>(
-      `select d.gender,
-              coalesce(a.n, 0)   as confirmed,
-              d.high_water
-         from recruit_display d
-         left join (select gender, count(*)::int as n
-                      from applicant where status = 'confirmed'
-                     group by gender) a on a.gender = d.gender`,
-    );
-
-    const remaining: Record<"M" | "F", number> = { M: CAP, F: CAP };
-    for (const r of rows) {
-      remaining[r.gender] = Math.max(0, CAP - r.high_water);
-    }
-
+    // 🔴 **자리를 세는 자리는 `seats.ts` 하나다.** 여기서 따로 세면 홈은 「자리 있음」인데
+    //    신청은 대기로 접수되는 일이 생긴다. 성별로 따로 센다 — 남10·여10이라
+    //    전체로 세면 남자만 스무 명인 상태도 「만석」이 된다.
+    const remaining = remainingSeats(await paidSeats(EVENT.id));
     const taken = CAP * 2 - remaining.M - remaining.F;
     const full = remaining.M === 0 && remaining.F === 0;
 
@@ -62,9 +43,10 @@ export async function GET() {
 
     if (full) {
       phase = "closed";
-      message = "마감되었습니다 — 대기 신청은 받습니다";
+      // 🔴 「대기 신청은 받습니다」를 뺐다. 대기 안내는 알림톡이 한다 —
+      //    여기서 권하면 대기자가 스스로 신청한 줄 알고 연락을 기다린다.
+      message = "마감되었습니다";
     } else if (taken >= EVENT.capacity / 2) {
-      // 🔴 성별로 나눠서 보여준다. 남10·여10이라 "5자리 남음"은 아무 뜻이 없다.
       phase = "counting";
       message = (["F", "M"] as const)
         .map((g) =>
@@ -72,8 +54,9 @@ export async function GET() {
         )
         .join(" · ");
     } else {
-      // 🔴 절반도 안 찼을 때 숫자를 보여주지 않는 이유 — "18자리 남음"은 희소성이
-      //    아니라 **「아무도 안 왔다」는 신호**다. 초대받은 느낌을 주지 못한다.
+      // 🔴 절반도 안 찼을 때 숫자를 감추는 규칙은 **그대로 가져왔다.** 그건 거짓이
+      //    아니라 침묵이다 — 「18자리 남음」은 희소성이 아니라 **「아무도 안 왔다」는
+      //    신호**라서 초대받은 느낌을 주지 못한다.
       phase = "hidden";
       message = "지금 신청받고 있습니다";
     }
@@ -88,6 +71,7 @@ export async function GET() {
   } catch (err) {
     // 🔴 현황을 못 읽는다고 신청 화면 전체를 망가뜨리지 않는다.
     //    모르면 **아무 숫자도 말하지 않는다** — 틀린 숫자보다 침묵이 낫다.
+    //    `message`가 비어 있으면 화면이 줄 자체를 그리지 않는다(RecruitStatus.tsx).
     console.error("[api/recruit] 조회 실패", err);
     return NextResponse.json({ phase: "unknown", message: "" }, { status: 200 });
   }

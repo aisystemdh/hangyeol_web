@@ -1,46 +1,62 @@
-import { EVENT } from "./event";
-
 /**
- * 기한 계산.
+ * 입금 기한 계산.
  *
- * 🔴 **절대 날짜를 코드 곳곳에 박지 않는다.** 전부 `EVENT.dateISO` 하나에서 나온다.
- *    행사일이 옮겨지면 그 한 줄만 고치면 된다 — 여러 곳에 적으면 반드시 하나가 빠진다.
+ * 🔴 **기한은 하나다 — 「신청 폼을 낸 시각 + 72시간」.**
+ *    (`docs/decisions/003-scenario-redesign-2026-09-05.md` §2 · 결정 8)
  *
- * 🔴 **기한이 둘이고, 먼저 오는 쪽이 이긴다.**
- *      개인 기한 — 폼9를 제출해 자리를 잡은 시각 + 72시간
- *      전체 마감 — 행사 7일 전 23:59:59 (KST)
+ *    신청 시각을 기준으로 하는 이유 셋:
+ *    ① 신청 완료 화면에서 **곧바로** 기한을 보여줄 수 있다. 알림톡 발송 시각 기준이면
+ *       그 화면에서는 아직 그 사람의 기한이 존재하지 않는다.
+ *    ② 알림톡이 실패해도 기한이 흔들리지 않는다. 발송 기준이면 실패한 사람은 기한 없이
+ *       방치되고, 운영자가 눈치채야만 시계가 돈다.
+ *    ③ 정식등록 시각 기준은 **등록만 안 하면 무한정 기다리는 구멍**을 만든다.
  *
- * ⚠️ 지식베이스 안에서 개인 기한의 기준이 두 가지로 적혀 있다 —
- *    개발명세 §1-1은 「제출 시각」, §3-1은 「알림톡 발송 시각」이다.
- *    **제출 시각으로 간다.** ① §1-1이 더 최신(2026-08-29 · 일괄 발송+선착순 확정)이고
- *    ② 「자리를 잡으면 3일 안에 입금」이라는 게이트 문서의 설명과 맞아떨어진다.
- *    일괄 발송이라 발송 시각 기준으로 잡으면 늦게 답한 사람의 시간이 통째로 사라진다.
+ * 🔴 **전체 마감(행사 7일 전 23:59:59)을 지우고 왔다.** 되살리지 말 것 —
+ *    소유자가 「지금 만드는 시나리오가 우선이고 필요해질 때 고친다」로 확정했다
+ *    (2026-09-05, 스펙 #28 결정 17). 안 쓰는 채로 남겨두면 다음 사람이 **아직 살아 있는
+ *    규칙으로 읽고**, 「먼저 오는 쪽이 이긴다」를 다시 계산에 넣는다.
+ *    옛 코드에는 `overallDeadline()`과 `isClosed()`가 있었다. 지금은 날짜로 신청을 막는
+ *    장치가 **없다** — 자리가 없으면 대기자로 접수되고, 기한이 지나도 시스템은 아무것도
+ *    하지 않는다(운영자가 개인적으로 연락한다).
+ *
+ * 🔴 **대기자에게는 기한이 없다.** 낼 자리가 없는 사람에게 시계를 돌리지 않는다 —
+ *    부르는 쪽이 대기자면 이 함수를 부르지 않고 `due_at`을 비워 둔다(`CONTEXT.md` 「기한」).
  */
 
-const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
-const HOLD_HOURS = 72;
+/** 신청 폼을 낸 시각으로부터 몇 시간을 주는가. */
+export const PAY_WINDOW_HOURS = 72;
 
-/** 한국 시간으로 그날 23:59:59.999 를 UTC 기준 Date로 만든다. */
-function endOfDayKST(iso: string): Date {
-  return new Date(Date.parse(`${iso}T23:59:59.999+09:00`));
+/** 신청 시각 → 입금 기한. 🔴 계산한 값을 신청 행에 **박아 둔다** — 규칙이 나중에
+ *  바뀌어도 과거에 약속한 기한이 따라 움직이면 안 된다. */
+export function dueAtFrom(appliedAt: Date): Date {
+  return new Date(appliedAt.getTime() + PAY_WINDOW_HOURS * 60 * 60 * 1000);
 }
 
-/** 전체 마감 — 행사 7일 전 끝. 이 시각이 지나면 아무도 자리를 못 잡는다. */
-export function overallDeadline(): Date {
-  const event = new Date(`${EVENT.dateISO}T00:00:00+09:00`);
-  const d = new Date(event.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const iso = new Date(d.getTime() + KST_OFFSET_MS).toISOString().slice(0, 10);
-  return endOfDayKST(iso);
-}
-
-/** 자리를 잡은 시각으로부터의 개인 기한과 전체 마감 중 **먼저 오는 쪽**. */
-export function dueAtFrom(heldAt: Date): Date {
-  const personal = new Date(heldAt.getTime() + HOLD_HOURS * 60 * 60 * 1000);
-  const overall = overallDeadline();
-  return personal < overall ? personal : overall;
-}
-
-/** 지금 신청을 받을 수 있는가. */
-export function isClosed(now: Date = new Date()): boolean {
-  return now > overallDeadline();
+/**
+ * 기한을 사람이 읽는 한 줄로. 알림톡의 `#{입금기한}`과 신청 완료 화면이 **같은 함수**를 쓴다.
+ *
+ * 🔴 **두 곳에서 따로 만들지 않는다.** 문자로 받은 기한과 화면에서 본 기한이 한 글자라도
+ *    다르면 손님은 어느 쪽이 맞는지 묻게 되고, 그 문의는 전부 운영자에게 간다.
+ *
+ * 🔴 **한국 시간으로 고정한다.** 서버는 UTC(Vercel `sin1`)에서 도는데 시간대를 안 박으면
+ *    「10월 26일 오후 11시」가 손님에게는 다음 날 아침으로 보인다.
+ *
+ * ⚠️ 분까지 적는다. 「10월 26일까지」로 뭉개면 그날 밤 11시 59분에 넣어도 되는지
+ *    묻는 사람이 반드시 나온다.
+ */
+export function formatDeadline(d: Date): string {
+  const parts = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return (
+    `${get("month")} ${get("day")}일 (${get("weekday")}) ` +
+    `${get("dayPeriod")} ${get("hour")}시 ${get("minute")}분`
+  );
 }

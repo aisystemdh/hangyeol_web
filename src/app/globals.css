@@ -1267,6 +1267,22 @@ html[data-scrolled] .site-header__logo {
   line-height: var(--lh-body);
   color: var(--mute);
 }
+/* 입금 기한 한 줄. 🔴 이 화면에서 손님이 **적어 가야 하는 유일한 값**이라
+   본문(--mute, 4.79:1)에서 잉크색(--ink)으로 끌어올리고 테두리로 묶어 세운다.
+   숫자를 굵게 키우지 않은 이유: 문장이 아니라 날짜라 --fs-3(18px)에서 이미 읽힌다. */
+/* ⚠️ `.confirm p`(0,1,1)가 색을 --mute로 잡고 있어 `.confirm__due` 한 클래스(0,1,0)로는
+   못 이긴다. `!important` 대신 특이도를 맞춘다. */
+.confirm p.confirm__due {
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  font-size: var(--fs-3);
+  color: var(--ink);
+}
+.confirm__due b {
+  font-weight: 700;
+}
 
 .rules {
   border: 1px solid var(--rule);
