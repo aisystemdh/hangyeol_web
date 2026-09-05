@@ -27,8 +27,12 @@ export const dynamic = "force-dynamic";
 
 type Row = {
   status: ApplicationStatus;
-  registered_at: string | null;
-  due_at: string | null;
+  // 🔴 `timestamptz` 컬럼이다. `src/lib/db.ts`가 커스텀 타입 파서를 등록하지 않으므로
+  //    `pg`가 기본값대로 **`Date` 객체**를 돌려준다 — `string`으로 적으면 실제 런타임
+  //    모양과 다른 타입을 스스로 믿게 된다(지금은 `formatDeadline`이 `Date`도
+  //    받아 우연히 돌지만, `.slice()`처럼 문자열 전용 연산을 쓰는 순간 깨진다).
+  registered_at: Date | null;
+  due_at: Date | null;
   view_override: string | null;
   event_id: number;
   name: string;
@@ -92,7 +96,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
         name: row.name,
         bizAccount: bizAccount(),
         price: EVENT.priceLabel,
-        dueAtLabel: row.due_at ? formatDeadline(new Date(row.due_at)) : null,
+        dueAtLabel: row.due_at ? formatDeadline(row.due_at) : null,
       };
       break;
     case "questions":

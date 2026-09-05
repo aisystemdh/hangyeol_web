@@ -14,7 +14,10 @@ export default function MeQuestions({ data }: { data: MeQuestionsData }) {
   return (
     <MeShell>
       <p className={s.eyebrow}>사전 질문</p>
-      <h1 className={s.title}>{data.name}님, 열 가지만 답해주세요</h1>
+      {/* 🔴 문항 수를 문구에 박지 않는다 — `PRE_QUESTION_FORM_VERSION`이 오르면
+          문항 개수도 바뀔 수 있고, 그때 제목만 옛 숫자로 남으면 바로 아래 줄의
+          실제 개수와 어긋나 보인다. */}
+      <h1 className={s.title}>{data.name}님, {data.questions.length}가지만 답해주세요</h1>
       <p className={s.body}>
         총 {data.questions.length}문항 · 문항 버전 {data.formVersion}
       </p>
