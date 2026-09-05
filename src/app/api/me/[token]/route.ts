@@ -6,6 +6,7 @@ import { isWaitlisted, paidSeats } from "@/lib/seats";
 import { bizAccount, bizIdentity } from "@/lib/biz";
 import { PAIRED_INDEXES, PRE_QUESTION_FORM, PRE_QUESTION_FORM_VERSION, QUESTIONS } from "@/lib/form9-copy";
 import { guardExposure, resolveMeScreen, type ApplicationStatus } from "@/lib/me-screen";
+import { reportForApplication, visibleReport } from "@/lib/report";
 import type { MeData } from "@/lib/me-response";
 
 /**
@@ -32,6 +33,7 @@ const bad = (error: string, message: string, status = 400) =>
   NextResponse.json({ ok: false, error, message }, { status });
 
 type Row = {
+  id: string;
   status: ApplicationStatus;
   // 🔴 `timestamptz` 컬럼이다. `src/lib/db.ts`가 커스텀 타입 파서를 등록하지 않으므로
   //    `pg`가 기본값대로 **`Date` 객체**를 돌려준다 — `string`으로 적으면 실제 런타임
@@ -50,7 +52,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   const { token } = await params;
 
   const rows = await q<Row>(
-    `select a.status, a.registered_at, a.due_at, a.view_override, a.event_id,
+    `select a.id, a.status, a.registered_at, a.due_at, a.view_override, a.event_id,
             p.name, p.gender,
             exists (
               select 1 from answer ans
@@ -108,6 +110,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
         questions: QUESTIONS,
         pairedIndexes: PAIRED_INDEXES,
       };
+      break;
+    case "ended":
+      // 🔴 리포트는 이 화면일 때만 조회한다 — 다른 화면은 볼 필요도, 볼 자격도 없다.
+      data = { screen, name: row.name, report: visibleReport(await reportForApplication(row.id)) };
       break;
     default:
       data = { screen, name: row.name };

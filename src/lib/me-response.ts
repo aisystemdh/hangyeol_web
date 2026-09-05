@@ -1,6 +1,7 @@
 import type { BizAccount, BizIdentity } from "./biz";
 import type { Question } from "./form9-copy";
 import type { MeScreenName } from "./me-screen";
+import type { VisibleReport } from "./report";
 
 /**
  * `GET /api/me/[token]`이 내려주는 모양. **화면마다 필드가 다르다** — 이슈 #32의
@@ -17,8 +18,24 @@ import type { MeScreenName } from "./me-screen";
 type Common = { name: string };
 
 /** 계좌·문항처럼 민감한 값이 없는 화면들. 안내 문구만 있으면 되는 자리다. */
-export type MeSimpleScreen = Exclude<MeScreenName, "register" | "payment" | "questions">;
+export type MeSimpleScreen = Exclude<MeScreenName, "register" | "payment" | "questions" | "ended">;
 export type MeSimpleData = Common & { screen: MeSimpleScreen };
+
+/** 리포트 링크. `report.ts`의 `VisibleReport`를 그대로 재수출한 것이다 — 선언을
+ *  둘로 나누지 않는다(위 import에 이유가 적혀 있다). */
+export type MeReport = VisibleReport;
+
+/**
+ * 행사 종료 화면(이슈 #40). 🔴 **`report`가 null이면 "아직 없다"가 아니라 "아직 못
+ *    보여준다"다** — 리포트 행이 아예 없거나, 있어도 `published_at`이 비었거나
+ *    아직 오지 않은 미래 시각인 경우를 모두 이 하나로 뭉갠다. 손님 입장에서는
+ *    셋의 차이가 없다("아직 준비 중입니다"로 충분하다) — 구분이 필요한 쪽은
+ *    운영자 화면(#34)이지 여기가 아니다.
+ */
+export type MeEndedData = Common & {
+  screen: "ended";
+  report: MeReport | null;
+};
 
 /** 등록 화면. 🔴 계좌·문항은 여기 없다 — 사업자 **신원**과 금액·환불 규정만. */
 export type MeRegisterData = Common & {
@@ -46,7 +63,7 @@ export type MeQuestionsData = Common & {
   pairedIndexes: number[];
 };
 
-export type MeData = MeSimpleData | MeRegisterData | MePaymentData | MeQuestionsData;
+export type MeData = MeSimpleData | MeRegisterData | MePaymentData | MeQuestionsData | MeEndedData;
 
 export type MeApiSuccess = { ok: true; data: MeData };
 export type MeApiError = { ok: false; error: string; message: string };
