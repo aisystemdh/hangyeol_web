@@ -9,7 +9,8 @@ import { TEMPLATE, sendTemplate } from "@/lib/notification";
 import { notifyNewApplicant } from "@/lib/notify";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
 import { EVENT } from "@/lib/event";
-import { myPageUrl } from "@/lib/site";
+import { myPageUrl, SITE_URL } from "@/lib/site";
+import { deriveSource } from "@/lib/source";
 
 /**
  * POST /api/apply — 신청 (공개)
@@ -45,10 +46,38 @@ type Body = {
   privacy_agreed?: unknown;
   marketing_agreed?: unknown;
   _gotcha?: unknown;
+  // ── 유입 (이슈 #41) ──────────────────────────────────────────
+  // `@/lib/attribution`이 첫 도착 시점에 굳혀 둔 값을 그대로 실어 보낸다.
+  referrer?: unknown;
+  utm?: unknown;
+  landing_path?: unknown;
 };
 
 const bad = (error: string, message: string, status = 400) =>
   NextResponse.json({ ok: false, error, message }, { status });
+
+// ── 유입 값 정리 (이슈 #41) ─────────────────────────────────────
+// 🔴 화면 검증을 믿지 않는다 — 여기 오는 값은 아무 클라이언트나 만들어 보낼 수 있다.
+//    길이를 자르고 모양이 다른 값은 조용히 버린다(막지 않는다 — 유입 값이 이상해도
+//    신청 자체를 실패시킬 이유는 아니다).
+const MAX_STR = 500;
+function sanitizeStr(v: unknown, max = MAX_STR): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  return t ? t.slice(0, max) : null;
+}
+
+// 표준 다섯 개만 받는다 — 광고주가 임의의 키를 붙여도 `utm` 칸이 무한정 커지지 않는다.
+const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const;
+function sanitizeUtm(v: unknown): Record<string, string> | null {
+  if (!v || typeof v !== "object") return null;
+  const out: Record<string, string> = {};
+  for (const key of UTM_KEYS) {
+    const raw = sanitizeStr((v as Record<string, unknown>)[key], 200);
+    if (raw) out[key] = raw;
+  }
+  return Object.keys(out).length > 0 ? out : null;
+}
 
 export async function POST(req: Request) {
   // ── 연타 차단 ────────────────────────────────────────────────
@@ -104,6 +133,17 @@ export async function POST(req: Request) {
   }
   const marketingAgreed = body.marketing_agreed === true;
 
+  // ── 유입 (이슈 #41) ──────────────────────────────────────────
+  // 🔴 `@/lib/attribution`이 첫 도착 시점에 굳힌 값을 그대로 받는다. 여기서 다시
+  //    `req.headers.get("referer")`를 쓰지 않는다 — 그 값은 "이 fetch 요청이 어느
+  //    페이지에서 나갔는가"(같은 사이트 안의 화면)일 뿐이라 마케팅 채널을 말해주지
+  //    않는다. 클라이언트 값이 비어 있으면(오래된 캐시된 번들·자바스크립트 없이
+  //    직접 API를 때린 경우) 그 헤더로라도 대신한다 — 아예 없는 것보다는 낫다.
+  const referrer = sanitizeStr(body.referrer) ?? sanitizeStr(req.headers.get("referer"));
+  const utm = sanitizeUtm(body.utm);
+  const landingPath = sanitizeStr(body.landing_path, 300);
+  const source = deriveSource({ utm, referrer, siteUrl: SITE_URL });
+
   // ── 저장 ─────────────────────────────────────────────────────
   const now = new Date();
   const token = newToken();
@@ -143,8 +183,9 @@ export async function POST(req: Request) {
       const made = await client.query<{ id: string; seq: string }>(
         `insert into application
            (applicant_id, event_id, status, token, token_issued_at, due_at,
-            privacy_agreed_at, marketing_agreed_at, memo, referrer)
-         values ($1, $2, '신청함', $3, $4, $5, $4, $6, $7, $8)
+            privacy_agreed_at, marketing_agreed_at, memo,
+            source, utm, referrer, landing_path)
+         values ($1, $2, '신청함', $3, $4, $5, $4, $6, $7, $8, $9, $10, $11)
          returning id, seq`,
         [
           applicantId,
@@ -154,9 +195,10 @@ export async function POST(req: Request) {
           dueAt,
           marketingAgreed ? now : null,
           ageOutOfRange ? `자격 확인 필요 — 신청 시점 만 ${age}세` : null,
-          // 어느 화면에서 눌렀는지. `source`·`utm`·`landing_path`는 마케팅 탭(#41)에서
-          // 폼이 함께 실어 보내게 된다 — 지금 없는 값을 그럴듯하게 채우지 않는다.
-          req.headers.get("referer"),
+          source,
+          utm ? JSON.stringify(utm) : null,
+          referrer,
+          landingPath,
         ],
       );
 
