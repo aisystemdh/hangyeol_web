@@ -14,6 +14,9 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Claude Design 핸드오프 번들 — 참조용 프로토타입이라 빌드·검사 대상이 아니다
     "design/**",
+    // Claude Code 훅 — 앱이 아니라 도구 쪽 스크립트다(Node CommonJS).
+    // 앱 규칙(`require()` 금지 등)을 적용할 대상이 아니다.
+    ".claude/**",
   ]),
 ]);
 

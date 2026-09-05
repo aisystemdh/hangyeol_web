@@ -21,6 +21,20 @@ Neon 대시보드 > SQL Editor를 열고 `migrations/` 안의 파일을 **번호
 psql "$DATABASE_URL" -f db/migrations/001_applicant.sql
 ```
 
+## 테스트 DB
+
+테스트는 **표를 통째로 비우며** 돌기 때문에 전용 데이터베이스가 따로 있어야 한다.
+같은 Neon 프로젝트 안의 다른 데이터베이스(`hangyeol_test`)를 쓰고 주소는
+`.env.local`의 `TEST_DATABASE_URL`에 둔다.
+
+스키마는 **여기 `migrations/`를 그대로 돌려서** 세운다(`vitest`의 준비 단계가
+`migrate()`를 부른다). 🔴 테스트용 스키마를 따로 적어 두지 않는다 — 두 벌이 되면
+마이그레이션을 더할 때마다 한쪽이 뒤처지고, 테스트는 통과하는데 배포하면 깨진다.
+
+🔴 `TEST_DATABASE_URL`이 없거나 `DATABASE_URL`과 같은 데이터베이스를 가리키면
+테스트가 **아예 시작하지 않는다**(`tests/setup/env.ts`). 풀러 주소와 직결 주소는
+호스트가 다르지만 같은 곳이므로, 비교할 때 `-pooler`를 떼고 본다.
+
 ## 규칙
 
 - **마이그레이션은 고치지 않고 새로 더한다.** 이미 돌아간 파일을 고치면 어느
