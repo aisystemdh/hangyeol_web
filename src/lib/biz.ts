@@ -42,7 +42,11 @@ export function biz(): Biz {
   };
   const missing: string[] = [];
   if (!b.regno) missing.push("사업자등록번호");
-  if (!b.mailorder) missing.push("통신판매업 신고번호");
+  // ⚠️ 통신판매업 신고번호는 **일부러 빼 두었다**(2026-09-05 소유자 확인 — 아직 신고 대상이 아니다).
+  //    🔴 면제는 조건부다. 전자상거래법 시행령 §6은 직전년도 통신판매 거래 횟수가 일정 수
+  //    미만이면 신고 의무를 면제하는데, 1차 행사는 20건이라 걸리지 않을 뿐이다.
+  //    **회차가 쌓이면 넘는다** — 2차 행사를 열 때 다시 확인하고, 신고하면 이 줄을 되살린다.
+  //    (값 자체는 `HANGYEOL_BIZ_MAILORDER`로 이미 읽고 있으므로 넣기만 하면 화면에 나온다.)
   if (!b.address) missing.push("영업소 소재지");
   if (!b.account) missing.push("입금 계좌번호");
   return { ...b, missing };
