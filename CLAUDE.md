@@ -18,7 +18,10 @@ Postgres(Neon, `pg`). shadcn은 쓰지 않는다. 경로 alias `@/*` → `src/*`
 
 ## 문서
 
-- `docs/architecture.md` — 코드 전수 지도(테이블·API·화면·하드코딩·위험). **구조를 물으면 여기부터.**
+- `docs/architecture.md` — 코드 전수 지도(테이블·API·화면·하드코딩·위험). **지금 코드를 물으면 여기부터.**
+- 🔴 `docs/decisions/003-scenario-redesign-2026-09-05.md` — **앞으로 만들 구조의 정본.**
+  선착순 슬롯이 사라지고 상태가 3개가 된다. 아래 「되돌리면 깨지는 것」 중 슬롯·상태 9개 관련
+  항목은 이 결정으로 대체된다 — 구현이 끝나면 이 파일도 함께 고친다.
 - `docs/handoff/` — 세션 핸드오프. SessionStart 훅이 최신 파일을 자동 주입한다. 세션이 200k에 가까우면 `/handoff`.
 - `docs/decisions/` — 설계 결정과 근거. 한 결정 한 파일.
 - 기획 정본은 지식베이스 레포 `econoai0119-tech/hangyeol-knowledge-base`(로컬 `~/projects/hangyeol-knowledge-base`). 필요한 문서만 그때 읽는다.
