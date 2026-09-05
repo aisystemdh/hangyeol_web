@@ -51,3 +51,13 @@ export type MeData = MeSimpleData | MeRegisterData | MePaymentData | MeQuestions
 export type MeApiSuccess = { ok: true; data: MeData };
 export type MeApiError = { ok: false; error: string; message: string };
 export type MeApiResponse = MeApiSuccess | MeApiError;
+
+/**
+ * `POST /api/me/[token]`(정식등록, 이슈 #33)이 돌려주는 모양.
+ *
+ * 🔴 여기에도 계좌가 없다 — 등록 응답은 "등록됐다"는 사실만 알린다. 계좌는 그다음
+ *    화면이 `GET`을 다시 부를 때 `resolveMeScreen`이 새로 고른 "payment" 화면에서만
+ *    내려온다. 등록 라우트 코드에는 `bizAccount()`를 부를 이유 자체가 없다.
+ */
+export type MeRegisterApiSuccess = { ok: true; data: { registeredAt: string } };
+export type MeRegisterApiResponse = MeRegisterApiSuccess | MeApiError;
