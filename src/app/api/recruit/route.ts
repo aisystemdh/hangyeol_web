@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { q } from "@/lib/db";
 import { EVENT } from "@/lib/event";
+import { paidSeats, remainingSeats } from "@/lib/seats";
 
 /**
  * GET /api/recruit — 공개 모집 현황
@@ -29,25 +29,12 @@ export const dynamic = "force-dynamic";
 const CAP: number = EVENT.capacityPerGender;
 const LABEL = { M: "남성", F: "여성" } as const;
 
-type Row = { gender: "M" | "F"; n: number };
-
 export async function GET() {
   try {
-    // 🔴 성별로 따로 센다. 남10·여10이라 전체로 세면 남자만 20명인 상태도 「만석」이 된다.
-    const rows = await q<Row>(
-      `select p.gender, count(*)::int as n
-         from application a
-         join applicant   p on p.id = a.applicant_id
-        where a.event_id = $1 and a.status = '입금완료'
-        group by p.gender`,
-      [EVENT.id],
-    );
-
-    const remaining: Record<"M" | "F", number> = { M: CAP, F: CAP };
-    for (const r of rows) {
-      remaining[r.gender] = Math.max(0, CAP - r.n);
-    }
-
+    // 🔴 **자리를 세는 자리는 `seats.ts` 하나다.** 여기서 따로 세면 홈은 「자리 있음」인데
+    //    신청은 대기로 접수되는 일이 생긴다. 성별로 따로 센다 — 남10·여10이라
+    //    전체로 세면 남자만 스무 명인 상태도 「만석」이 된다.
+    const remaining = remainingSeats(await paidSeats(EVENT.id));
     const taken = CAP * 2 - remaining.M - remaining.F;
     const full = remaining.M === 0 && remaining.F === 0;
 

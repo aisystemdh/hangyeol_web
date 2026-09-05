@@ -8,6 +8,17 @@ type Gender = "M" | "F" | null;
 type Status = "idle" | "submitting" | "done" | "error" | "duplicate";
 
 /**
+ * 신청이 저장된 뒤 서버가 알려주는 것.
+ *
+ * 🔴 **기한을 화면이 계산하지 않는다.** 서버가 「신청 시각 + 72시간」을 신청 행에
+ *    박아 두고, 같은 값을 사람이 읽는 문장으로 만들어 함께 내려준다. 화면이 따로
+ *    계산하면 알림톡으로 받은 기한과 한 글자라도 달라질 수 있고, 그 문의는 전부
+ *    운영자에게 간다.
+ * 🔴 `waitlisted`면 **기한이 없다.** 낼 자리가 없는 사람에게 시계를 돌리지 않는다.
+ */
+type Accepted = { waitlisted: boolean; dueAtLabel: string | null };
+
+/**
  * 사전 등록은 이제 **우리 서버로 간다**(`/api/apply` → Neon Postgres).
  *
  * ⚠️ 예전에는 `NEXT_PUBLIC_FORM_ENDPOINT`(Formspree)로 브라우저가 직접 쐈다.
@@ -102,6 +113,7 @@ export default function ApplyForm() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>("idle");
+  const [accepted, setAccepted] = useState<Accepted | null>(null);
 
   const submitting = status === "submitting";
 
@@ -183,10 +195,12 @@ export default function ApplyForm() {
         return;
       }
       if (!res.ok) throw new Error(String(res.status));
+      const payload = (await res.json()) as { data?: Accepted };
       /* 성공했을 때만 센다 — 전송 실패는 신청이 아니다.
          성별만 싣는 이유: 남10·여10이라 성비를 매일 봐야 한다.
          이름·연락처·생년월일은 절대 싣지 않는다. */
       track("apply_submit", { gender: gender === "M" ? "남" : "여" });
+      setAccepted(payload.data ?? { waitlisted: false, dueAtLabel: null });
       setStatus("done");
     } catch {
       setStatus("error");
@@ -194,13 +208,31 @@ export default function ApplyForm() {
   };
 
   if (status === "done") {
+    // 🔴 **자리가 찬 뒤 신청한 사람에게 기한을 말하지 않는다.** 낼 자리가 없는데
+    //    시계가 돌면 말이 안 되고, 입금부터 하면 환불이 생긴다.
+    const waitlisted = accepted?.waitlisted ?? false;
     return (
       <div className="confirm">
-        <div className="confirm__title">사전 등록이 접수되었습니다</div>
-        <p>
-          지금은 <b>사전 등록</b>입니다. 참가비를 받지 않습니다. 9월 28일에
-          등록해주신 분들께 질문지와 참가 안내를 한 번에 보내드립니다.
-        </p>
+        <div className="confirm__title">
+          {waitlisted ? "대기 명단에 등록되었습니다" : "신청이 접수되었습니다"}
+        </div>
+        {waitlisted ? (
+          <p>
+            지금은 <b>{EVENT.date} 모임의 자리가 모두 찼습니다.</b> 대기 명단에
+            등록해 두었고, 자리가 생기면 순서대로 알림톡으로 연락드립니다.
+            지금은 입금하지 않으셔도 됩니다.
+          </p>
+        ) : (
+          <p>
+            방금 보내드린 알림톡의 링크에서 참가 정보를 입력하고 입금해 주세요.{" "}
+            <b>입금이 확인되면 자리가 확정됩니다.</b> 신청만으로는 자리가 잡히지 않습니다.
+          </p>
+        )}
+        {!waitlisted && accepted?.dueAtLabel && (
+          <p className="confirm__due">
+            입금 기한 <b>{accepted.dueAtLabel}</b>
+          </p>
+        )}
         {/* 연락처를 잘못 적었을 때 돌아갈 길. 입력값은 그대로 남아 있다. */}
         <button
           type="button"

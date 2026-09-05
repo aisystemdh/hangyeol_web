@@ -31,3 +31,32 @@ export const PAY_WINDOW_HOURS = 72;
 export function dueAtFrom(appliedAt: Date): Date {
   return new Date(appliedAt.getTime() + PAY_WINDOW_HOURS * 60 * 60 * 1000);
 }
+
+/**
+ * 기한을 사람이 읽는 한 줄로. 알림톡의 `#{입금기한}`과 신청 완료 화면이 **같은 함수**를 쓴다.
+ *
+ * 🔴 **두 곳에서 따로 만들지 않는다.** 문자로 받은 기한과 화면에서 본 기한이 한 글자라도
+ *    다르면 손님은 어느 쪽이 맞는지 묻게 되고, 그 문의는 전부 운영자에게 간다.
+ *
+ * 🔴 **한국 시간으로 고정한다.** 서버는 UTC(Vercel `sin1`)에서 도는데 시간대를 안 박으면
+ *    「10월 26일 오후 11시」가 손님에게는 다음 날 아침으로 보인다.
+ *
+ * ⚠️ 분까지 적는다. 「10월 26일까지」로 뭉개면 그날 밤 11시 59분에 넣어도 되는지
+ *    묻는 사람이 반드시 나온다.
+ */
+export function formatDeadline(d: Date): string {
+  const parts = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return (
+    `${get("month")} ${get("day")}일 (${get("weekday")}) ` +
+    `${get("dayPeriod")} ${get("hour")}시 ${get("minute")}분`
+  );
+}
