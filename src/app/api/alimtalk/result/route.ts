@@ -56,8 +56,11 @@ export async function POST(req: Request) {
   const isUuid = refkey != null && /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(refkey);
 
   if (!refkey || !isUuid) {
-    // 🔴 조용히 200을 주지 않는다. refkey가 없으면 어느 발송인지 영영 못 맞추므로,
-    //    대행사가 재시도하도록 실패로 답하고 로그에 몸통을 남긴다.
+    // ⚠️ 여기는 **우리가 고쳐야 할 신호**다. 몸통의 열쇠 이름을 잘못 짚었으면 모든
+    //    웹훅이 이 길로 빠지는데, 조용히 200을 주면 대행사 쪽에도 우리 쪽에도 아무
+    //    표시가 안 남아 **영영 모른 채 도달 결과가 통째로 비어 있게 된다.**
+    //    (아래 「기록 없음」과 코드가 다른 이유 — 그쪽은 몸통이 멀쩡한데 맞출 상대가
+    //     없는 경우라 재시도해도 달라질 게 없다.)
     console.error("[alimtalk/result] refkey가 없거나 모양이 다르다", body);
     return NextResponse.json({ ok: false, error: "bad_refkey" }, { status: 400 });
   }
@@ -70,16 +73,20 @@ export async function POST(req: Request) {
     : "실패";
 
   try {
-    // 🔴 같은 결과가 두 번 와도 한 번만 반영되게 한다. `delivered_at`이 이미 찍혀
-    //    있으면 건드리지 않는다 — 재전송된 웹훅이 나중 값으로 앞의 사실을 덮으면
-    //    「언제 닿았나」가 흔들린다.
+    // 🔴 **`delivered_at`은 실제로 닿았을 때만 찍는다.** 실패에도 찍으면 ① 안 닿은
+    //    안내에 「도달 시각」이 남아 운영자가 보냈다고 착각하고 ② 아래 중복 방어가
+    //    그 행을 **영영 잠근다** — 실패 결과가 먼저 오고 도달이 나중에 오는 순서(재발송·
+    //    문자 대체)에서 진짜 도달이 반영되지 못한 채 「실패」로 굳는다.
+    //
+    // 🔴 그래서 중복 방어의 기준도 `delivered_at`이다. 같은 도달 결과가 두 번 와도
+    //    시각이 흔들리지 않고, **실패 뒤에 온 도달은 그대로 받아들인다.**
     const rows = await q<{ id: string }>(
       `update notification
           set result_code  = $2,
-              delivered_at = coalesce(delivered_at, now()),
+              delivered_at = case when $5 then now() else delivered_at end,
               message_key  = coalesce(message_key, $3),
               status       = $4,
-              error        = case when $5 then null else coalesce(error, $6) end
+              error        = case when $5 then null else $6 end
         where id = $1 and delivered_at is null
         returning id`,
       [

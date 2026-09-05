@@ -117,6 +117,17 @@ export async function sendTemplate(opts: {
       );
     }
 
+    // 🔴 버튼 주소에는 `#{}`를 못 쓴다. 그 사람의 주소를 통째로 만들어 넣는다.
+    // 🔴 **버튼은 있는데 넣을 주소가 없으면 보내지 않는다.** 문구는 운영자가 고칠 수
+    //    있고(#38) 부르는 자리도 여럿이 되므로, 본문에 `#{링크}`가 없으면서 부르는 쪽도
+    //    링크를 안 넘기는 짝이 실제로 생긴다. 그러면 「못 채운 변수」로는 안 걸리고
+    //    주소 없는 버튼이 나가 **대행사가 요청 전체를 거절한다** — 한 사람이 아니라
+    //    그 발송이 통째로 죽는다. 변수 검사와 **나란히, 기록을 세우기 전에** 막는다.
+    const link = opts.vars.링크 || null;
+    if ((tpl.buttons ?? []).length > 0 && !link) {
+      return await recordFailure(opts, tpl.id, "버튼이 있는데 넣을 링크가 없습니다.", text);
+    }
+
     // 🔴 발송 **전에** 기록을 세운다. 이 행의 id가 곧 뿌리오에 보내는 `refkey`이고,
     //    도달 웹훅이 그 값을 그대로 돌려주므로 짝이 맞는다.
     const made = await q<{ id: string }>(
@@ -127,12 +138,10 @@ export async function sendTemplate(opts: {
     );
     const id = made[0].id;
 
-    // 🔴 버튼 주소에는 `#{}`를 못 쓴다. 그 사람의 주소를 통째로 만들어 넣는다.
-    const link = opts.vars.링크 ?? undefined;
     const buttons = (tpl.buttons ?? []).map((b) => ({
       ...b,
-      url_mobile: b.url_mobile || link,
-      url_pc: b.url_pc || link,
+      url_mobile: b.url_mobile || link!,
+      url_pc: b.url_pc || link!,
     }));
 
     // 🔴 **기록을 세운 뒤의 실패는 반드시 그 기록에 적는다.** `alimtalk()`은 통로를

@@ -166,6 +166,9 @@ function ppurioConfig() {
   return { account: account!, password: password!, senderKey: senderKey!, from: from! };
 }
 
+/** 캐시를 얼마나 붙들고 있을지. 토큰은 24시간짜리라 한 시간 여유를 둔다. */
+const TOKEN_TTL_MS = 23 * 60 * 60 * 1000;
+
 async function ppurioToken(cfg: { account: string; password: string }): Promise<string> {
   if (cachedToken && cachedToken.until > Date.now()) return cachedToken.value;
 
@@ -176,13 +179,16 @@ async function ppurioToken(cfg: { account: string; password: string }): Promise<
   });
   if (!res.ok) throw new Error(`뿌리오 토큰 발급 실패 (HTTP ${res.status})`);
 
-  const body = (await res.json()) as { token?: string; expired?: string };
+  const body = (await res.json()) as { token?: string };
   if (!body.token) throw new Error("뿌리오 토큰 발급 실패 — 응답에 token이 없습니다.");
 
-  // 응답의 만료 시각을 쓰되, 못 읽으면 24시간에서 한 시간 뺀 값으로 잡는다.
-  const parsed = body.expired ? Date.parse(body.expired.replace(" ", "T")) : NaN;
-  const until = Number.isFinite(parsed) ? parsed - 60 * 60 * 1000 : Date.now() + 23 * 60 * 60 * 1000;
-  cachedToken = { value: body.token, until };
+  // 🔴 **응답의 `expired` 문자열을 파싱하지 않는다.** `"2026-09-07 00:00:00"`처럼
+  //    시간대가 없는 값이라, 대행사는 한국 시간으로 주는데 서버는 UTC(Vercel)에서
+  //    돌아 **아홉 시간 뒤로 읽는다.** 그러면 이미 만료된 토큰을 여덟 시간 동안 계속
+  //    쓰고, 재시도를 일부러 안 넣어 뒀으므로 **그 사이 신청한 사람 전부가 안내를
+  //    못 받는다**(전부 조용히 「실패」로 기록될 뿐이다).
+  //    24시간짜리라는 것만 알면 충분하므로 고정 23시간으로 잡는다.
+  cachedToken = { value: body.token, until: Date.now() + TOKEN_TTL_MS };
   return body.token;
 }
 
@@ -227,6 +233,10 @@ function ppurioSender(): AlimtalkSender {
           messagekey?: string;
         };
         const code = body.code == null ? null : String(body.code);
+
+        // 토큰이 거절당했으면 캐시가 상한 것이다. 버려서 **다음 발송이 새로 받게** 한다
+        // (여기서 다시 보내지는 않는다 — 자동 재시도는 넣지 않는 것이 원칙이다).
+        if (res.status === 401 || res.status === 403) __clearPpurioToken();
 
         // 🔴 `1000`은 「접수됨」이지 「손님이 받았다」가 아니다. 도달은 웹훅으로 온다.
         if (res.ok && code === "1000") {

@@ -124,11 +124,17 @@ export async function POST(req: Request) {
       // 🔴 **사람과 신청을 나눠 둔 이유가 여기서 드러난다.** 연락처는 사람의 것이라
       //    UNIQUE지만, 신청은 회차마다 따로 생긴다 — 그래서 같은 사람이 2차 회차에
       //    다시 신청할 수 있다. 옛 구조는 한 표라 두 번째 회차가 아예 막혀 있었다.
+      // 🔴 **이미 있는 사람의 신원을 덮어쓰지 않는다.** 이유 둘:
+      //    ① 자리는 `applicant.gender`를 이어 세므로, 2차에 성별을 잘못 골라 다시
+      //       신청하면 **지난 회차에 이미 확정된 그 사람의 자리가 반대쪽 칸으로 옮겨간다** —
+      //       끝난 회차의 성비와 공개 모집 현황이 뒤늦게 바뀐다.
+      //    ② 번호만 알면 남의 이름·생년월일을 이 API로 바꿀 수 있게 된다.
+      //    잘못 적은 신원은 운영자가 고친다(#34). `do update`인 것은 `do nothing`이
+      //    행을 안 돌려주기 때문이고, 실제로 바꾸는 값은 없다.
       const person = await client.query<{ id: string }>(
         `insert into applicant (name, phone, gender, birth)
          values ($1, $2, $3, $4)
-         on conflict (phone) do update
-            set name = excluded.name, gender = excluded.gender, birth = excluded.birth
+         on conflict (phone) do update set updated_at = now()
          returning id`,
         [name, phone, gender, birth],
       );

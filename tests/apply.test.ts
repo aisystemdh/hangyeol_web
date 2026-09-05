@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { POST as applyPOST } from "@/app/api/apply/route";
 import { POST as resultPOST } from "@/app/api/alimtalk/result/route";
-import { fakeOutbox } from "@/lib/alimtalk";
+import { clearFakeOutbox, fakeOutbox } from "@/lib/alimtalk";
 import { settleAfterResponse } from "@/lib/after";
 import { newToken } from "@/lib/admin";
+import { sendTemplate } from "@/lib/notification";
 import { formatDeadline } from "@/lib/deadline";
 import { EVENT } from "@/lib/event";
 import { at, callRoute, q } from "./helpers";
@@ -133,6 +134,27 @@ describe("신청 저장", () => {
     // 참가 조건(20~32세) 밖이라 운영자가 볼 표시가 남는다 — 막지는 않는다.
     expect(rows[0].memo).toMatch(/자격 확인 필요/);
     expect(rows[0].memo).not.toMatch(/25세/);
+  });
+
+  it("🔴 이미 있는 사람의 신원을 신청 폼이 덮어쓰지 않는다", async () => {
+    await 신청하기();
+    // 그 사람은 1차에서 이미 입금까지 마쳤다.
+    await q(`update application set status = '입금완료', paid_at = now()`);
+
+    // 같은 번호로 2차에 신청하면서 성별과 생년월일을 다르게 보낸다.
+    // (2차 신청 자체는 아래 회차 검사가 다루고, 여기서 보는 것은 **덮어쓰기**다.)
+    const 다시 = await 신청하기({ gender: "F", birth: "1990-01-01", name: "남의이름" });
+    expect(다시.status).toBe(409);
+
+    const 사람 = (
+      await q<{ name: string; gender: string; birth: string }>(
+        `select name, gender, birth::text as birth from applicant`,
+      )
+    )[0];
+    // 🔴 성별이 바뀌면 **이미 확정된 지난 회차의 자리가 반대쪽 칸으로 옮겨간다**
+    //    (자리를 `applicant.gender`로 세기 때문이다). 이름·생년월일도 마찬가지로,
+    //    번호만 아는 사람이 이 API로 남의 신원을 바꿀 수 있으면 안 된다.
+    expect(사람).toMatchObject({ name: "김한결", gender: "M", birth: "1998-05-05" });
   });
 
   it("응답에 이름·연락처·토큰이 실려 나가지 않는다", async () => {
@@ -300,6 +322,39 @@ describe("자동 발송", () => {
     expect(기록[0].status).toBe("실패");
     expect(기록[0].error).toContain("계좌");
   });
+
+  it("🔴 버튼이 있는데 넣을 링크가 없으면 보내지 않는다", async () => {
+    await 신청하기();
+    const 신청id = (await q<{ id: string }>(`select id from application`))[0].id;
+    // 위 신청이 이미 한 통 보냈다. 이 검사에서 보려는 것은 **그다음 발송**이다.
+    await q(`delete from notification`);
+    clearFakeOutbox();
+
+    // 본문에 `▶ #{링크}` 줄이 없고, 부르는 쪽도 링크를 안 넘긴 문구.
+    // 문구는 운영자가 화면에서 고칠 수 있고(#38) 발송 화면도 여럿이 될 것이라
+    // 이 짝은 실제로 생긴다 — 그런데 「못 채운 변수」로는 걸리지 않는다.
+    await q(
+      `update notification_template
+          set body = '[한결] #{이름}님, 잘 받았습니다.'
+        where id = '입금안내'`,
+    );
+
+    const r = await sendTemplate({
+      applicationId: 신청id,
+      templateId: "입금안내",
+      phone: "01012345678",
+      vars: { 이름: "김한결" },
+      sentBy: "system",
+    });
+
+    // 주소 없는 버튼이 실리면 대행사가 **요청 전체를** 거절한다 —
+    // 한 사람이 아니라 그 발송이 통째로 죽는다.
+    expect(r.ok).toBe(false);
+    expect(fakeOutbox()).toHaveLength(0);
+    const 기록 = (await q<{ status: string; error: string }>(`select status, error from notification`))[0];
+    expect(기록.status).toBe("실패");
+    expect(기록.error).toContain("링크");
+  });
 });
 
 describe("발송 기록", () => {
@@ -404,6 +459,28 @@ describe("도달 결과 웹훅", () => {
     const 나중 = (await q<{ delivered_at: string }>(시각))[0];
 
     expect(나중.delivered_at).toBe(처음.delivered_at);
+  });
+
+  it("🔴 실패가 먼저 오고 도달이 나중에 와도 도달이 반영된다", async () => {
+    await 신청하기();
+    const 기록 = (await q<{ id: string }>(`select id from notification`))[0];
+
+    // 대행사가 중간 결과를 먼저 주고, 문자로 대체돼 도달한 결과를 나중에 주는 순서다.
+    await callRoute(resultPOST, { method: "POST", body: { refkey: 기록.id, result: "3018" } });
+    await callRoute(resultPOST, {
+      method: "POST",
+      body: { refkey: 기록.id, result: "4100", type: "sms" },
+    });
+
+    const 뒤 = (
+      await q<{ status: string; delivered_at: string | null; error: string | null }>(
+        `select status, delivered_at, error from notification`,
+      )
+    )[0];
+    // 🔴 실패에도 도달 시각을 찍어 두면 그 행이 **영영 잠겨** 진짜 도달이 반영되지 못한다.
+    expect(뒤.status).toBe("문자대체");
+    expect(뒤.delivered_at).not.toBeNull();
+    expect(뒤.error).toBeNull();
   });
 
   it("모양이 아닌 refkey는 500이 아니라 400으로 거절한다", async () => {

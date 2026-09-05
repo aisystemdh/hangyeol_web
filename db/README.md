@@ -15,11 +15,23 @@
 Neon 대시보드 > SQL Editor를 열고 `migrations/` 안의 파일을 **번호 순서대로**
 통째로 붙여넣어 실행한다. 결과가 눈에 보여서 처음 한 번은 이 편이 안전하다.
 
-**방법 2 — psql**
+**방법 2 — 실행기 (권장)**
 
 ```bash
-psql "$DATABASE_URL" -f db/migrations/001_applicant.sql
+npm run db:migrate
 ```
+
+이미 적용한 파일은 건너뛰고, **파일 하나를 한 트랜잭션으로** 돌린다.
+
+**방법 3 — psql**
+
+```bash
+psql "$DATABASE_URL" --single-transaction -f db/migrations/005_rebuild.sql
+```
+
+🔴 **`--single-transaction`을 빼지 말 것.** psql은 기본이 **문장마다 자동 커밋**이라,
+`005`처럼 drop과 create가 함께 있는 파일에서 create가 실패하면 **drop만 커밋된 채 남는다** —
+표가 통째로 사라지고 되돌릴 것이 없다. 실행기(`방법 2`)는 이미 감싸 준다.
 
 ## 테스트 DB
 
