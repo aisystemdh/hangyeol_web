@@ -38,15 +38,13 @@ export default function RecruitStatus() {
 
   if (!status) return null;
 
+  // 🔴 마감일 때 붙던 「— 자리가 나면 순서대로 안내드립니다」를 뺐다.
+  //    대기 안내는 **알림톡이 개인에게** 한다(ADR 003 §3의 2번). 공개 화면에서 미리
+  //    약속하면, 신청도 하지 않은 사람이 「등록해 뒀다」고 믿고 연락을 기다린다.
   return (
     <div className="facts__row">
       <dt>모집 현황</dt>
-      <dd>
-        {status.message}
-        {status.phase === "closed" && (
-          <span className="facts__note"> — 자리가 나면 순서대로 안내드립니다</span>
-        )}
-      </dd>
+      <dd>{status.message}</dd>
     </div>
   );
 }

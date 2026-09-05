@@ -6,11 +6,11 @@ export { q };
  * 비우지 않는 표.
  *
  * - `schema_migration` — 어디까지 적용했는지의 기록이다. 지우면 매번 처음부터 다시 돈다.
- * - `gender_slot` · `recruit_display` — 마이그레이션이 넣어 둔 행이 **데이터가 아니라
- *   스키마의 일부**다(성별마다 한 줄씩 미리 있어야 한다). 비우는 대신 값만 0으로 되돌린다.
- *   🟡 이 둘은 #30에서 없어진다. 없어지면 아래 되돌리기도 저절로 건너뛴다.
+ * - `event`(회차) — 마이그레이션이 넣어 둔 1차 행이 **데이터가 아니라 스키마의 일부**다.
+ *   🔴 신청도 돈 줄도 이 행을 참조하므로 비우면 **모든 테스트가 외래키에서 막힌다.**
+ *   회차 행에는 테스트가 더럽힐 카운터가 없어서 되돌릴 것도 없다.
  */
-const KEEP = new Set(["schema_migration", "gender_slot", "recruit_display"]);
+const KEEP = new Set(["schema_migration", "event"]);
 
 /**
  * 테스트 하나가 시작하기 전에 DB를 빈 상태로 되돌린다.
@@ -34,9 +34,6 @@ export async function resetDb(): Promise<void> {
     // restart identity — seq 번호까지 1로 되돌린다. cascade — 참조하는 표도 함께.
     await q(`truncate ${wipe.map((n) => `"${n}"`).join(", ")} restart identity cascade`);
   }
-
-  if (names.includes("gender_slot")) await q(`update gender_slot set taken = 0`);
-  if (names.includes("recruit_display")) await q(`update recruit_display set high_water = 0`);
 }
 
 /**
