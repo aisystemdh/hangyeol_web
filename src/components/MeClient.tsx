@@ -105,7 +105,7 @@ export default function MeClient({ token }: { token: string }) {
     case "cancelled":
       return <MeCancelled name={data.name} />;
     case "ended":
-      return <MeEnded name={data.name} />;
+      return <MeEnded name={data.name} report={data.report} />;
     case "eventDay":
       return <MeEventDay name={data.name} />;
     case "waitlisted":
