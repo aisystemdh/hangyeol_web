@@ -1,0 +1,102 @@
+/**
+ * 마이페이지(`/me/[token]`) 공용 뼈대 스타일.
+ *
+ * ⚠️ **의도적으로 얇다.** 화면 내용(등록 폼·입금 안내·문항 열 개)의 실제 디자인은
+ *    다음 이슈들(#33·#34·#36)이 채운다 — 이 파일은 그때까지 화면이 완전히 안
+ *    꾸며진 채로 무너져 보이지 않을 만큼만 잡아 둔다. `SiteChrome`이 `/me/`에는
+ *    헤더·푸터를 안 붙이므로(이슈 #32), 로고 대신 브랜드명 텍스트로 "진짜 한결이
+ *    보낸 링크"임을 표시한다.
+ *
+ * 카드 모서리 22px는 이 저장소의 다른 카드류(`globals.css`의 `.faq__item` 등)와
+ * 맞춘 값이다 — 새 반경을 하나 더 만들지 않는다.
+ */
+
+.shell {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6) var(--sp-4);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.brand {
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--fs-3);
+  letter-spacing: var(--ls-label);
+  margin-bottom: var(--sp-5);
+}
+
+.card {
+  width: 100%;
+  max-width: 480px;
+  border: 1px solid var(--rule);
+  border-radius: 22px;
+  padding: var(--sp-6) var(--sp-5);
+  background: var(--field);
+}
+
+.eyebrow {
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 0 0 var(--sp-2);
+}
+
+.title {
+  font-family: var(--font-display), sans-serif;
+  font-size: var(--fs-5);
+  line-height: var(--lh-title);
+  margin: 0 0 var(--sp-4);
+}
+
+.body {
+  font-size: var(--fs-3);
+  line-height: var(--lh-body);
+  color: var(--mute);
+  margin: 0 0 var(--sp-4);
+}
+
+.body:last-child {
+  margin-bottom: 0;
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-5);
+  padding: var(--sp-4);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.fact {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  font-size: var(--fs-2);
+}
+
+.factKey {
+  color: var(--faint);
+}
+
+.factVal {
+  font-weight: 600;
+  text-align: right;
+}
+
+.warn {
+  font-size: var(--fs-1);
+  color: var(--terra-ink);
+  margin: 0 0 var(--sp-4);
+}
+
+.loading {
+  font-size: var(--fs-2);
+  color: var(--faint);
+}
