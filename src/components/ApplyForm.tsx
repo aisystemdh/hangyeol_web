@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AGE_RANGE, EVENT } from "@/lib/event";
 import { track } from "@/lib/track";
+import { readAttribution } from "@/lib/attribution";
 
 type Gender = "M" | "F" | null;
 type Status = "idle" | "submitting" | "done" | "error" | "duplicate";
@@ -175,6 +176,9 @@ export default function ApplyForm() {
     setErrors({});
     setStatus("submitting");
     try {
+      // 이 세션이 처음 도착했을 때 굳혀 둔 값이다(`@/lib/attribution`) — 지금 이
+      // 페이지의 주소가 아니라 **어디서 들어왔는지**를 마케팅 탭(#41)이 봐야 한다.
+      const attribution = readAttribution();
       const res = await fetch(ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -186,6 +190,9 @@ export default function ApplyForm() {
           privacy_agreed: true,
           marketing_agreed: marketing,
           _gotcha: gotcha,
+          referrer: attribution.referrer,
+          utm: attribution.utm,
+          landing_path: attribution.landingPath,
         }),
       });
       // 같은 번호로 두 번 — 실패가 아니라 "이미 접수돼 있다"는 사실이다.
