@@ -191,6 +191,21 @@ describe("GET /api/admin/marketing — 유입 경로별 신청 수", () => {
     const bySource = new Map(res.body.data?.sources.map((s) => [s.source, s.count]));
     expect(bySource.get("미상")).toBe(1);
   });
+
+  it("🔴 (이슈 #54) 취소된 신청은 기본은 빼고, ?includeCancelled=1이면 포함한다", async () => {
+    await 신청하기({ utm: { utm_source: "instagram" } });
+    const { 전화 } = await 신청하기({ utm: { utm_source: "instagram" } });
+    await q(`update application set status = '취소됨' where applicant_id = (select id from applicant where phone = $1)`, [전화]);
+    const cookies = await 로그인쿠키();
+
+    const 기본 = await callRoute<MarketingBody>(marketingGET, { cookies });
+    const 포함 = await callRoute<MarketingBody>(marketingGET, { cookies, query: { includeCancelled: "1" } });
+
+    const 기본맵 = new Map(기본.body.data?.sources.map((s) => [s.source, s.count]));
+    const 포함맵 = new Map(포함.body.data?.sources.map((s) => [s.source, s.count]));
+    expect(기본맵.get("instagram")).toBe(1);
+    expect(포함맵.get("instagram")).toBe(2);
+  });
 });
 
 describe("GET /api/admin/marketing — 퍼널 네 단계", () => {
@@ -247,6 +262,28 @@ describe("GET /api/admin/marketing — 퍼널 네 단계", () => {
     expect(byKey.get("정식등록")?.count).toBe(3);
     expect(byKey.get("입금")?.count).toBe(2);
     expect(byKey.get("사전질문")?.count).toBe(1);
+  });
+
+  it("🔴 (이슈 #54) 입금까지 갔다가 취소한 사람은 기본에서 「입금 단계 이탈」로 안 보인다", async () => {
+    const 취소전_id = await 신청만들기({ paid: true });
+    await q(`update application set status = '취소됨' where id = $1`, [취소전_id]);
+    await 신청만들기({ paid: true });
+    const cookies = await 로그인쿠키();
+
+    const 기본 = await callRoute<MarketingBody>(marketingGET, { cookies });
+    const 기본단계 = new Map(기본.body.data?.funnel.map((f) => [f.key, f]));
+    // 취소자를 빼면 신청 1(살아있는 사람)·입금 1이라 이탈처럼 안 보인다.
+    expect(기본단계.get("신청")?.count).toBe(1);
+    expect(기본단계.get("입금")?.count).toBe(1);
+
+    const 포함 = await callRoute<MarketingBody>(marketingGET, {
+      cookies,
+      query: { includeCancelled: "1" },
+    });
+    const 포함단계 = new Map(포함.body.data?.funnel.map((f) => [f.key, f]));
+    expect(포함단계.get("신청")?.count).toBe(2);
+    // 입금 단계는 `status = '입금완료'`만 세므로 취소자는 include 여부와 무관하게 계속 빠진다.
+    expect(포함단계.get("입금")?.count).toBe(1);
   });
 
   it("비율은 1단계(신청) 대비다", async () => {

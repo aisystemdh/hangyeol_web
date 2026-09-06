@@ -3,7 +3,7 @@ import { isAdmin, normalizeActor } from "@/lib/admin";
 import { recordPayment } from "@/lib/admin-data";
 import { parseMoneyBody, type MoneyBodyInput } from "@/lib/payment";
 import { EVENT } from "@/lib/event";
-import { paidSeats, remainingSeats } from "@/lib/seats";
+import { isOverCapacity, paidSeats, remainingSeats } from "@/lib/seats";
 
 /**
  * POST /api/admin/applications/[id]/payment — 입금 확인 (이슈 #35).
@@ -69,7 +69,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
    */
   const taken = await paidSeats(EVENT.id);
   const remaining = remainingSeats(taken);
-  const overCapacity = remaining[result.gender] <= 0;
+  const overCapacity = isOverCapacity(taken, result.gender);
 
   return NextResponse.json({
     ok: true,
