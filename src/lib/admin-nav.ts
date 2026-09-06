@@ -8,8 +8,8 @@
  */
 export const ADMIN_NAV = [
   { href: "/admin", label: "신청 목록" },
+  { href: "/admin/nicknames", label: "닉네임 배정" }, // #39
   { href: "/admin/marketing", label: "마케팅" }, // #41
-  // 다음 이슈가 여기 한 줄씩 추가한다:
-  // { href: "/admin/notify", label: "알림톡" },        ← #37
-  // { href: "/admin/nicknames", label: "닉네임 배정" }, ← #39
+  // 다음 이슈가 여기 한 줄 추가한다:
+  // { href: "/admin/notify", label: "알림톡" }, ← #37
 ] as const;
