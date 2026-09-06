@@ -50,10 +50,19 @@ export type Question = {
   paired?: { label: string; choices: Choice[] }[];
   /** 일반 문항의 선택지. 10번만 3지선다다. */
   choices?: Choice[];
+  /**
+   * 🔴 자유 서술 문항인가(이슈 #36). 지금 열 개는 전부 선택지형이라 전부 `false`다.
+   *    당장 쓸 데가 없어 보여도 필드 자체를 지금 넣어 둔다 — 나중에 현장·후기 폼에
+   *    "어떤 점이 좋았나요" 같은 서술형 칸이 생기면, 파기 배치(#42)가 "이 답은 사람이
+   *    쓴 글이라 더 조심해서 지워야 하는가"를 판정할 근거가 이 필드다. 답이 이미
+   *    쌓인 뒤에 필드를 추가하면 그 판정을 과거 답까지 되짚어 다시 해야 한다.
+   */
+  freeText: boolean;
 };
 
 export const QUESTIONS: Question[] = [
   {
+    freeText: false,
     code: "R1",
     topic: "연휴 사흘",
     scene: "연휴 사흘. 둘 다 약속이 없다. 이렇게 통으로 빈 건 올해 처음이다.",
@@ -63,6 +72,7 @@ export const QUESTIONS: Question[] = [
     ],
   },
   {
+    freeText: false,
     code: "R2",
     topic: "내 시간",
     scene: "새로 만나는 사람과 2주째 거의 매일 붙어 있다. 슬슬 내 시간이 필요하다.",
@@ -72,6 +82,7 @@ export const QUESTIONS: Question[] = [
     ],
   },
   {
+    freeText: false,
     code: "R3",
     topic: "안 좋은 날",
     scene: "회사에서 제대로 깨진 날. 하필 오늘 저녁에 만나기로 한 날이다.",
@@ -81,6 +92,7 @@ export const QUESTIONS: Question[] = [
     ],
   },
   {
+    freeText: false,
     code: "R4",
     topic: "다투고 난 뒤",
     scene: "크게 다퉜다. 할 말은 서로 다 했고, 지금 밤 11시다.",
@@ -102,6 +114,7 @@ export const QUESTIONS: Question[] = [
     ],
   },
   {
+    freeText: false,
     code: "R5",
     topic: "또 갈렸다",
     scene: "주말에 뭐 할지 또 갈렸다. 지난 세 번은 전부 상대가 원하는 쪽이었다.",
@@ -111,6 +124,7 @@ export const QUESTIONS: Question[] = [
     ],
   },
   {
+    freeText: false,
     code: "R6",
     topic: "상대가 힘들 때",
     scene: "상대가 3주째 일에 치여 산다. 이번 주말에 오랜만에 만나기로 했다.",
@@ -132,6 +146,7 @@ export const QUESTIONS: Question[] = [
     ],
   },
   {
+    freeText: false,
     code: "R7",
     topic: "여행 예산",
     scene:
@@ -142,6 +157,7 @@ export const QUESTIONS: Question[] = [
     ],
   },
   {
+    freeText: false,
     code: "R8",
     topic: "제안이 왔다",
     scene:
@@ -152,6 +168,7 @@ export const QUESTIONS: Question[] = [
     ],
   },
   {
+    freeText: false,
     code: "R9",
     topic: "여윳돈",
     scene: "예상 못 한 보너스로 월급만큼이 들어왔다. 당장 급하게 쓸 데는 없다.",
@@ -161,6 +178,7 @@ export const QUESTIONS: Question[] = [
     ],
   },
   {
+    freeText: false,
     code: "R10",
     topic: "아직 아무것도",
     scene:
@@ -178,6 +196,52 @@ export const PAIRED_INDEXES = QUESTIONS.reduce<number[]>(
   (acc, q, i) => (q.paired ? [...acc, i] : acc),
   [],
 );
+
+/**
+ * 답 하나의 저장 모양. 일반 문항은 고른 번호 하나, 페어드 문항(4·6번)은
+ * `[나, 상대]` 두 값의 배열이다(`Question.paired`의 주석과 같은 규칙).
+ */
+export type PreQuestionAnswers = Record<string, number | [number, number]>;
+
+/**
+ * 제출된 답이 지금 문항 정의(`QUESTIONS`)와 정확히 맞는 모양인지 검사한다
+ * (이슈 #36). 여기를 통과한 값만 `answer.a`에 저장한다.
+ *
+ * 🔴 **문항 코드마다 있어야 할 값의 모양을 이 함수가 직접 안다** — 그래서
+ *    `QUESTIONS`가 바뀌면(문항 추가·선택지 변경) 이 함수도 같이 봐야 하고,
+ *    그때 `PRE_QUESTION_FORM_VERSION`도 함께 올린다(위 상수 주석).
+ * 하나라도 빠지거나, 문항에 없는 번호를 골랐거나, 페어드인데 단일 값(또는
+ * 반대)이 왔으면 전부 거절한다 — 부분적으로만 맞는 답을 저장하지 않는다.
+ */
+export function validatePreQuestionAnswers(input: unknown): PreQuestionAnswers | null {
+  if (typeof input !== "object" || input === null || Array.isArray(input)) return null;
+  const raw = input as Record<string, unknown>;
+  const out: PreQuestionAnswers = {};
+
+  for (const question of QUESTIONS) {
+    const value = raw[question.code];
+    if (question.paired) {
+      if (!Array.isArray(value) || value.length !== 2) return null;
+      const [mine, theirs] = value as [unknown, unknown];
+      const [minePick, theirsPick] = question.paired;
+      if (
+        typeof mine !== "number" ||
+        typeof theirs !== "number" ||
+        !minePick.choices.some((c) => c.n === mine) ||
+        !theirsPick.choices.some((c) => c.n === theirs)
+      ) {
+        return null;
+      }
+      out[question.code] = [mine, theirs];
+    } else {
+      const choices = question.choices ?? [];
+      if (typeof value !== "number" || !choices.some((c) => c.n === value)) return null;
+      out[question.code] = value;
+    }
+  }
+
+  return out;
+}
 
 /**
  * 화면 문구.

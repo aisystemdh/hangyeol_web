@@ -78,3 +78,12 @@ export type MeApiResponse = MeApiSuccess | MeApiError;
  */
 export type MeRegisterApiSuccess = { ok: true; data: { registeredAt: string } };
 export type MeRegisterApiResponse = MeRegisterApiSuccess | MeApiError;
+
+/**
+ * `POST /api/me/[token]/answers`(사전질문 제출, 이슈 #36)이 돌려주는 모양.
+ *
+ * 🔴 등록 응답과 같은 이유로 여기에도 문항이 없다 — "저장됐다"는 사실만 알린다.
+ *    다음 화면("confirmed")은 `MeClient`가 `GET`을 다시 불러 새로 고른다.
+ */
+export type MeAnswersApiSuccess = { ok: true; data: { submittedAt: string } };
+export type MeAnswersApiResponse = MeAnswersApiSuccess | MeApiError;

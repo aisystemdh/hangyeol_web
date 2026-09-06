@@ -100,3 +100,55 @@
   font-size: var(--fs-2);
   color: var(--faint);
 }
+
+/* 사전질문(이슈 #36) — 문항 한 칸. globals.css의 `.gender__input`·`.gender__btn`을
+   그대로 이어 쓴다(같은 "숨긴 라디오 + 라벨을 버튼처럼" 패턴) — 새 라디오 스타일을
+   만들지 않는다. 다만 `.gender`는 2칸 그리드로 고정돼 있어 문장이 긴 선택지나
+   10번의 3지선다에는 맞지 않는다. 그래서 그리드 대신 세로로 쌓는 이 클래스를 쓴다. */
+.question {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-5) 0;
+  border-bottom: 1px solid var(--rule);
+}
+.question:last-of-type {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.questionNum {
+  font-size: var(--fs-1);
+  letter-spacing: var(--ls-label);
+  color: var(--faint);
+}
+
+.scene {
+  font-size: var(--fs-3);
+  line-height: var(--lh-body);
+  margin: 0;
+}
+
+/* 페어드 문항(4·6번)의 두 갈래("나는" / "상대는 이렇게 해줬으면") 사이 간격 */
+.pairLabel {
+  font-size: var(--fs-1);
+  color: var(--mute);
+  margin: var(--sp-2) 0 0;
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.progress {
+  font-size: var(--fs-1);
+  color: var(--faint);
+  text-align: center;
+  margin: 0 0 var(--sp-4);
+}
