@@ -295,6 +295,7 @@ export default function Dashboard({
               <th>신청일</th>
               <th>기한</th>
               <th>마지막 발송</th>
+              <th>닉네임</th>
             </tr>
           </thead>
           <tbody>
@@ -343,13 +344,14 @@ export default function Dashboard({
                           }`
                         : "—"}
                     </td>
+                    <td className={st.mono}>{r.nick ?? "—"}</td>
                   </tr>
                 );
               });
             })()}
             {shown.length === 0 && (
               <tr>
-                <td colSpan={10} className={st.empty}>
+                <td colSpan={11} className={st.empty}>
                   조건에 맞는 신청이 없습니다.
                 </td>
               </tr>

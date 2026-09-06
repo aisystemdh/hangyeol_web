@@ -41,6 +41,8 @@ export type AdminApplicationRow = {
    *    막지 않고 목록에 표시만 남긴다 — `docs/decisions/003…` §7.
    */
   amountMismatch: boolean;
+  /** 현장 이름표 번호(1~20). 행사 며칠 전 일괄 배정 전에는 null(이슈 #39). */
+  nick: number | null;
 };
 
 /**

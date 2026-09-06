@@ -43,6 +43,7 @@ type Row = {
   last_notified_label: string | null;
   last_notified_status: string | null;
   amount_mismatch: boolean;
+  nick: number | null;
 };
 
 /** 신청 목록. `filter`는 검색어·상태·성별 — 실제로 거르는 규칙은 `admin-list.ts`에 있다. */
@@ -54,7 +55,7 @@ export async function loadApplications(
   const rows = await q<Row>(
     `select a.id, a.seq::text as seq, a.status, a.view_override,
             p.name, p.gender, p.birth::text as birth, p.phone,
-            a.created_at, a.due_at,
+            a.created_at, a.due_at, a.nick,
             ln.created_at as last_notified_at,
             coalesce(nt.label, ln.template_id) as last_notified_label,
             ln.status as last_notified_status,
@@ -108,6 +109,7 @@ export async function loadApplications(
       screenLocked: viewOverride !== null,
       viewOverride,
       amountMismatch: r.amount_mismatch,
+      nick: r.nick,
     };
   });
 
@@ -512,5 +514,70 @@ export async function cancelApplication(
       [id, actor, JSON.stringify({ note, previousStatus: row.status })],
     );
     return true;
+  });
+}
+
+export type AssignNicknamesResult = {
+  /** 이번 호출에서 새로 번호를 받은 사람 수. 0이면 「다시 눌러도 안 바뀐다」가 지켜진 것이다. */
+  assignedCount: number;
+};
+
+/**
+ * 닉네임 일괄 배정 — 행사 며칠 전, **그 시점의** 입금완료 신청 전체에 현장 이름표
+ * 번호(1~20)를 붙인다(이슈 #39, `CONTEXT.md` "닉네임", 결정 14).
+ *
+ * 🔴 **순서 기준은 `seq`(접수 순서) 오름차순.** 이슈 본문에 정해진 규칙이 없어
+ *    선택했다 — 이 시스템에 이미 있는 유일한 "공정한 한 줄 순서"이고, 이름·성별
+ *    순은 동명이인에서 안정적이지 않거나(이름) 번호에 성별을 드러내게 된다(성별,
+ *    결정 14 "번호에 성별이 드러나지 않는다").
+ *
+ * 🔴 **"다시 눌러도 안 바뀐다"와 "번호가 안 빈다"를 동시에 만족시키는 방법** —
+ *    이미 `nick`이 있는 사람은 건드리지 않고 건너뛰며, 아직 없는 사람에게만
+ *    "이미 쓰인 최댓값 + 1"부터 seq 순서로 이어 붙인다. 전체를 매번 1부터 다시
+ *    매기면 이미 이름표를 인쇄해 현장에 붙여 둔 사람의 번호가 바뀌는 사고가 난다.
+ *    이 방식은 취소로 중간에 빈 사람이 있어도 자동으로 채운다 — 대상 자체가
+ *    "지금 입금완료인" 사람들만이라, 취소된 사람은 애초에 세지 않기 때문이다.
+ *
+ * 🔴 **`select ... for update`로 대상 행을 잠그고 트랜잭션 안에서 계산한다.**
+ *    동시에 두 번 눌려도(운영자 셋이 각자 다른 기기로) 두 번째 호출은 첫 번째가
+ *    커밋할 때까지 기다렸다가 **그 결과가 반영된 값**(이미 배정된 최댓값)을 보고
+ *    다음 번호를 계산한다 — 잠그지 않으면 두 트랜잭션이 같은 "다음 번호"를 동시에
+ *    계산해 `application_nick_uq`(부분 UNIQUE)가 결국 막아주긴 해도, 그중 하나는
+ *    이유 없이 통째로 실패한 응답을 받는다.
+ *
+ * 취소된 신청·아직 입금 전인 신청은 대상이 아니다(`where status = '입금완료'`).
+ * 이 함수 어디에도 `gender`가 등장하지 않는다 — 성별과 무관하게 seq 순서로만
+ * 번호를 매긴다.
+ */
+export async function assignNicknames(
+  actor: string,
+  eventId: number = EVENT.id,
+): Promise<AssignNicknamesResult> {
+  return tx(async (client) => {
+    const found = await client.query<{ id: string; nick: number | null }>(
+      `select id, nick
+         from application
+        where event_id = $1 and status = '입금완료'
+        order by seq
+        for update`,
+      [eventId],
+    );
+
+    const maxNick = found.rows.reduce((m, r) => (r.nick !== null && r.nick > m ? r.nick : m), 0);
+    const unassigned = found.rows.filter((r) => r.nick === null);
+
+    let next = maxNick + 1;
+    for (const r of unassigned) {
+      const nick = next;
+      next += 1;
+      await client.query(`update application set nick = $2 where id = $1`, [r.id, nick]);
+      await client.query(
+        `insert into event_log (application_id, kind, actor, meta)
+         values ($1, '닉네임배정', $2, $3)`,
+        [r.id, actor, JSON.stringify({ nick })],
+      );
+    }
+
+    return { assignedCount: unassigned.length };
   });
 }
