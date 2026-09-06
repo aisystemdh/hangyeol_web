@@ -1,4 +1,4 @@
-import { EVENT, EVENT_SCHEMA } from "./event";
+import { EVENT_SCHEMA, eventDayStart } from "./event";
 
 /**
  * 마이페이지(`/me/[token]`) 화면 선택.
@@ -60,7 +60,7 @@ export function isMeScreenName(v: string | null | undefined): v is MeScreenName 
  *    고칠 것(회차별 날짜를 어디서 가져올지는 그때 정한다).
  */
 function eventPhase(now: Date): "before" | "eventDay" | "ended" {
-  const dayStart = new Date(`${EVENT.dateISO}T00:00:00+09:00`);
+  const dayStart = eventDayStart();
   const dayEnd = new Date(EVENT_SCHEMA.endISO);
   if (now.getTime() >= dayEnd.getTime()) return "ended";
   if (now.getTime() >= dayStart.getTime()) return "eventDay";
