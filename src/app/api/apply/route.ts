@@ -10,7 +10,7 @@ import { notifyNewApplicant } from "@/lib/notify";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
 import { EVENT } from "@/lib/event";
 import { myPageUrl, SITE_URL } from "@/lib/site";
-import { deriveSource } from "@/lib/source";
+import { deriveSource, UTM_KEYS } from "@/lib/source";
 
 /**
  * POST /api/apply — 신청 (공개)
@@ -67,8 +67,7 @@ function sanitizeStr(v: unknown, max = MAX_STR): string | null {
   return t ? t.slice(0, max) : null;
 }
 
-// 표준 다섯 개만 받는다 — 광고주가 임의의 키를 붙여도 `utm` 칸이 무한정 커지지 않는다.
-const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const;
+// 표준 다섯 개만 받는다(`@/lib/source`) — 광고주가 임의의 키를 붙여도 `utm` 칸이 무한정 커지지 않는다.
 function sanitizeUtm(v: unknown): Record<string, string> | null {
   if (!v || typeof v !== "object") return null;
   const out: Record<string, string> = {};

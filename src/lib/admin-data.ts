@@ -245,7 +245,7 @@ export async function loadApplicationDetail(
     }>(
       `select id::text as id, kind, amount, occurred_at, depositor_name, note, recorded_by, created_at
          from money where application_id = $1
-        order by occurred_at`,
+        order by occurred_at, id`,
       [id],
     ),
     q<{

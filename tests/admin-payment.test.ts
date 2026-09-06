@@ -297,6 +297,22 @@ describe("POST /api/admin/applications/[id]/payment — 입금 확인", () => {
     expect(res.body.error).toBe("invalid_depositor_name");
   });
 
+  it("🔴 (이슈 #54) 정확히 정원을 채우는 마지막 입금은 초과 경고를 띄우지 않는다", async () => {
+    await 입금완료로채우기("M", EVENT.capacityPerGender - 1);
+    const { id } = await 신청만들기({ name: "마지막정원", gender: "M" });
+    const cookies = await 로그인쿠키();
+
+    const res = await callRoute<OkBody, { id: string }>(paymentPOST, {
+      method: "POST",
+      params: { id },
+      cookies,
+      body: 정상입금(),
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.overCapacity).toBe(false);
+  });
+
   it("🔴 정원이 찼는데 입금 확인을 누르면 경고를 주되 막지 않는다 — 응답은 200, 자리는 정원을 넘겨서도 찬다", async () => {
     await 입금완료로채우기("M", EVENT.capacityPerGender);
     const { id } = await 신청만들기({ name: "정원초과자", gender: "M" });

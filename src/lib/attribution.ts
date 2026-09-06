@@ -25,6 +25,8 @@
  * ⚠️ 개인정보를 담지 않는다 — 여기 담기는 값은 URL·리퍼러 문자열뿐이다.
  */
 
+import { UTM_KEYS } from "./source";
+
 const KEY = "hg-attribution";
 
 export type Attribution = {
@@ -34,8 +36,6 @@ export type Attribution = {
 };
 
 const EMPTY: Attribution = { referrer: null, utm: null, landingPath: null };
-
-const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const;
 
 function captureNow(): Attribution {
   const params = new URLSearchParams(window.location.search);

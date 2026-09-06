@@ -19,6 +19,14 @@
  *    같은 이유(`CLAUDE.md` "테스트"). `tests/marketing.test.ts`가 `POST /api/apply`를
  *    통해 실제로 저장되는 `application.source` 값으로 이 규칙을 검사한다.
  */
+
+/**
+ * 표준 UTM 다섯 키. (이슈 #54) `attribution.ts`(클라이언트가 캡처)와
+ * `/api/apply/route.ts`(서버가 그 값을 다시 검증)가 각자 따로 이 목록을 들고 있으면
+ * 키를 하나 늘릴 때 한쪽만 고쳐질 수 있다 — 이 파일이 이미 유입 규칙의 정본이라 여기 둔다.
+ */
+export const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const;
+
 export function deriveSource(input: {
   utm: Record<string, string> | null;
   referrer: string | null;

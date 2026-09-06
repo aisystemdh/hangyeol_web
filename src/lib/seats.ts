@@ -44,6 +44,21 @@ export function remainingSeats(taken: SeatCount): SeatCount {
 }
 
 /**
+ * 이 성별이 정원을 **넘겼는가**(이슈 #54·#35). 입금 확인 화면의 경고가 이 값을 쓴다.
+ *
+ * 🔴 **`remainingSeats(taken)[gender] <= 0`이나 `< 0`으로 대신하지 않는다.**
+ *    `remainingSeats`는 화면에 "-3명 남음"을 보여주지 않으려고 `Math.max(0, ...)`로
+ *    음수를 0에 묶는다 — 그래서 그 값으로는 "정확히 다 참"과 "정원을 넘김"을 구분할
+ *    수 없다(`<= 0`은 둘 다 참이 되고, `< 0`은 클램프 때문에 절대 참이 안 된다 —
+ *    실측: 정원을 정확히 채우는 테스트가 이걸로 깨졌다). 클램프되지 않은 `taken`을
+ *    정원과 직접 비교해야 한다. **자리를 세는 곳은 여기 하나다**(`CONTEXT.md` "자리") —
+ *    호출부가 이 비교를 다시 베끼지 않는다.
+ */
+export function isOverCapacity(taken: SeatCount, gender: "M" | "F"): boolean {
+  return taken[gender] > EVENT.capacityPerGender;
+}
+
+/**
  * 이 성별로 지금 신청하면 대기자인가.
  *
  * 🔴 **대기자는 저장하는 상태가 아니다**(`CONTEXT.md`). 그때그때 세어서 판단한다 —

@@ -42,6 +42,36 @@ function nowLocalInputValue(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+type PostResult<T> = { ok: true; data: T } | { ok: false; message: string };
+
+/**
+ * 서랍의 조작 버튼 넷(화면 고정·입금 확인·환불·취소)이 공유하는 fetch 뼈대.
+ *
+ * 🔴 코드리뷰(2026-09-06) — 네트워크 오류 시 `busy`를 풀어주는 try/catch/finally를
+ *    네 곳에 각각 복붙했더니, 그중 하나(`applyScreen`)를 빠뜨렸었다 — 하나를
+ *    빠뜨리기 쉬운 바로 그 모양이라 한 곳으로 모은다. `busy`를 여기서 풀지 않는
+ *    이유는 성공했을 때 호출부가 후속 처리(로컬 상태 갱신 등)를 마칠 때까지
+ *    버튼이 다시 눌리지 않게 하기 위해서다 — 호출부가 자기 타이밍에 풀어준다.
+ */
+async function postAdminAction<T>(
+  url: string,
+  body: unknown,
+  failPrefix: string,
+): Promise<PostResult<T>> {
+  try {
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) return { ok: false, message: `${failPrefix}: ${j.message ?? j.error ?? r.status}` };
+    return { ok: true, data: j.data as T };
+  } catch {
+    return { ok: false, message: `${failPrefix}: 네트워크 오류. 다시 시도해주세요.` };
+  }
+}
+
 export default function ApplicationDrawer({
   id,
   onClose,
@@ -136,15 +166,10 @@ export default function ApplicationDrawer({
       return;
     }
     setBusy(true);
-    const r = await fetch(`/api/admin/applications/${id}/screen`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ screen, actor }),
-    });
-    const j = await r.json().catch(() => ({}));
+    const res = await postAdminAction(`/api/admin/applications/${id}/screen`, { screen, actor }, "실패");
     setBusy(false);
-    if (!r.ok) {
-      onMessage(`실패: ${j.message ?? j.error ?? r.status}`);
+    if (!res.ok) {
+      onMessage(res.message);
       return;
     }
     onMessage(screen ? `화면을 「${SCREEN_LABELS[screen]}」로 고정했습니다.` : "화면 고정을 풀었습니다.");
@@ -202,26 +227,25 @@ export default function ApplicationDrawer({
       return;
     }
     setBusy(true);
-    const r = await fetch(`/api/admin/applications/${id}/payment`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    const res = await postAdminAction<{ amountMismatch?: boolean; overCapacity?: boolean }>(
+      `/api/admin/applications/${id}/payment`,
+      {
         amount,
         occurredAt: payOccurredAt,
         depositorName: payDepositor.trim(),
         note: payNote.trim() || undefined,
         actor,
-      }),
-    });
-    const j = await r.json().catch(() => ({}));
+      },
+      "입금 확인 실패",
+    );
     setBusy(false);
-    if (!r.ok) {
-      onMessage(`입금 확인 실패: ${j.message ?? j.error ?? r.status}`);
+    if (!res.ok) {
+      onMessage(res.message);
       return;
     }
     const parts = [`입금(${amount.toLocaleString()}원)을 확인해 자리를 채웠습니다.`];
-    if (j.data?.amountMismatch) parts.push(`${EVENT.priceLabel}과 다른 금액입니다.`);
-    if (j.data?.overCapacity) parts.push("정원 초과 상태입니다. 그래도 저장은 됐습니다.");
+    if (res.data?.amountMismatch) parts.push(`${EVENT.priceLabel}과 다른 금액입니다.`);
+    if (res.data?.overCapacity) parts.push("정원 초과 상태입니다. 그래도 저장은 됐습니다.");
     onMessage(parts.join(" "));
     setPayNote("");
     onChanged();
@@ -242,21 +266,20 @@ export default function ApplicationDrawer({
       return;
     }
     setBusy(true);
-    const r = await fetch(`/api/admin/applications/${id}/refund`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    const res = await postAdminAction(
+      `/api/admin/applications/${id}/refund`,
+      {
         amount,
         occurredAt: refundOccurredAt,
         depositorName: refundDepositor.trim() || undefined,
         note: refundNote.trim() || undefined,
         actor,
-      }),
-    });
-    const j = await r.json().catch(() => ({}));
+      },
+      "환불 기록 실패",
+    );
     setBusy(false);
-    if (!r.ok) {
-      onMessage(`환불 기록 실패: ${j.message ?? j.error ?? r.status}`);
+    if (!res.ok) {
+      onMessage(res.message);
       return;
     }
     onMessage(`환불(${amount.toLocaleString()}원)을 돈 줄에 남겼습니다.`);
@@ -274,15 +297,10 @@ export default function ApplicationDrawer({
       return;
     }
     setBusy(true);
-    const r = await fetch(`/api/admin/applications/${id}/cancel`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ actor }),
-    });
-    const j = await r.json().catch(() => ({}));
+    const res = await postAdminAction(`/api/admin/applications/${id}/cancel`, { actor }, "취소 실패");
     setBusy(false);
-    if (!r.ok) {
-      onMessage(`취소 실패: ${j.message ?? j.error ?? r.status}`);
+    if (!res.ok) {
+      onMessage(res.message);
       return;
     }
     onMessage("신청을 취소됨으로 바꿨습니다.");
