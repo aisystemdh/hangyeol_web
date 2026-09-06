@@ -95,6 +95,12 @@ a.tab, a.tabOn { text-decoration: none; display: inline-block; }
 .plainList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .pre { margin: 4px 0 0; padding: 8px 10px; background: #f8f9fa; border-radius: 6px; font-size: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
 
+/* 문구 추가·수정 폼(#38) — 라벨과 입력을 세로로 쌓고 서랍 폭 전체를 쓴다. */
+.form { display: flex; flex-direction: column; gap: 14px; }
+.form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #495057; }
+.form input, .form select, .form textarea { width: 100%; box-sizing: border-box; }
+.form textarea { font-family: inherit; resize: vertical; }
+
 /* ── 마케팅 탭 (#41) ───────────────────────────────────
    `.drawer h3`과 같은 크기(14px) — 이 화면 안 섹션 제목도 상세 서랍과 같은
    위계(본문보다 작고, 표 제목만큼 도드라짐)라 값을 새로 정하지 않고 그대로 썼다. */

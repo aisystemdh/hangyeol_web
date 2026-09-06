@@ -11,4 +11,5 @@ export const ADMIN_NAV = [
   { href: "/admin/notify", label: "알림톡" }, // #37
   { href: "/admin/nicknames", label: "닉네임 배정" }, // #39
   { href: "/admin/marketing", label: "마케팅" }, // #41
+  { href: "/admin/templates", label: "문구 관리" }, // #38
 ] as const;
