@@ -23,9 +23,10 @@ import MeWaitlisted from "./MeWaitlisted";
  *    못 막는다. 그래서 이 컴포넌트가 마운트된 **뒤에** `GET /api/me/[token]`을
  *    따로 불러 가져온다.
  *
- * 🔴 **등록(`MeRegister`, 이슈 #33)이 성공한 뒤에도 다음 화면은 여기서 다시 받아온다.**
- *    등록 라우트의 응답에는 계좌가 없다(`me-response.ts`의 `MeRegisterApiResponse`) —
- *    다음 화면이 "payment"인지 "questions"인지는 서버의 `resolveMeScreen`만 알고,
+ * 🔴 **등록(`MeRegister`, 이슈 #33)·사전질문 제출(`MeQuestions`, 이슈 #36)이 성공한
+ *    뒤에도 다음 화면은 여기서 다시 받아온다.** 두 라우트의 응답 모두 계좌·문항이
+ *    없다(`me-response.ts`의 `MeRegisterApiResponse`·`MeAnswersApiResponse`) —
+ *    다음 화면이 "payment"인지 "questions"인지 "confirmed"인지는 서버의 `resolveMeScreen`만 알고,
  *    그건 `GET`을 다시 불러야 새로 계산된다. 그래서 화면을 여기서 직접 조립하지
  *    않고 `reloadKey`를 올려 **같은 조회를 한 번 더** 태운다 — 진실이 두 곳(이
  *    조립 로직과 서버의 판정)으로 나뉘지 않게 한다. `RecruitStatus.tsx`와 같은
@@ -34,13 +35,15 @@ import MeWaitlisted from "./MeWaitlisted";
  *    (`react-hooks/set-state-in-effect`)가 "effect 안에서 setState를 직접
  *    부른다"고 보고 막기 때문이다.
  *
- * 🔴 **등록 직후의 재조회가 실패하면 "링크를 확인해주세요"라고 하지 않는다.**
- *    그 문구는 토큰이 틀렸다는 뜻인데, 이 경우는 등록은 **이미 저장된 뒤**라
- *    사실이 아니다(`afterRegisterRef`). 등록이 성공했다는 사실과 "다음 화면을
- *    못 받아왔다"는 사실을 구분해서 말해야, 손님이 이미 된 등록을 다시 시도하거나
- *    "링크가 잘못됐나" 하고 걱정하지 않는다. `ref`로 두는 이유는 이 플래그가
- *    바뀐다고 새로 조회를 다시 태울 필요는 없기 때문이다(`state`로 두면 성공
- *    직후 이 값을 되돌리는 것 자체가 effect를 한 번 더 돌려 조회가 중복된다).
+ * 🔴 **등록·사전질문 제출 직후의 재조회가 실패하면 "링크를 확인해주세요"라고
+ *    하지 않는다.** 그 문구는 토큰이 틀렸다는 뜻인데, 이 경우는 제출이 **이미
+ *    저장된 뒤**라 사실이 아니다(`afterActionRef`). 제출이 성공했다는 사실과
+ *    "다음 화면을 못 받아왔다"는 사실을 구분해서 말해야, 손님이 이미 된 제출을
+ *    다시 시도하거나 "링크가 잘못됐나" 하고 걱정하지 않는다. `ref`로 두는 이유는
+ *    이 플래그가 바뀐다고 새로 조회를 다시 태울 필요는 없기 때문이다(`state`로
+ *    두면 성공 직후 이 값을 되돌리는 것 자체가 effect를 한 번 더 돌려 조회가
+ *    중복된다). 등록·사전질문 둘 다 같은 플래그를 쓰는 이유는, 둘 다 "직전 제출은
+ *    끝났는데 다음 화면만 못 받아왔다"는 같은 상황이라 문구도 하나로 충분해서다.
  */
 export default function MeClient({ token }: { token: string }) {
   const [state, setState] = useState<
@@ -49,11 +52,11 @@ export default function MeClient({ token }: { token: string }) {
     | { phase: "ready"; data: MeData }
   >({ phase: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
-  const afterRegisterRef = useRef(false);
+  const afterActionRef = useRef(false);
 
   useEffect(() => {
     let alive = true;
-    const afterRegister = afterRegisterRef.current;
+    const afterAction = afterActionRef.current;
 
     fetch(`/api/me/${encodeURIComponent(token)}`)
       .then(async (res) => {
@@ -62,23 +65,23 @@ export default function MeClient({ token }: { token: string }) {
         if (!body || body.ok !== true) {
           setState({
             phase: "error",
-            message: afterRegister
-              ? "등록은 완료됐지만 다음 화면을 불러오지 못했습니다. 잠시 후 이 페이지를 새로고침해주세요."
+            message: afterAction
+              ? "직전 제출은 완료됐지만 다음 화면을 불러오지 못했습니다. 잠시 후 이 페이지를 새로고침해주세요."
               : body && "message" in body
                 ? body.message
                 : "잠시 문제가 있었습니다.",
           });
           return;
         }
-        afterRegisterRef.current = false;
+        afterActionRef.current = false;
         setState({ phase: "ready", data: body.data });
       })
       .catch(() => {
         if (!alive) return;
         setState({
           phase: "error",
-          message: afterRegister
-            ? "등록은 완료됐지만 다음 화면을 불러오지 못했습니다. 잠시 후 이 페이지를 새로고침해주세요."
+          message: afterAction
+            ? "직전 제출은 완료됐지만 다음 화면을 불러오지 못했습니다. 잠시 후 이 페이지를 새로고침해주세요."
             : "잠시 문제가 있었습니다. 다시 시도해주세요.",
         });
       });
@@ -116,7 +119,7 @@ export default function MeClient({ token }: { token: string }) {
           token={token}
           data={data}
           onRegistered={() => {
-            afterRegisterRef.current = true;
+            afterActionRef.current = true;
             setReloadKey((k) => k + 1);
           }}
         />
@@ -124,7 +127,16 @@ export default function MeClient({ token }: { token: string }) {
     case "payment":
       return <MePayment data={data} />;
     case "questions":
-      return <MeQuestions data={data} />;
+      return (
+        <MeQuestions
+          token={token}
+          data={data}
+          onSubmitted={() => {
+            afterActionRef.current = true;
+            setReloadKey((k) => k + 1);
+          }}
+        />
+      );
     case "confirmed":
       return <MeConfirmed name={data.name} />;
   }
