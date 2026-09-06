@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AdminApplicationRow } from "@/lib/admin-list";
+import { EVENT } from "@/lib/event";
 import { SITE } from "@/lib/site";
 import st from "../admin.module.css";
 
@@ -61,7 +62,7 @@ export default function NicknameBoard({ initial }: { initial: AdminApplicationRo
       }
       const j = (await r.json()) as {
         ok: boolean;
-        data?: { assignedCount: number; items: AdminApplicationRow[] };
+        data?: { assignedCount: number; overCapacityCount: number; items: AdminApplicationRow[] };
         message?: string;
       };
       if (!j.ok) {
@@ -69,12 +70,26 @@ export default function NicknameBoard({ initial }: { initial: AdminApplicationRo
         return;
       }
       if (j.data) {
-        setRows(j.data.items);
-        setMsg(
-          j.data.assignedCount > 0
-            ? `${j.data.assignedCount}명에게 새 번호를 붙였습니다.`
-            : "이미 전원 번호가 있어 바뀐 것이 없습니다.",
-        );
+        const { assignedCount, overCapacityCount, items } = j.data;
+        setRows(items);
+        // 🔴 코드리뷰(2026-09-06) — "새로 붙은 사람이 0명"인 이유가 서로 다른 세
+        //    경우(대상이 아예 없음 · 이미 전원 배정됨 · 정원 초과라 못 받음)를
+        //    하나의 문구로 뭉치면 운영자가 왜 안 바뀌었는지 알 수 없다.
+        if (assignedCount > 0) {
+          setMsg(
+            overCapacityCount > 0
+              ? `${assignedCount}명에게 새 번호를 붙였습니다. 정원(${EVENT.capacity}명)을 넘는 ${overCapacityCount}명은 번호를 받지 못했습니다.`
+              : `${assignedCount}명에게 새 번호를 붙였습니다.`,
+          );
+        } else if (items.length === 0) {
+          setMsg("아직 입금완료인 신청이 없습니다.");
+        } else if (overCapacityCount > 0) {
+          setMsg(
+            `이미 번호가 정원(${EVENT.capacity}명)만큼 다 찼습니다. ${overCapacityCount}명은 정원 초과라 번호를 받지 못했습니다.`,
+          );
+        } else {
+          setMsg("이미 전원 번호가 있어 바뀐 것이 없습니다.");
+        }
       }
     } finally {
       setBusy(false);

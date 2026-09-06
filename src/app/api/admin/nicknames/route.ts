@@ -45,5 +45,8 @@ export async function POST(req: Request) {
 
   const result = await assignNicknames(actor);
   const items = await loadApplications({ status: "입금완료" });
-  return NextResponse.json({ ok: true, data: { assignedCount: result.assignedCount, items } });
+  return NextResponse.json({
+    ok: true,
+    data: { assignedCount: result.assignedCount, overCapacityCount: result.overCapacityCount, items },
+  });
 }

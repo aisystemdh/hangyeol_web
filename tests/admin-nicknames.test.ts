@@ -20,7 +20,7 @@ import { callRoute, q, setCookies } from "./helpers";
 type ItemsBody = { ok: boolean; data?: { items: AdminApplicationRow[] } };
 type AssignBody = {
   ok: boolean;
-  data?: { assignedCount: number; items: AdminApplicationRow[] };
+  data?: { assignedCount: number; overCapacityCount: number; items: AdminApplicationRow[] };
   error?: string;
   message?: string;
 };
@@ -248,5 +248,31 @@ describe("POST /api/admin/nicknames — 닉네임 일괄 배정", () => {
     expect([...nicks].sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual(
       Array.from({ length: 10 }, (_, i) => i + 1),
     );
+  });
+
+  it("🔴 정원(20명)을 넘는 입금완료가 있어도 21번째 번호를 붙이려다 통째로 롤백되지 않는다", async () => {
+    // 정원이 차도 입금 확인 자체는 막지 않는다(이슈 #35 AC) — 그래서 입금완료가
+    // `EVENT.capacity`(20)를 넘는 상황이 실제로 생긴다. `application.nick`의
+    // `check (nick between 1 and 20)`을 이 21번째 사람에게서 미리 피해야 한다
+    // (코드리뷰 2026-09-06에서 잡힌 버그 — 안 피하면 트랜잭션 전체가 롤백돼
+    // 정원 안의 20명도 함께 번호를 못 받는다).
+    const people: { id: string; seq: number }[] = [];
+    for (let i = 0; i < EVENT.capacity + 1; i += 1) {
+      people.push(await 입금완료만들기(`정원${i}`, i % 2 === 0 ? "M" : "F"));
+    }
+    const cookies = await 로그인쿠키();
+
+    const res = await 배정하기(cookies);
+
+    expect(res.status).toBe(200); // 던지지 않는다 — 롤백 사고가 없다.
+    expect(res.body.data?.assignedCount).toBe(EVENT.capacity);
+    expect(res.body.data?.overCapacityCount).toBe(1);
+
+    const 정렬됨 = [...people].sort((a, b) => a.seq - b.seq);
+    for (let i = 0; i < EVENT.capacity; i += 1) {
+      expect(await nick조회(정렬됨[i].id)).toBe(i + 1);
+    }
+    // 21번째(정원 밖)는 번호를 받지 못한다.
+    expect(await nick조회(정렬됨[EVENT.capacity].id)).toBeNull();
   });
 });

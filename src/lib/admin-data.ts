@@ -520,6 +520,15 @@ export async function cancelApplication(
 export type AssignNicknamesResult = {
   /** 이번 호출에서 새로 번호를 받은 사람 수. 0이면 「다시 눌러도 안 바뀐다」가 지켜진 것이다. */
   assignedCount: number;
+  /**
+   * 🔴 정원(`EVENT.capacity`, 20)을 넘어서 번호를 받지 못한 사람 수(코드리뷰 2026-09-06).
+   *    `recordPayment`는 정원이 차도 입금 확인 자체를 막지 않으므로(이슈 #35 AC —
+   *    `ApplicationDrawer.tsx`의 "정원 초과 상태입니다" 문구가 그 증거다) 입금완료
+   *    인원이 20명을 넘는 경우가 실제로 생긴다. 0보다 크면 화면이 "누구는 번호를
+   *    못 받았다"를 표시해야 한다 — 조용히 넘어가면 운영자가 이름표가 모자란 이유를
+   *    현장에서야 알게 된다.
+   */
+  overCapacityCount: number;
 };
 
 /**
@@ -548,6 +557,14 @@ export type AssignNicknamesResult = {
  * 취소된 신청·아직 입금 전인 신청은 대상이 아니다(`where status = '입금완료'`).
  * 이 함수 어디에도 `gender`가 등장하지 않는다 — 성별과 무관하게 seq 순서로만
  * 번호를 매긴다.
+ *
+ * 🔴 **`EVENT.capacity`(20)를 넘는 번호는 절대 붙이지 않는다**(코드리뷰 2026-09-06
+ *    지적). `application.nick`엔 `check (nick between 1 and 20)`이 있는데, 정원이
+ *    차도 입금 확인을 막지 않는 규칙(이슈 #35) 탓에 입금완료가 20명을 넘는 상황이
+ *    실제로 생길 수 있다. 여기서 미리 멈추지 않으면 21번째 사람의 `update`가 그
+ *    체크 제약을 어겨 트랜잭션 전체가 롤백되고 — **이미 정원 안에서 정상 배정된
+ *    나머지도 함께** 취소된다. 정원을 넘는 사람은 조용히 건너뛰고 그 수를
+ *    `overCapacityCount`로 알린다.
  */
 export async function assignNicknames(
   actor: string,
@@ -567,7 +584,9 @@ export async function assignNicknames(
     const unassigned = found.rows.filter((r) => r.nick === null);
 
     let next = maxNick + 1;
+    let assignedCount = 0;
     for (const r of unassigned) {
+      if (next > EVENT.capacity) break; // 정원을 넘는 번호는 DB 체크 제약이 막는다 — 그 전에 멈춘다.
       const nick = next;
       next += 1;
       await client.query(`update application set nick = $2 where id = $1`, [r.id, nick]);
@@ -576,8 +595,9 @@ export async function assignNicknames(
          values ($1, '닉네임배정', $2, $3)`,
         [r.id, actor, JSON.stringify({ nick })],
       );
+      assignedCount += 1;
     }
 
-    return { assignedCount: unassigned.length };
+    return { assignedCount, overCapacityCount: unassigned.length - assignedCount };
   });
 }
