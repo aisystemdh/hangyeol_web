@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import type { AdminApplicationDetail } from "@/lib/admin-data";
+import { formatDT } from "@/lib/admin-format";
 import { isMeScreenName, type MeScreenName } from "@/lib/me-screen";
 import { EXPECTED_DEPOSIT_KRW } from "@/lib/payment";
 import { EVENT } from "@/lib/event";
@@ -28,15 +29,6 @@ const SCREEN_LABELS: Record<MeScreenName, string> = {
 };
 
 const SCREEN_OPTIONS = Object.keys(SCREEN_LABELS) as MeScreenName[];
-
-function formatDT(iso: string | null): string {
-  if (!iso) return "—";
-  return new Intl.DateTimeFormat("ko-KR", {
-    timeZone: "Asia/Seoul",
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(iso));
-}
 
 /**
  * `<input type="datetime-local">`의 기본값. 운영자가 방금 확인한 입금은 대개 "지금

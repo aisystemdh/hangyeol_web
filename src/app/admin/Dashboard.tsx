@@ -5,7 +5,7 @@ import type { AdminApplicationRow, AdminStatus } from "@/lib/admin-list";
 import { isDueSoon } from "@/lib/admin-list";
 import type { SeatsSummary } from "@/lib/admin-data";
 import { EVENT } from "@/lib/event";
-import { SITE } from "@/lib/site";
+import { ActorSelect } from "./ActorSelect";
 import ApplicationDrawer from "./ApplicationDrawer";
 import st from "./admin.module.css";
 
@@ -81,14 +81,8 @@ export default function Dashboard({
   const [openId, setOpenId] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
 
-  /**
-   * 🔴 공유 비밀번호라 서버는 누가 눌렀는지 모른다. 이 선택값을 조작 API에 실어
-   *    보내 기록에 이름을 남긴다(`CONTEXT.md` "운영자가 하는 일").
-   *
-   * ⚠️ localStorage 값을 상태 초깃값으로 쓰면 서버 렌더에는 없는 값이라 하이드레이션이
-   *    어긋난다. `<select>`를 DOM으로 직접 읽고 쓰는 이유가 그것이다(옛 `Board.tsx`와
-   *    같은 회피).
-   */
+  // 🔴 공유 비밀번호라 서버는 누가 눌렀는지 모른다 — `ActorSelect.tsx`가 이 선택값을
+  //    되살리고 저장하는 방법을 담당한다. 여기서는 값만 읽는다.
   const actorRef = useRef<HTMLSelectElement>(null);
   const getActor = useCallback(() => actorRef.current?.value ?? "", []);
 
@@ -116,10 +110,9 @@ export default function Dashboard({
     if (j.data?.seats) setSeats(j.data.seats);
   }, []);
 
-  // 사람이 바뀌기 전에 마지막으로 고른 조작자를 되살린다(위 주석 참조) + 30초 폴링.
+  // ⚠️ 첫 데이터는 서버가 이미 넘겼다. 여기서 또 부르지 않고 30초 뒤부터 갱신한다.
+  //    (조작자 되살리기는 `ActorSelect.tsx`가 자기 마운트 이펙트에서 한다.)
   useEffect(() => {
-    if (actorRef.current) actorRef.current.value = localStorage.getItem("hg-actor") ?? "";
-    // ⚠️ 첫 데이터는 서버가 이미 넘겼다. 여기서 또 부르지 않고 30초 뒤부터 갱신한다.
     const t = setInterval(load, 30_000);
     return () => clearInterval(t);
   }, [load]);
@@ -177,27 +170,7 @@ export default function Dashboard({
     <>
       <header className={st.head}>
         <h1 className={st.h1}>신청 목록</h1>
-        <div className={st.actor}>
-          <label htmlFor="actor">조작하는 사람</label>
-          {/* 🔴 자유 입력이 아니라 명단(`SITE.operators`, `site.ts`)에서 고른다 —
-              서버(`/api/admin/applications/[id]/screen`)도 이 명단에 없는 이름은 거절한다. */}
-          <select
-            id="actor"
-            ref={actorRef}
-            className={st.inputSm}
-            defaultValue=""
-            onChange={(e) => localStorage.setItem("hg-actor", e.target.value)}
-          >
-            <option value="" disabled>
-              선택
-            </option>
-            {SITE.operators.map((o) => (
-              <option key={o.name} value={o.name}>
-                {o.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <ActorSelect id="actor" label="조작하는 사람" ref={actorRef} />
       </header>
 
       {/* 🔴 이슈 #35 AC "남은 자리가 성별로 보인다" — 이 화면에서 가장 자주 확인하는

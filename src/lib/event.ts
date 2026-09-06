@@ -65,6 +65,18 @@ export const EVENT_SCHEMA = {
 } as const;
 
 /**
+ * 행사 당일 00:00(KST)을 나타내는 `Date`.
+ *
+ * 🔴 **이 계산을 두 곳에서 따로 하지 않는다.** `me-screen.ts`의 "오늘이 행사날인가"
+ *    판정과 `admin-notify.ts`의 "행사가 임박했는가"("행사임박" — 이슈 #37) 판정이
+ *    같은 순간을 가리켜야 한다 — 따로 계산하면 시간대(KST/UTC) 표기를 한쪽만 고쳤을 때
+ *    두 화면이 "오늘이 행사날인지"를 다르게 답하게 된다.
+ */
+export function eventDayStart(): Date {
+  return new Date(`${EVENT.dateISO}T00:00:00+09:00`);
+}
+
+/**
  * 환불 규정. 카피에 문장을 직접 쓰지 말고 여기서 가져온다.
  * ⚠️ 이 3단은 **행사일** 기준이다. 아래 REFUND_LAW와 반드시 함께 노출한다.
  */
