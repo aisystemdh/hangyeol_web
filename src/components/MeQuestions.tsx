@@ -43,6 +43,49 @@ function isAnswered(value: number | SlotPair | undefined): boolean {
   return true;
 }
 
+/**
+ * 선택지 하나짜리 라디오 묶음 — 일반 문항과 페어드 문항의 두 갈래가 똑같은 모양
+ * (숨긴 라디오 + `.gender__btn` 라벨)이라 여기 하나로 모은다. 갈랐다가 한쪽만
+ * 고치는 실수(코드 리뷰 2026-09-06 지적)를 막는다.
+ */
+function ChoiceGroup({
+  legend,
+  name,
+  choices,
+  checkedValue,
+  onPick,
+}: {
+  legend: string;
+  name: string;
+  choices: { n: 1 | 2 | 3; text: string }[];
+  checkedValue: number | undefined;
+  onPick: (n: number) => void;
+}) {
+  return (
+    <fieldset className={s.choices}>
+      <legend className="sr-only">{legend}</legend>
+      {choices.map((c) => {
+        const id = `${name}-${c.n}`;
+        return (
+          <div key={c.n}>
+            <input
+              type="radio"
+              id={id}
+              name={name}
+              className="gender__input"
+              checked={checkedValue === c.n}
+              onChange={() => onPick(c.n)}
+            />
+            <label className="gender__btn" htmlFor={id}>
+              {c.text}
+            </label>
+          </div>
+        );
+      })}
+    </fieldset>
+  );
+}
+
 export default function MeQuestions({
   token,
   data,
@@ -139,56 +182,24 @@ export default function MeQuestions({
                 return (
                   <div key={branch.label}>
                     <p className={s.pairLabel}>{branch.label}</p>
-                    <fieldset className={s.choices}>
-                      <legend className="sr-only">
-                        {q.topic} · {branch.label}
-                      </legend>
-                      {branch.choices.map((c) => {
-                        const id = `${q.code}-${slot}-${c.n}`;
-                        const checked = Array.isArray(cur) && cur[slot] === c.n;
-                        return (
-                          <div key={c.n}>
-                            <input
-                              type="radio"
-                              id={id}
-                              name={`${q.code}-${slot}`}
-                              className="gender__input"
-                              checked={checked}
-                              onChange={() => pickPaired(q.code, slot, c.n)}
-                            />
-                            <label className="gender__btn" htmlFor={id}>
-                              {c.text}
-                            </label>
-                          </div>
-                        );
-                      })}
-                    </fieldset>
+                    <ChoiceGroup
+                      legend={`${q.topic} · ${branch.label}`}
+                      name={`${q.code}-${slot}`}
+                      choices={branch.choices}
+                      checkedValue={Array.isArray(cur) ? cur[slot] : undefined}
+                      onPick={(n) => pickPaired(q.code, slot, n)}
+                    />
                   </div>
                 );
               })
             ) : (
-              <fieldset className={s.choices}>
-                <legend className="sr-only">{q.topic}</legend>
-                {(q.choices ?? []).map((c) => {
-                  const id = `${q.code}-${c.n}`;
-                  const checked = answers[q.code] === c.n;
-                  return (
-                    <div key={c.n}>
-                      <input
-                        type="radio"
-                        id={id}
-                        name={q.code}
-                        className="gender__input"
-                        checked={checked}
-                        onChange={() => pickSingle(q.code, c.n)}
-                      />
-                      <label className="gender__btn" htmlFor={id}>
-                        {c.text}
-                      </label>
-                    </div>
-                  );
-                })}
-              </fieldset>
+              <ChoiceGroup
+                legend={q.topic}
+                name={q.code}
+                choices={q.choices ?? []}
+                checkedValue={typeof answers[q.code] === "number" ? (answers[q.code] as number) : undefined}
+                onPick={(n) => pickSingle(q.code, n)}
+              />
             )}
           </div>
         ))}
