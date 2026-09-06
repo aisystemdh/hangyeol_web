@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AdminApplicationRow, AdminStatus } from "@/lib/admin-list";
 import { isDueSoon } from "@/lib/admin-list";
+import type { SeatsSummary } from "@/lib/admin-data";
+import { EVENT } from "@/lib/event";
 import { SITE } from "@/lib/site";
 import ApplicationDrawer from "./ApplicationDrawer";
 import st from "./admin.module.css";
@@ -61,8 +63,17 @@ function dueDisplay(row: AdminApplicationRow, now: Date): { label: string; soon:
   return { label, soon: isDueSoon(row.status, dueAt, now) };
 }
 
-export default function Dashboard({ initial }: { initial: AdminApplicationRow[] }) {
+export default function Dashboard({
+  initial,
+  initialSeats,
+}: {
+  initial: AdminApplicationRow[];
+  initialSeats: SeatsSummary;
+}) {
   const [rows, setRows] = useState<AdminApplicationRow[]>(initial);
+  // 🔴 「남은 자리가 성별로 보인다」(이슈 #35 AC) — 목록과 같은 30초 폴링을 탄다.
+  //    입금 확인 라우트가 도는 자리 계산과 같은 함수(`seats.ts`)를 쓰므로 둘이 어긋나지 않는다.
+  const [seats, setSeats] = useState<SeatsSummary>(initialSeats);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<AdminStatus | "전체">("전체");
   const [genderFilter, setGenderFilter] = useState<"전체" | "M" | "F">("전체");
@@ -102,6 +113,7 @@ export default function Dashboard({ initial }: { initial: AdminApplicationRow[] 
     }
     const j = await r.json();
     setRows(j.data?.items ?? []);
+    if (j.data?.seats) setSeats(j.data.seats);
   }, []);
 
   // 사람이 바뀌기 전에 마지막으로 고른 조작자를 되살린다(위 주석 참조) + 30초 폴링.
@@ -155,7 +167,9 @@ export default function Dashboard({ initial }: { initial: AdminApplicationRow[] 
     });
   };
 
-  const afterScreenChange = () => {
+  // 화면 고정·입금 확인·환불·취소 — 어느 쪽이든 목록(자리 현황 포함)을 다시 그려야
+  // 다른 사람 행을 계속 클릭해 나가도 방금 바뀐 상태·자리 수가 바로 보인다.
+  const afterMutation = () => {
     load();
   };
 
@@ -185,6 +199,28 @@ export default function Dashboard({ initial }: { initial: AdminApplicationRow[] 
           </select>
         </div>
       </header>
+
+      {/* 🔴 이슈 #35 AC "남은 자리가 성별로 보인다" — 이 화면에서 가장 자주 확인하는
+          숫자라 목록 위에 크게 둔다. 정원이 차도(강조만 하고) 계속 보여준다 —
+          입금 확인 자체를 막지 않는 규칙과 같은 이유다. */}
+      <div className={st.counters}>
+        <div className={seats.remaining.M === 0 ? st.cardHi : st.card}>
+          <div className={st.cardLabel}>남은 자리 · 남</div>
+          <div className={st.cardNum}>
+            {seats.remaining.M} / {seats.capacityPerGender}
+            <span className={st.sep}>·</span>
+            <span className={st.cardSub}>입금완료 {seats.taken.M}명</span>
+          </div>
+        </div>
+        <div className={seats.remaining.F === 0 ? st.cardHi : st.card}>
+          <div className={st.cardLabel}>남은 자리 · 여</div>
+          <div className={st.cardNum}>
+            {seats.remaining.F} / {seats.capacityPerGender}
+            <span className={st.sep}>·</span>
+            <span className={st.cardSub}>입금완료 {seats.taken.F}명</span>
+          </div>
+        </div>
+      </div>
 
       <div className={st.filters}>
         <input
@@ -288,6 +324,9 @@ export default function Dashboard({ initial }: { initial: AdminApplicationRow[] 
                       {r.status}
                       {r.waitlisted && <span className={st.badgeWait}> 대기</span>}
                       {r.screenLocked && <span className={st.badgeLock}> 화면 고정됨</span>}
+                      {r.amountMismatch && (
+                        <span className={st.badgeMismatch}> {EVENT.priceLabel}과 다름</span>
+                      )}
                     </td>
                     <td>{r.name}</td>
                     <td>{r.gender === "M" ? "남" : "여"}</td>
@@ -328,8 +367,9 @@ export default function Dashboard({ initial }: { initial: AdminApplicationRow[] 
           id={openId}
           onClose={() => setOpenId(null)}
           getActor={getActor}
-          onScreenChanged={afterScreenChange}
+          onChanged={afterMutation}
           onMessage={setMsg}
+          seatsRemaining={seats.remaining}
         />
       )}
     </>

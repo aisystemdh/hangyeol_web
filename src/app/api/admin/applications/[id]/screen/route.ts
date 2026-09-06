@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/admin";
+import { isAdmin, normalizeActor } from "@/lib/admin";
 import { setViewOverride } from "@/lib/admin-data";
 import { isMeScreenName, type MeScreenName } from "@/lib/me-screen";
-import { SITE } from "@/lib/site";
 
 /**
  * POST /api/admin/applications/[id]/screen — 화면 고정 · 해제 (결정 13, 이슈 #34).
@@ -23,8 +22,6 @@ import { SITE } from "@/lib/site";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const OPERATOR_NAMES: readonly string[] = SITE.operators.map((o) => o.name);
-
 type Body = { screen?: unknown; actor?: unknown };
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -35,8 +32,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const body = (await req.json().catch(() => ({}))) as Body;
 
-  const actor = typeof body.actor === "string" ? body.actor.trim() : "";
-  if (!OPERATOR_NAMES.includes(actor)) {
+  const actor = normalizeActor(body.actor);
+  if (!actor) {
     return NextResponse.json(
       { ok: false, error: "invalid_actor", message: "조작하는 사람을 목록에서 골라주세요." },
       { status: 400 },

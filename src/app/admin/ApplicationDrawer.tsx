@@ -1,15 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import type { AdminApplicationDetail } from "@/lib/admin-data";
 import { isMeScreenName, type MeScreenName } from "@/lib/me-screen";
+import { EXPECTED_DEPOSIT_KRW } from "@/lib/payment";
+import { EVENT } from "@/lib/event";
+import type { SeatCount } from "@/lib/seats";
 import st from "./admin.module.css";
 
 /**
- * 상세 서랍 (이슈 #34 AC) — 답변·돈 줄·발송 이력·조작 로그를 한 화면에 모은다.
+ * 상세 서랍 (이슈 #34 AC · #35 AC) — 답변·돈 줄·발송 이력·조작 로그를 한 화면에 모으고,
+ * 여기서 입금 확인·환불·취소까지 처리한다.
  *
- * 🔴 `prompt()`/`confirm()`을 쓰지 않는다 — 화면 고정은 `<select>` 두 개(화면·조작자)와
- *    버튼 하나로 끝낸다.
+ * 🔴 `prompt()`/`confirm()`을 쓰지 않는다 — 모든 조작은 이 서랍 안의 `<form>`·`<select>`·
+ *    버튼으로 끝낸다(`docs/decisions/003…` §7).
  */
 
 const SCREEN_LABELS: Record<MeScreenName, string> = {
@@ -34,18 +38,35 @@ function formatDT(iso: string | null): string {
   }).format(new Date(iso));
 }
 
+/**
+ * `<input type="datetime-local">`의 기본값. 운영자가 방금 확인한 입금은 대개 "지금
+ * 막" 찍힌 시각이라 매번 새로 타이핑하지 않도록 지금 시각을 채워 둔다 — 다른 시각이면
+ * 직접 고치면 된다. 🔴 이 값은 시간대 표기가 없는 「로컬 시각 문자열」이고,
+ * 서버(`payment.ts`의 `parseMoneyBody`)가 이걸 **한국 시각**으로 못박아 해석한다.
+ */
+function nowLocalInputValue(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function ApplicationDrawer({
   id,
   onClose,
   getActor,
-  onScreenChanged,
+  onChanged,
   onMessage,
+  seatsRemaining,
 }: {
   id: string;
   onClose: () => void;
   getActor: () => string;
-  onScreenChanged: () => void;
+  /** 화면 고정·입금 확인·환불·취소 중 무엇이든 바뀐 뒤 목록(자리 현황 포함)을 다시 부른다. */
+  onChanged: () => void;
   onMessage: (msg: string) => void;
+  /** 목록이 30초마다 갱신하는 자리 현황. 서랍을 열 때의 스냅샷이라 약간 낡을 수 있어
+   *  최종 판단은 서버(입금 확인 응답의 `overCapacity`)가 한다 — 여기서는 미리 보여주는 용도. */
+  seatsRemaining: SeatCount;
 }) {
   const [detail, setDetail] = useState<AdminApplicationDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,12 +80,19 @@ export default function ApplicationDrawer({
   const [screenPick, setScreenPick] = useState<"" | MeScreenName>("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    // ⚠️ 여기서 `setLoading(true)`를 부르지 않는다 — 이펙트 본문에서 곧바로
-    //    setState를 부르면 렌더가 한 번 더 겹친다(react-hooks/set-state-in-effect).
-    //    `loading`의 초깃값이 이미 `true`이고, `Dashboard`가 이 컴포넌트를
-    //    `key={id}`로 매번 새로 마운트하므로 사람이 바뀔 때도 다시 `true`로
-    //    시작한다 — 그래서 이 이펙트는 끝날 때 `false`로 내리기만 한다.
+  // ── 입금 확인 폼 ──
+  const [payAmount, setPayAmount] = useState(String(EXPECTED_DEPOSIT_KRW));
+  const [payOccurredAt, setPayOccurredAt] = useState(nowLocalInputValue());
+  const [payDepositor, setPayDepositor] = useState("");
+  const [payNote, setPayNote] = useState("");
+
+  // ── 환불 폼 ──
+  const [refundAmount, setRefundAmount] = useState("");
+  const [refundOccurredAt, setRefundOccurredAt] = useState(nowLocalInputValue());
+  const [refundDepositor, setRefundDepositor] = useState("");
+  const [refundNote, setRefundNote] = useState("");
+
+  const loadDetail = useCallback(() => {
     let cancelled = false;
     fetch(`/api/admin/applications/${id}`)
       .then(async (r) => {
@@ -84,6 +112,7 @@ export default function ApplicationDrawer({
       .then((data) => {
         if (cancelled || data === null) return;
         setDetail(data);
+        setPayDepositor((prev) => prev || data.application.depositorName || "");
         setScreenPick(isMeScreenName(data.application.viewOverride) ? data.application.viewOverride : "");
       })
       .catch((err) => {
@@ -98,6 +127,15 @@ export default function ApplicationDrawer({
       cancelled = true;
     };
   }, [id]);
+
+  useEffect(() => {
+    // ⚠️ 여기서 `setLoading(true)`를 부르지 않는다 — 이펙트 본문에서 곧바로
+    //    setState를 부르면 렌더가 한 번 더 겹친다(react-hooks/set-state-in-effect).
+    //    `loading`의 초깃값이 이미 `true`이고, `Dashboard`가 이 컴포넌트를
+    //    `key={id}`로 매번 새로 마운트하므로 사람이 바뀔 때도 다시 `true`로
+    //    시작한다 — 그래서 이 이펙트는 끝날 때 `false`로 내리기만 한다.
+    return loadDetail();
+  }, [loadDetail]);
 
   const applyScreen = async (screen: MeScreenName | null) => {
     const actor = getActor();
@@ -118,7 +156,7 @@ export default function ApplicationDrawer({
       return;
     }
     onMessage(screen ? `화면을 「${SCREEN_LABELS[screen]}」로 고정했습니다.` : "화면 고정을 풀었습니다.");
-    onScreenChanged();
+    onChanged();
     /**
      * 🔴 코드리뷰(2026-09-06) — 방금 서버에 적어 넣은 값을 이미 알고 있는데
      *    다섯 개 표(답변·돈 줄·발송 이력·조작 로그 포함) 전체를 다시 긁어오는
@@ -144,6 +182,120 @@ export default function ApplicationDrawer({
           }
         : prev,
     );
+  };
+
+  /**
+   * 입금 확인 — **이 시스템에서 자리가 차는 유일한 순간**(이슈 #35). 상태 변경과 돈 줄
+   * 쌓기가 서버(`recordPayment`)에서 한 트랜잭션으로 함께 일어나므로, 여기서는 값만
+   * 모아 한 번에 보낸다.
+   *
+   * 🔴 금액·정원 어느 쪽도 이 화면에서 막지 않는다. 정원 초과는 서버가 방금 커밋한
+   *    진짜 자리 수(`overCapacity`)로 판단해 경고 문구만 띄운다 — `confirm()` 없이도
+   *    "막지 않되 알린다"를 만족한다.
+   */
+  const submitPayment = async (e: FormEvent) => {
+    e.preventDefault();
+    const actor = getActor();
+    if (!actor) {
+      onMessage("먼저 「조작하는 사람」을 골라주세요.");
+      return;
+    }
+    const amount = Number(payAmount);
+    if (!Number.isInteger(amount) || amount <= 0) {
+      onMessage("금액을 원 단위 양수로 입력해주세요.");
+      return;
+    }
+    if (!payDepositor.trim()) {
+      onMessage("입금자명을 입력해주세요.");
+      return;
+    }
+    setBusy(true);
+    const r = await fetch(`/api/admin/applications/${id}/payment`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount,
+        occurredAt: payOccurredAt,
+        depositorName: payDepositor.trim(),
+        note: payNote.trim() || undefined,
+        actor,
+      }),
+    });
+    const j = await r.json().catch(() => ({}));
+    setBusy(false);
+    if (!r.ok) {
+      onMessage(`입금 확인 실패: ${j.message ?? j.error ?? r.status}`);
+      return;
+    }
+    const parts = [`입금(${amount.toLocaleString()}원)을 확인해 자리를 채웠습니다.`];
+    if (j.data?.amountMismatch) parts.push(`${EVENT.priceLabel}과 다른 금액입니다.`);
+    if (j.data?.overCapacity) parts.push("정원 초과 상태입니다. 그래도 저장은 됐습니다.");
+    onMessage(parts.join(" "));
+    setPayNote("");
+    onChanged();
+    loadDetail();
+  };
+
+  /** 환불 — 돈 줄에 「−금액 환불」 한 줄을 쌓는다. 상태는 바꾸지 않는다(취소는 따로). */
+  const submitRefund = async (e: FormEvent) => {
+    e.preventDefault();
+    const actor = getActor();
+    if (!actor) {
+      onMessage("먼저 「조작하는 사람」을 골라주세요.");
+      return;
+    }
+    const amount = Number(refundAmount);
+    if (!Number.isInteger(amount) || amount <= 0) {
+      onMessage("환불 금액을 원 단위 양수로 입력해주세요.");
+      return;
+    }
+    setBusy(true);
+    const r = await fetch(`/api/admin/applications/${id}/refund`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount,
+        occurredAt: refundOccurredAt,
+        depositorName: refundDepositor.trim() || undefined,
+        note: refundNote.trim() || undefined,
+        actor,
+      }),
+    });
+    const j = await r.json().catch(() => ({}));
+    setBusy(false);
+    if (!r.ok) {
+      onMessage(`환불 기록 실패: ${j.message ?? j.error ?? r.status}`);
+      return;
+    }
+    onMessage(`환불(${amount.toLocaleString()}원)을 돈 줄에 남겼습니다.`);
+    setRefundAmount("");
+    setRefundNote("");
+    onChanged();
+    loadDetail();
+  };
+
+  /** 취소 — 돈 줄은 건드리지 않는다. 이미 낸 돈을 돌려주려면 환불을 따로 쌓는다. */
+  const submitCancel = async () => {
+    const actor = getActor();
+    if (!actor) {
+      onMessage("먼저 「조작하는 사람」을 골라주세요.");
+      return;
+    }
+    setBusy(true);
+    const r = await fetch(`/api/admin/applications/${id}/cancel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ actor }),
+    });
+    const j = await r.json().catch(() => ({}));
+    setBusy(false);
+    if (!r.ok) {
+      onMessage(`취소 실패: ${j.message ?? j.error ?? r.status}`);
+      return;
+    }
+    onMessage("신청을 취소됨으로 바꿨습니다.");
+    onChanged();
+    loadDetail();
   };
 
   return (
@@ -190,11 +342,142 @@ export default function ApplicationDrawer({
                 <dd>{detail.application.depositorName ?? "—"}</dd>
                 <dt>입금 확인</dt>
                 <dd>{formatDT(detail.application.paidAt)}</dd>
+                <dt>낸 돈</dt>
+                <dd className={st.mono}>{detail.netPaid.toLocaleString()}원</dd>
                 <dt>닉네임</dt>
                 <dd>{detail.application.nick ?? "—"}</dd>
                 <dt>메모</dt>
                 <dd>{detail.application.memo ?? "—"}</dd>
               </dl>
+            </section>
+
+            <section>
+              <h3>입금 확인</h3>
+              <p className={st.loginNote}>
+                은행 앱에 찍힌 입금자명·금액·시각을 그대로 적는다. {EVENT.priceLabel}이 아니어도
+                막지 않고 그대로 저장한다 — 다르면 목록·상세에 표시만 남는다.
+                {seatsRemaining[detail.application.gender] <= 0 && (
+                  <strong className={st.warn}> 지금 이 성별 자리가 이미 다 찼습니다.</strong>
+                )}
+              </p>
+              <form className={st.moneyForm} onSubmit={submitPayment}>
+                <label>
+                  금액(원)
+                  <input
+                    type="number"
+                    className={st.inputSm}
+                    value={payAmount}
+                    onChange={(e) => setPayAmount(e.target.value)}
+                    min={1}
+                    step={1}
+                    disabled={busy}
+                    required
+                  />
+                </label>
+                <label>
+                  입금 시각
+                  <input
+                    type="datetime-local"
+                    className={st.inputSm}
+                    value={payOccurredAt}
+                    onChange={(e) => setPayOccurredAt(e.target.value)}
+                    disabled={busy}
+                    required
+                  />
+                </label>
+                <label>
+                  입금자명
+                  <input
+                    type="text"
+                    className={st.inputSm}
+                    value={payDepositor}
+                    onChange={(e) => setPayDepositor(e.target.value)}
+                    disabled={busy}
+                    required
+                  />
+                </label>
+                <label>
+                  메모(선택)
+                  <input
+                    type="text"
+                    className={st.inputSm}
+                    value={payNote}
+                    onChange={(e) => setPayNote(e.target.value)}
+                    disabled={busy}
+                  />
+                </label>
+                <button type="submit" className={st.btnPay} disabled={busy}>
+                  입금 확인
+                </button>
+              </form>
+            </section>
+
+            <section>
+              <h3>환불</h3>
+              <p className={st.loginNote}>상태는 바꾸지 않는다 — 취소는 아래에서 따로 한다.</p>
+              <form className={st.moneyForm} onSubmit={submitRefund}>
+                <label>
+                  금액(원)
+                  <input
+                    type="number"
+                    className={st.inputSm}
+                    value={refundAmount}
+                    onChange={(e) => setRefundAmount(e.target.value)}
+                    min={1}
+                    step={1}
+                    disabled={busy}
+                    required
+                  />
+                </label>
+                <label>
+                  환불 시각
+                  <input
+                    type="datetime-local"
+                    className={st.inputSm}
+                    value={refundOccurredAt}
+                    onChange={(e) => setRefundOccurredAt(e.target.value)}
+                    disabled={busy}
+                    required
+                  />
+                </label>
+                <label>
+                  받는 사람(선택)
+                  <input
+                    type="text"
+                    className={st.inputSm}
+                    value={refundDepositor}
+                    onChange={(e) => setRefundDepositor(e.target.value)}
+                    disabled={busy}
+                  />
+                </label>
+                <label>
+                  메모(선택)
+                  <input
+                    type="text"
+                    className={st.inputSm}
+                    value={refundNote}
+                    onChange={(e) => setRefundNote(e.target.value)}
+                    disabled={busy}
+                  />
+                </label>
+                <button type="submit" className={st.btnSm} disabled={busy}>
+                  환불 기록
+                </button>
+              </form>
+            </section>
+
+            <section>
+              <h3>취소</h3>
+              <p className={st.loginNote}>
+                돈 줄은 그대로 둔다. 이미 낸 돈을 돌려주려면 위 환불을 따로 남긴다.
+              </p>
+              <button
+                className={st.btnSm}
+                disabled={busy || detail.application.status === "취소됨"}
+                onClick={submitCancel}
+              >
+                {detail.application.status === "취소됨" ? "이미 취소됨" : "취소로 바꾸기"}
+              </button>
             </section>
 
             <section>
@@ -258,7 +541,7 @@ export default function ApplicationDrawer({
             </section>
 
             <section>
-              <h3>돈 줄 ({detail.money.length})</h3>
+              <h3>돈 줄 ({detail.money.length}) · 낸 돈 {detail.netPaid.toLocaleString()}원</h3>
               {detail.money.length === 0 ? (
                 <p className={st.empty}>아직 없습니다.</p>
               ) : (
@@ -277,7 +560,12 @@ export default function ApplicationDrawer({
                     {detail.money.map((m) => (
                       <tr key={m.id}>
                         <td>{m.kind}</td>
-                        <td className={st.mono}>{m.amount.toLocaleString()}원</td>
+                        <td className={st.mono}>
+                          {m.amount.toLocaleString()}원
+                          {m.amountMismatch && (
+                            <span className={st.badgeMismatch}> {EVENT.priceLabel}과 다름</span>
+                          )}
+                        </td>
                         <td>{formatDT(m.occurredAt)}</td>
                         <td>{m.depositorName ?? "—"}</td>
                         <td>{m.recordedBy}</td>
