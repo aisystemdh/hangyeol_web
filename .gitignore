@@ -46,3 +46,7 @@ next-env.d.ts
 
 # Claude Code — 개인 설정만 제외. settings.json·skills·hooks는 팀과 공유한다
 .claude/settings.local.json
+
+# 에이전트 병렬 작업용 임시 git worktree — 레포 전체 사본이 통째로 들어있다.
+# 공유 설정이 아니라 실행 중 산출물이라 팀 공유 대상에서 뺀다(2026-09-06 실측).
+.claude/worktrees/
